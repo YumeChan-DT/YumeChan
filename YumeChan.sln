@@ -3,7 +3,31 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 16
 VisualStudioVersion = 16.0.28917.182
 MinimumVisualStudioVersion = 10.0.40219.1
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Nodsoft.YumeChan.ConsoleRunner", "src\Nodsoft.YumeChan.ConsoleRunner\Nodsoft.YumeChan.ConsoleRunner.csproj", "{B4E6E6B5-B495-4668-BB0D-1107B457C420}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Nodsoft.YumeChan.Core", "src\Nodsoft.YumeChan.Core\Nodsoft.YumeChan.Core.csproj", "{58155AE6-D0DF-45E3-9B38-64ED0ACA8AC0}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Nodsoft.YumeChan.Modules", "src\Nodsoft.YumeChan.Modules\Nodsoft.YumeChan.Modules.csproj", "{FD4B7EFA-7B34-4544-AD4A-EA67F006A1E8}"
+EndProject
 Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{B4E6E6B5-B495-4668-BB0D-1107B457C420}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B4E6E6B5-B495-4668-BB0D-1107B457C420}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B4E6E6B5-B495-4668-BB0D-1107B457C420}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B4E6E6B5-B495-4668-BB0D-1107B457C420}.Release|Any CPU.Build.0 = Release|Any CPU
+		{58155AE6-D0DF-45E3-9B38-64ED0ACA8AC0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{58155AE6-D0DF-45E3-9B38-64ED0ACA8AC0}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{58155AE6-D0DF-45E3-9B38-64ED0ACA8AC0}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{58155AE6-D0DF-45E3-9B38-64ED0ACA8AC0}.Release|Any CPU.Build.0 = Release|Any CPU
+		{FD4B7EFA-7B34-4544-AD4A-EA67F006A1E8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FD4B7EFA-7B34-4544-AD4A-EA67F006A1E8}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FD4B7EFA-7B34-4544-AD4A-EA67F006A1E8}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FD4B7EFA-7B34-4544-AD4A-EA67F006A1E8}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
