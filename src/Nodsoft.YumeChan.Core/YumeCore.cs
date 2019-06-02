@@ -7,6 +7,8 @@ using System.Diagnostics;
 using System.Reflection;
 using System.Threading.Tasks;
 
+using Nodsoft.YumeChan.Modules;
+
 namespace Nodsoft.YumeChan.Core
 {
 	public class YumeCore
@@ -55,7 +57,7 @@ namespace Nodsoft.YumeChan.Core
 			Client.Log += Logger.Log;
 			Commands.Log += Logger.Log;
 
-			await RegisterCommandsAsync();
+			await RegisterCommandsAsync().ConfigureAwait(false);
 			await Client.LoginAsync(TokenType.Bot, BotToken);
 			await Client.StartAsync();
 		}
@@ -64,14 +66,18 @@ namespace Nodsoft.YumeChan.Core
 		{
 			Client.MessageReceived += HandleCommandAsync;
 
-			await Commands.AddModulesAsync(Assembly.GetEntryAssembly(), Services);    //Add Local Commands
+			await Commands.AddModulesAsync(Assembly.GetEntryAssembly(), Services);		//Add possible Commands from Entry Assembly (contextual)
+			await Commands.AddModulesAsync(typeof(YumeCore).Assembly, Services);		//Add Local Commands (if any)
+			await Commands.AddModulesAsync(typeof(ModulesIndex).Assembly, Services);	//Add Commands from Nodsoft.YumeChan.Modules
+
+
 		}
 
 		private async Task HandleCommandAsync(SocketMessage arg)
 		{
 			SocketUserMessage message = arg as SocketUserMessage;
 
-			if (message == null || message.Author.IsBot) return;
+			if (message == null || message.Author.IsBot) { return; }
 
 			int argPosition = 0;
 
