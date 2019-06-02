@@ -2,6 +2,24 @@
 
   <PropertyGroup>
     <TargetFramework>netstandard2.1</TargetFramework>
+    <Version>0.1.0</Version>
+    <Authors>DJ Daemonix</Authors>
+    <Company>Nodsoft ES</Company>
+    <Product>YumeChan</Product>
+    <Copyright>GNU GPLv3</Copyright>
+    <NeutralLanguage>en</NeutralLanguage>
+    <RepositoryUrl>https://github.com/DJDaemonix/YumeChan</RepositoryUrl>
+    <RepositoryType>Git</RepositoryType>
+    <SignAssembly>false</SignAssembly>
   </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Discord.Net" Version="2.1.0" />
+    <PackageReference Include="Discord.Net.Commands" Version="2.1.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Nodsoft.YumeChan.Modules\Nodsoft.YumeChan.Modules.csproj" />
+  </ItemGroup>
 
 </Project>

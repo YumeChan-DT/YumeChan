@@ -1,12 +1,10 @@
-﻿using System;
+﻿using Nodsoft.YumeChan.Core;
+using System.Threading.Tasks;
 
 namespace Nodsoft.YumeChan.ConsoleRunner
 {
-	class Program
+	static class Program
 	{
-		static void Main(string[] args)
-		{
-
-		}
+		static void Main(string[] args) => new YumeCore(new Logger()).RunBot();
 	}
 }
