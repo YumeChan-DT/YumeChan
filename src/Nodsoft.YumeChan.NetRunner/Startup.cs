@@ -8,7 +8,8 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.HttpsPolicy;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Nodsoft.YumeChan.NetRunner.Data;
+
+//using Nodsoft.YumeChan.NetRunner.Data;
 
 namespace Nodsoft.YumeChan.NetRunner
 {
@@ -20,7 +21,6 @@ namespace Nodsoft.YumeChan.NetRunner
 		{
 			services.AddRazorPages();
 			services.AddServerSideBlazor();
-			services.AddSingleton<WeatherForecastService>();
 		}
 
 		// This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -37,9 +37,7 @@ namespace Nodsoft.YumeChan.NetRunner
 			}
 
 			app.UseHttpsRedirection();
-
 			app.UseStaticFiles();
-
 			app.UseRouting();
 
 			app.UseEndpoints(endpoints =>
