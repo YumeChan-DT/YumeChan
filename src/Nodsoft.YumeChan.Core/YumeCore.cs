@@ -66,6 +66,8 @@ namespace Nodsoft.YumeChan.Core
 		{
 			Client.MessageReceived += HandleCommandAsync;
 
+			ModulesIndex.CoreVersion = typeof(YumeCore).Assembly.GetName().Version;
+
 			await Commands.AddModulesAsync(Assembly.GetEntryAssembly(), Services);		//Add possible Commands from Entry Assembly (contextual)
 			await Commands.AddModulesAsync(typeof(YumeCore).Assembly, Services);		//Add Local Commands (if any)
 			await Commands.AddModulesAsync(typeof(ModulesIndex).Assembly, Services);	//Add Commands from Nodsoft.YumeChan.Modules
