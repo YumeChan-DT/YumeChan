@@ -21,6 +21,7 @@ namespace Nodsoft.YumeChan.NetRunner
 		{
 			services.AddRazorPages();
 			services.AddServerSideBlazor();
+			services.AddSingleton<YumeCoreSingleton>();
 		}
 
 		// This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
