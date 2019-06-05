@@ -1,15 +1,10 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.HttpsPolicy;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 
-//using Nodsoft.YumeChan.NetRunner.Data;
+using static Nodsoft.YumeChan.NetRunner.Services;
+
 
 namespace Nodsoft.YumeChan.NetRunner
 {
@@ -17,15 +12,19 @@ namespace Nodsoft.YumeChan.NetRunner
 	{
 		// This method gets called by the runtime. Use this method to add services to the container.
 		// For more information on how to configure your application, visit https://go.microsoft.com/fwlink/?LinkID=398940
-		public void ConfigureServices(IServiceCollection services)
+		public static void ConfigureServices(IServiceCollection services)
 		{
 			services.AddRazorPages();
 			services.AddServerSideBlazor();
 			services.AddSingleton<YumeCoreSingleton>();
+
+			AppServiceProvider = services.BuildServiceProvider();
+
+			BotService = AppServiceProvider.GetService<YumeCoreSingleton>();
 		}
 
 		// This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-		public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
+		public static void Configure(IApplicationBuilder app, IWebHostEnvironment env)
 		{
 			if (env.IsDevelopment())
 			{

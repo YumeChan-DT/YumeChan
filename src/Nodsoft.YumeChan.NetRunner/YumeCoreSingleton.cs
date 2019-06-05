@@ -8,6 +8,6 @@ namespace Nodsoft.YumeChan.NetRunner
 		private static readonly Lazy<YumeCoreSingleton> lazy = new Lazy<YumeCoreSingleton>(() => new YumeCoreSingleton());
 		public static YumeCoreSingleton Instance { get => lazy.Value; }
 
-		public YumeCoreSingleton() : base(new Logger()) { }
+		public YumeCoreSingleton() : base(new Logger()) { /* Calls the base class with local Logger */ }
 	}
 }

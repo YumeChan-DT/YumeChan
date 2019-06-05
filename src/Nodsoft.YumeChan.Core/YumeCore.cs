@@ -9,11 +9,14 @@ using System.Threading.Tasks;
 
 using Nodsoft.YumeChan.Modules;
 
+
 namespace Nodsoft.YumeChan.Core
 {
 	public class YumeCore
 	{
 		//Properties
+
+		public bool IsBotOnline { get; private set; } = false;
 
 		public DiscordSocketClient Client { get; set; }
 		public CommandService Commands { get; set; }
@@ -60,6 +63,8 @@ namespace Nodsoft.YumeChan.Core
 			await RegisterCommandsAsync().ConfigureAwait(false);
 			await Client.LoginAsync(TokenType.Bot, BotToken);
 			await Client.StartAsync();
+
+			IsBotOnline = true;
 		}
 
 		public async Task RegisterCommandsAsync()
@@ -71,8 +76,6 @@ namespace Nodsoft.YumeChan.Core
 			await Commands.AddModulesAsync(Assembly.GetEntryAssembly(), Services);		//Add possible Commands from Entry Assembly (contextual)
 			await Commands.AddModulesAsync(typeof(YumeCore).Assembly, Services);		//Add Local Commands (if any)
 			await Commands.AddModulesAsync(typeof(ModulesIndex).Assembly, Services);	//Add Commands from Nodsoft.YumeChan.Modules
-
-
 		}
 
 		private async Task HandleCommandAsync(SocketMessage arg)
