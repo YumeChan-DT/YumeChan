@@ -9,11 +9,14 @@ using System.Threading.Tasks;
 
 using Nodsoft.YumeChan.Modules;
 
+
 namespace Nodsoft.YumeChan.Core
 {
 	public class YumeCore
 	{
 		//Properties
+
+		public bool IsBotOnline { get; private set; }
 
 		public DiscordSocketClient Client { get; set; }
 		public CommandService Commands { get; set; }
@@ -60,6 +63,8 @@ namespace Nodsoft.YumeChan.Core
 			await RegisterCommandsAsync().ConfigureAwait(false);
 			await Client.LoginAsync(TokenType.Bot, BotToken);
 			await Client.StartAsync();
+
+			IsBotOnline = true;
 		}
 
 		public async Task RegisterCommandsAsync()
@@ -71,26 +76,25 @@ namespace Nodsoft.YumeChan.Core
 			await Commands.AddModulesAsync(Assembly.GetEntryAssembly(), Services);		//Add possible Commands from Entry Assembly (contextual)
 			await Commands.AddModulesAsync(typeof(YumeCore).Assembly, Services);		//Add Local Commands (if any)
 			await Commands.AddModulesAsync(typeof(ModulesIndex).Assembly, Services);	//Add Commands from Nodsoft.YumeChan.Modules
-
-
 		}
 
 		private async Task HandleCommandAsync(SocketMessage arg)
 		{
 			SocketUserMessage message = arg as SocketUserMessage;
 
-			if (message == null || message.Author.IsBot) { return; }
-
-			int argPosition = 0;
-
-			if (message.HasStringPrefix("==", ref argPosition) || message.HasMentionPrefix(Client.CurrentUser, ref argPosition))
+			if (message != null && !message.Author.IsBot)
 			{
-				SocketCommandContext context = new SocketCommandContext(Client, message);
-				IResult result = await Commands.ExecuteAsync(context, argPosition, Services);
+				int argPosition = 0;
 
-				if (!result.IsSuccess)
+				if (message.HasStringPrefix("==", ref argPosition) || message.HasMentionPrefix(Client.CurrentUser, ref argPosition))
 				{
-					await Logger.Log(new LogMessage(LogSeverity.Error, new StackTrace().GetFrame(1).GetMethod().Name, result.ErrorReason));
+					SocketCommandContext context = new SocketCommandContext(Client, message);
+					IResult result = await Commands.ExecuteAsync(context, argPosition, Services);
+
+					if (!result.IsSuccess)
+					{
+						await Logger.Log(new LogMessage(LogSeverity.Error, new StackTrace().GetFrame(1).GetMethod().Name, result.ErrorReason));
+					}
 				}
 			}
 		}

@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>netcoreapp3.0</TargetFramework>
+    <LangVersion>8.0</LangVersion>
+    <Version>0.1.0</Version>
+    <Authors>DJ Daemonix</Authors>
+    <Company>Nodsoft ES</Company>
+    <Product>YumeChan</Product>
+    <Copyright>GNU GPL v3</Copyright>
+    <NeutralLanguage>Anglais</NeutralLanguage>
+    <StartupObject>Nodsoft.YumeChan.NetRunner.Program</StartupObject>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Nodsoft.YumeChan.Core\Nodsoft.YumeChan.Core.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Data\" />
+  </ItemGroup>
+
+</Project>
