@@ -16,7 +16,7 @@ namespace Nodsoft.YumeChan.Core
 	{
 		//Properties
 
-		public bool IsBotOnline { get; private set; } = false;
+		public bool IsBotOnline { get; private set; }
 
 		public DiscordSocketClient Client { get; set; }
 		public CommandService Commands { get; set; }
@@ -82,18 +82,19 @@ namespace Nodsoft.YumeChan.Core
 		{
 			SocketUserMessage message = arg as SocketUserMessage;
 
-			if (message == null || message.Author.IsBot) { return; }
-
-			int argPosition = 0;
-
-			if (message.HasStringPrefix("==", ref argPosition) || message.HasMentionPrefix(Client.CurrentUser, ref argPosition))
+			if (message != null && !message.Author.IsBot)
 			{
-				SocketCommandContext context = new SocketCommandContext(Client, message);
-				IResult result = await Commands.ExecuteAsync(context, argPosition, Services);
+				int argPosition = 0;
 
-				if (!result.IsSuccess)
+				if (message.HasStringPrefix("==", ref argPosition) || message.HasMentionPrefix(Client.CurrentUser, ref argPosition))
 				{
-					await Logger.Log(new LogMessage(LogSeverity.Error, new StackTrace().GetFrame(1).GetMethod().Name, result.ErrorReason));
+					SocketCommandContext context = new SocketCommandContext(Client, message);
+					IResult result = await Commands.ExecuteAsync(context, argPosition, Services);
+
+					if (!result.IsSuccess)
+					{
+						await Logger.Log(new LogMessage(LogSeverity.Error, new StackTrace().GetFrame(1).GetMethod().Name, result.ErrorReason));
+					}
 				}
 			}
 		}
