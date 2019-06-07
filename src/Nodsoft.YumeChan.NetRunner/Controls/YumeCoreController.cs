@@ -1,5 +1,6 @@
 ﻿using System.Threading.Tasks;
 
+using Nodsoft.YumeChan.Core;
 using static Nodsoft.YumeChan.NetRunner.Services;
 
 
@@ -9,7 +10,7 @@ namespace Nodsoft.YumeChan.NetRunner.Controls
     {
 		public static async Task StartBotButton()
 		{
-			if (!BotService.IsBotOnline)
+			if (BotService.CoreState == YumeCoreState.Offline)
 			{
 				await BotService.StartBotAsync();
 			}

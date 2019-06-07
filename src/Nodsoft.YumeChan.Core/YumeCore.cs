@@ -12,11 +12,16 @@ using Nodsoft.YumeChan.Modules;
 
 namespace Nodsoft.YumeChan.Core
 {
+	public enum YumeCoreState
+	{
+		Offline = 0, Online = 1, Starting = 2, Stopping = 3, Reloading = 4
+	}
+
 	public class YumeCore
 	{
 		//Properties
 
-		public bool IsBotOnline { get; private set; }
+		public YumeCoreState CoreState { get; protected set; }
 
 		public DiscordSocketClient Client { get; set; }
 		public CommandService Commands { get; set; }
@@ -47,6 +52,7 @@ namespace Nodsoft.YumeChan.Core
 
 		public async Task StartBotAsync()
 		{
+			CoreState = YumeCoreState.Starting;
 			Client = new DiscordSocketClient();
 			Commands = new CommandService();
 
@@ -64,7 +70,7 @@ namespace Nodsoft.YumeChan.Core
 			await Client.LoginAsync(TokenType.Bot, BotToken);
 			await Client.StartAsync();
 
-			IsBotOnline = true;
+			CoreState = YumeCoreState.Online;
 		}
 
 		public async Task RegisterCommandsAsync()
