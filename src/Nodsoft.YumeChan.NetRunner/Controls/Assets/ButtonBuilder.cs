@@ -17,8 +17,11 @@ namespace Nodsoft.YumeChan.NetRunner.Controls.Assets
 
 		// Fluent Access Methods
 		public void SetColor(ButtonColor color) => Color = color;
+
 		public void SetSize(ButtonSize size) => Size = size;
-		public void SetOutline(bool outline = true) => IsOutline = outline;
+
+		public void SetOutline() => IsOutline = true;
+		public void SetOutline(bool outline) => IsOutline = outline;
 
 		// Functional Methods
 		public string BuildClass()
@@ -44,7 +47,10 @@ namespace Nodsoft.YumeChan.NetRunner.Controls.Assets
 
 			StringBuilder builder = new StringBuilder("btn btn-");
 
-			if (IsOutline) { builder.Append("outline-"); }
+			if (IsOutline)
+			{
+				builder.Append("outline-");
+			}
 
 			builder.Append(color);
 			builder.Append(size ?? size);

@@ -4,7 +4,7 @@ namespace Nodsoft.YumeChan.NetRunner.Controls.Assets
 {
 	public static class Buttons
 	{
-		public const string
+		public static readonly string
 			primary = "btn btn-primary",
 			secondary = "btn btn-secondary",
 			success = "btn btn-success",

@@ -4,7 +4,7 @@ namespace Nodsoft.YumeChan.NetRunner.Controls.Assets
 {
 	public static class Alerts
 	{
-		public const string
+		public static readonly string
 			primary = "alert alert-primary",
 			secondary = "alert alert-secondary",
 			success = "alert alert-success",

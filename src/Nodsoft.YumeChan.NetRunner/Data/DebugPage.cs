@@ -5,11 +5,9 @@ namespace Nodsoft.YumeChan.NetRunner.Data
 	public static class DebugPage
 	{
 		public static string DebugEnvVar { get; } = "WhereIsThatCake";
-		public static string DebugEnvValue { get => ReadDebug(); }
-
-		public static string ReadDebug()
+		public static string DebugEnvValue
 		{
-			return Environment.GetEnvironmentVariable(DebugEnvVar);
+			get => Environment.GetEnvironmentVariable(DebugEnvVar);
 		}
 	}
 }
