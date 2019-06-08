@@ -1,10 +1,17 @@
 ﻿@page "/BotControls"
-@using Nodsoft.YumeChan.NetRunner.Controls;
+@using static Nodsoft.YumeChan.NetRunner.Controls.YumeCoreController;
 
 <h1>Bot Controls</h1>
 <br />
 <br />
 
 
-<button class="btn btn-success" onclick="@YumeCoreController.StartBotButton">Start Bot Service</button>
+<div class=@botStatusAlert[0] role="alert">@botStatusAlert[1]</div>
+
+<button class="btn btn-success" onclick="@StartBotButton">Start Bot Service</button>
+
+@functions 
+{
+    private string[] botStatusAlert = DisplayStatusAlert().Result;
+}
 
