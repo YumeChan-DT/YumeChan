@@ -9,7 +9,6 @@ using System.Threading.Tasks;
 
 using Nodsoft.YumeChan.Modules;
 
-
 namespace Nodsoft.YumeChan.Core
 {
 	public enum YumeCoreState
@@ -42,6 +41,13 @@ namespace Nodsoft.YumeChan.Core
 		public YumeCore(ILogger logger) => Logger = logger;
 
 
+		//Destructor
+		~YumeCore()
+		{
+			StopBotAsync().Wait();
+		}
+
+
 		//Methods
 
 		public void RunBot()
@@ -53,6 +59,7 @@ namespace Nodsoft.YumeChan.Core
 		public async Task StartBotAsync()
 		{
 			CoreState = YumeCoreState.Starting;
+
 			Client = new DiscordSocketClient();
 			Commands = new CommandService();
 
@@ -73,6 +80,22 @@ namespace Nodsoft.YumeChan.Core
 			CoreState = YumeCoreState.Online;
 		}
 
+		public async Task StopBotAsync()
+		{
+			CoreState = YumeCoreState.Stopping;
+
+			Services = null;
+			Commands = null;
+
+			await Client.LogoutAsync();
+			await Client.StopAsync();
+
+			Client.Dispose();
+			Client = null;
+
+			CoreState = YumeCoreState.Offline;
+		}
+
 		public async Task RegisterCommandsAsync()
 		{
 			Client.MessageReceived += HandleCommandAsync;
@@ -82,6 +105,27 @@ namespace Nodsoft.YumeChan.Core
 			await Commands.AddModulesAsync(Assembly.GetEntryAssembly(), Services);		//Add possible Commands from Entry Assembly (contextual)
 			await Commands.AddModulesAsync(typeof(YumeCore).Assembly, Services);		//Add Local Commands (if any)
 			await Commands.AddModulesAsync(typeof(ModulesIndex).Assembly, Services);	//Add Commands from Nodsoft.YumeChan.Modules
+		}
+
+		public async Task ReleaseCommandsAsync()
+		{
+			Client.MessageReceived -= HandleCommandAsync;
+
+			foreach (ModuleInfo module in Commands.Modules)
+			{
+				await Commands.RemoveModuleAsync(module);
+			}
+		}
+
+		public async Task ReloadCommandsAsync()
+		{
+			CoreState = YumeCoreState.Reloading;
+
+			ReleaseCommandsAsync().Wait();
+
+			await RegisterCommandsAsync();
+
+			CoreState = YumeCoreState.Online;
 		}
 
 		private async Task HandleCommandAsync(SocketMessage arg)
