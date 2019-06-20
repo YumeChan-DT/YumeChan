@@ -98,8 +98,11 @@ namespace Nodsoft.YumeChan.Core
 
 		public async Task RestartBotAsync()
 		{
-			await StopBotAsync();
-			await StartBotAsync();
+			// Stop Bot
+			await StopBotAsync().ConfigureAwait(true);
+
+			// Start Bot
+			await StartBotAsync().ConfigureAwait(false);
 		}
 
 		public async Task RegisterCommandsAsync()
@@ -125,9 +128,9 @@ namespace Nodsoft.YumeChan.Core
 		{
 			CoreState = YumeCoreState.Reloading;
 
-			await ReleaseCommands();
+			await ReleaseCommands().ConfigureAwait(true);
 
-			await RegisterCommandsAsync();
+			await RegisterCommandsAsync().ConfigureAwait(false);
 
 			CoreState = YumeCoreState.Online;
 		}
