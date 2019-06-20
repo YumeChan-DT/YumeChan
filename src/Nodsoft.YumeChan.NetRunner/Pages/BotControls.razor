@@ -1,16 +1,28 @@
-﻿@page "/BotControls"
+﻿@{
+#pragma warning disable TS1219
+}
+@page "/BotControls"
 @using static Nodsoft.YumeChan.NetRunner.Controls.YumeCoreController;
 
 <h1>Bot Controls</h1>
 <br />
 <br />
 
-
 <div class=@botStatusAlert[0] role="alert">@botStatusAlert[1]</div>
 
-<button class="btn btn-success" onclick="@StartBotButton">Start Bot Service</button>
+<h3>Core :</h3>
+<br />
+<button class="btn btn-success" onclick="@StartBotButton">Start Bot Service</button> 
+<button class="btn btn-danger" onclick="@StopBotButton">Stop Bot Service</button> 
+<button class="btn btn-warning" onclick="@RestartBotButton">Restart Bot Service</button> 
 
-@functions 
+<br />
+<br />
+
+<h3>Modules :</h3>
+<br />
+<button class="btn btn-info" onclick="@ReloadModulesButton">Reload Modules</button>
+@functions
 {
     private string[] botStatusAlert = DisplayStatusAlert().Result;
 }

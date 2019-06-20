@@ -1,4 +1,5 @@
-﻿using System.Threading.Tasks;
+﻿using System;
+using System.Threading.Tasks;
 
 using Nodsoft.YumeChan.Core;
 using Nodsoft.YumeChan.NetRunner.Controls.Assets;
@@ -9,22 +10,22 @@ namespace Nodsoft.YumeChan.NetRunner.Controls
 {
     public static class YumeCoreController
     {
-		public static async Task<string[]> DisplayStatusAlert()
+		public static Task<string[]> DisplayStatusAlert()
 		{
 			switch (BotService.CoreState)
 			{
 				case YumeCoreState.Offline:
-					return new string[] { Alerts.danger , "Bot is offline." };
+					return Task.FromResult(new string[] { Alerts.danger, "Bot is offline." });
 				case YumeCoreState.Online:
-					return new string[] { Alerts.success, "Bot is online." };
+					return Task.FromResult(new string[] { Alerts.success, "Bot is online." });
 				case YumeCoreState.Starting:
-					return new string[] { Alerts.info, "Bot is starting..." };
+					return Task.FromResult(new string[] { Alerts.info, "Bot is starting..." });
 				case YumeCoreState.Stopping:
-					return new string[] { Alerts.warning, "Bot is Stopping..." };
+					return Task.FromResult(new string[] { Alerts.warning, "Bot is Stopping..." });
 				case YumeCoreState.Reloading:
-					return new string[] { Alerts.warning, "Bot is Reloading..." };
+					return Task.FromResult(new string[] { Alerts.warning, "Bot is Reloading..." });
 				default:
-					return new string[] { Alerts.danger, "Bot Status is Unknown." };
+					return Task.FromResult(new string[] { Alerts.danger, "Bot Status is Unknown." });
 			}
 		}
 
@@ -33,6 +34,30 @@ namespace Nodsoft.YumeChan.NetRunner.Controls
 			if (BotService.CoreState == YumeCoreState.Offline)
 			{
 				await BotService.StartBotAsync();
+			}
+		}
+
+		public static async Task StopBotButton()
+		{
+			if (BotService.CoreState != YumeCoreState.Offline)
+			{
+				await BotService.StopBotAsync();
+			}
+		}
+
+		public static async Task RestartBotButton()
+		{
+			if (BotService.CoreState == YumeCoreState.Online)
+			{
+				await BotService.RestartBotAsync();
+			}
+		}
+
+		public static async Task ReloadModulesButton()
+		{
+			if (BotService.CoreState == YumeCoreState.Online)
+			{
+				await BotService.ReloadCommandsAsync();
 			}
 		}
     }
