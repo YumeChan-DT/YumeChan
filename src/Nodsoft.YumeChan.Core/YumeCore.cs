@@ -96,6 +96,12 @@ namespace Nodsoft.YumeChan.Core
 			CoreState = YumeCoreState.Offline;
 		}
 
+		public async Task RestartBotAsync()
+		{
+			await StopBotAsync();
+			await StartBotAsync();
+		}
+
 		public async Task RegisterCommandsAsync()
 		{
 			Client.MessageReceived += HandleCommandAsync;
@@ -107,21 +113,19 @@ namespace Nodsoft.YumeChan.Core
 			await Commands.AddModulesAsync(typeof(ModulesIndex).Assembly, Services);	//Add Commands from Nodsoft.YumeChan.Modules
 		}
 
-		public async Task ReleaseCommandsAsync()
+		public Task ReleaseCommands()
 		{
-			Client.MessageReceived -= HandleCommandAsync;
+			Commands = new CommandService();
+			Commands.Log += Logger.Log;
 
-			foreach (ModuleInfo module in Commands.Modules)
-			{
-				await Commands.RemoveModuleAsync(module);
-			}
+			return Task.CompletedTask;
 		}
 
 		public async Task ReloadCommandsAsync()
 		{
 			CoreState = YumeCoreState.Reloading;
 
-			ReleaseCommandsAsync().Wait();
+			await ReleaseCommands();
 
 			await RegisterCommandsAsync();
 
