@@ -3,6 +3,8 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 
+using Nodsoft.YumeChan.Core;
+using System.Threading.Tasks;
 using static Nodsoft.YumeChan.NetRunner.Services;
 
 
@@ -16,11 +18,10 @@ namespace Nodsoft.YumeChan.NetRunner
 		{
 			services.AddRazorPages();
 			services.AddServerSideBlazor();
-			services.AddSingleton<YumeCoreSingleton>();
+			services.AddSingleton(BotService);
+			services.AddSingleton(LoggerService);
 
 			AppServiceProvider = services.BuildServiceProvider();
-
-			BotService = AppServiceProvider.GetService<YumeCoreSingleton>();
 		}
 
 		// This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -45,6 +46,8 @@ namespace Nodsoft.YumeChan.NetRunner
 				endpoints.MapBlazorHub();
 				endpoints.MapFallbackToPage("/_Host");
 			});
+
+			BotService.StartBotAsync().GetAwaiter().GetResult();
 		}
 	}
 }

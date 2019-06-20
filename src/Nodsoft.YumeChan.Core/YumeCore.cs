@@ -9,14 +9,18 @@ using System.Threading.Tasks;
 
 using Nodsoft.YumeChan.Modules;
 
-
 namespace Nodsoft.YumeChan.Core
 {
+	public enum YumeCoreState
+	{
+		Offline = 0, Online = 1, Starting = 2, Stopping = 3, Reloading = 4
+	}
+
 	public class YumeCore
 	{
 		//Properties
 
-		public bool IsBotOnline { get; private set; }
+		public YumeCoreState CoreState { get; protected set; }
 
 		public DiscordSocketClient Client { get; set; }
 		public CommandService Commands { get; set; }
@@ -37,6 +41,13 @@ namespace Nodsoft.YumeChan.Core
 		public YumeCore(ILogger logger) => Logger = logger;
 
 
+		//Destructor
+		~YumeCore()
+		{
+			StopBotAsync().Wait();
+		}
+
+
 		//Methods
 
 		public void RunBot()
@@ -47,6 +58,8 @@ namespace Nodsoft.YumeChan.Core
 
 		public async Task StartBotAsync()
 		{
+			CoreState = YumeCoreState.Starting;
+
 			Client = new DiscordSocketClient();
 			Commands = new CommandService();
 
@@ -64,7 +77,32 @@ namespace Nodsoft.YumeChan.Core
 			await Client.LoginAsync(TokenType.Bot, BotToken);
 			await Client.StartAsync();
 
-			IsBotOnline = true;
+			CoreState = YumeCoreState.Online;
+		}
+
+		public async Task StopBotAsync()
+		{
+			CoreState = YumeCoreState.Stopping;
+
+			Services = null;
+			Commands = null;
+
+			await Client.LogoutAsync();
+			await Client.StopAsync();
+
+			Client.Dispose();
+			Client = null;
+
+			CoreState = YumeCoreState.Offline;
+		}
+
+		public async Task RestartBotAsync()
+		{
+			// Stop Bot
+			await StopBotAsync().ConfigureAwait(true);
+
+			// Start Bot
+			await StartBotAsync().ConfigureAwait(false);
 		}
 
 		public async Task RegisterCommandsAsync()
@@ -76,6 +114,25 @@ namespace Nodsoft.YumeChan.Core
 			await Commands.AddModulesAsync(Assembly.GetEntryAssembly(), Services);		//Add possible Commands from Entry Assembly (contextual)
 			await Commands.AddModulesAsync(typeof(YumeCore).Assembly, Services);		//Add Local Commands (if any)
 			await Commands.AddModulesAsync(typeof(ModulesIndex).Assembly, Services);	//Add Commands from Nodsoft.YumeChan.Modules
+		}
+
+		public Task ReleaseCommands()
+		{
+			Commands = new CommandService();
+			Commands.Log += Logger.Log;
+
+			return Task.CompletedTask;
+		}
+
+		public async Task ReloadCommandsAsync()
+		{
+			CoreState = YumeCoreState.Reloading;
+
+			await ReleaseCommands().ConfigureAwait(true);
+
+			await RegisterCommandsAsync().ConfigureAwait(false);
+
+			CoreState = YumeCoreState.Online;
 		}
 
 		private async Task HandleCommandAsync(SocketMessage arg)

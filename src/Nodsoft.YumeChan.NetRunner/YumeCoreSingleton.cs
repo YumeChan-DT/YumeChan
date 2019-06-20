@@ -9,5 +9,6 @@ namespace Nodsoft.YumeChan.NetRunner
 		public static YumeCoreSingleton Instance { get => lazy.Value; }
 
 		public YumeCoreSingleton() : base(new Logger()) { /* Calls the base class with local Logger */ }
+		public YumeCoreSingleton(ILogger logger) : base(logger) { /* Calls the base class with specified logger */ }
 	}
 }
