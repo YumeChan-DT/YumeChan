@@ -41,17 +41,19 @@ namespace Nodsoft.YumeChan.Modules.Network
 		public static bool TryResolveHostname(string hostname, out IPAddress resolved, out Exception exception)
 		{
 			IPAddress[] a;
-			try { a = Dns.GetHostAddresses(hostname); }
+			try
+			{
+				a = Dns.GetHostAddresses(hostname);
+				resolved = a.FirstOrDefault();
+				exception = null;
+				return true;
+			}
 			catch (Exception e)
 			{
 				resolved = null;
 				exception = e;
 				return false;
 			}
-
-			resolved = a.FirstOrDefault();
-			exception = null;
-			return true;
 		}
 	}
 }
