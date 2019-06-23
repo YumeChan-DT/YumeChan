@@ -22,10 +22,6 @@ namespace Nodsoft.YumeChan.Modules.Network
 		[Command("")]
 		public async Task NetworkPingCommand(string host)
 		{
-#if RELEASE
-			throw new NotImplementedException();
-#endif
-
 			string contextUser = Context.User.Mention;
 			
 			// 1A. Find out if supplied Hostname or IP
