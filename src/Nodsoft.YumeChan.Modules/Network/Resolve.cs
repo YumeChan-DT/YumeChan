@@ -12,7 +12,6 @@ namespace Nodsoft.YumeChan.Modules.Network
 		[Command]
 		public async Task ResolveCommand(string host)
 		{
-			string hostResolved;
 			string contextUser = Context.User.Mention;
 
 			if (host.IsIPAddress())
@@ -21,16 +20,9 @@ namespace Nodsoft.YumeChan.Modules.Network
 			}
 			else
 			{
-				try
-				{
-					hostResolved = ResolveHostnameAsync(host).Result.ToString();
-
-					await ReplyAsync($"{contextUser}, Hostname ``{host}`` resolves to IP Address ``{hostResolved}``.");
-				}
-				catch (Exception e)
-				{
-					await ReplyAsync($"{contextUser}, Hostname ``{host}`` could not be resolved.\nException Thrown : {e.Message}");
-				}
+					await ReplyAsync(TryResolveHostname(host, out string hostResolved, out Exception e) 
+						? $"{contextUser}, Hostname ``{host}`` resolves to IP Address ``{hostResolved}``."
+						: $"{contextUser}, Hostname ``{host}`` could not be resolved.\nException Thrown : {e.Message}");
 			}
 		}
 
@@ -38,6 +30,28 @@ namespace Nodsoft.YumeChan.Modules.Network
 		{
 			IPAddress[] a = await Dns.GetHostAddressesAsync(hostname).ConfigureAwait(false);
 			return a.FirstOrDefault();
+		}
+
+		public static bool TryResolveHostname(string hostname, out string resolved, out Exception exception)
+		{
+			bool tryResult = TryResolveHostname(hostname, out IPAddress resolvedIp, out exception);
+			resolved = resolvedIp.ToString();
+			return tryResult;
+		}
+		public static bool TryResolveHostname(string hostname, out IPAddress resolved, out Exception exception)
+		{
+			IPAddress[] a;
+			try { a = Dns.GetHostAddresses(hostname); }
+			catch (Exception e)
+			{
+				resolved = null;
+				exception = e;
+				return false;
+			}
+
+			resolved = a.FirstOrDefault();
+			exception = null;
+			return true;
 		}
 	}
 }
