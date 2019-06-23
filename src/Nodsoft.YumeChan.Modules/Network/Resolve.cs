@@ -15,7 +15,7 @@ namespace Nodsoft.YumeChan.Modules.Network
 			string hostResolved;
 			string contextUser = Context.User.Mention;
 
-			if (IsIPAddress(host))
+			if (host.IsIPAddress())
 			{
 				await ReplyAsync($"{contextUser}, Isn't ``{host}`` already an IP address ?");
 			}
@@ -23,8 +23,7 @@ namespace Nodsoft.YumeChan.Modules.Network
 			{
 				try
 				{
-					IPAddress[] a = await Dns.GetHostAddressesAsync(host).ConfigureAwait(false);
-					hostResolved = a.FirstOrDefault().ToString();
+					hostResolved = ResolveHostnameAsync(host).Result.ToString();
 
 					await ReplyAsync($"{contextUser}, Hostname ``{host}`` resolves to IP Address ``{hostResolved}``.");
 				}
@@ -35,17 +34,10 @@ namespace Nodsoft.YumeChan.Modules.Network
 			}
 		}
 
-		internal static bool IsIPAddress(string address)
+		public static async Task<IPAddress> ResolveHostnameAsync(string hostname)
 		{
-			try
-			{
-				IPAddress.Parse(address);
-				return true;
-			}
-			catch (Exception)
-			{
-				return false;
-			}
+			IPAddress[] a = await Dns.GetHostAddressesAsync(hostname).ConfigureAwait(false);
+			return a.FirstOrDefault();
 		}
 	}
 }
