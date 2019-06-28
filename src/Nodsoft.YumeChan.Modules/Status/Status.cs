@@ -16,6 +16,9 @@ namespace Nodsoft.YumeChan.Modules.Status
 				.WithDescription("Status : Online")
 				.AddField("Core", $"Version : {(CoreVersion != null ? CoreVersion.ToString() : MissingVersionSubstitute)}", true)
 				.AddField("Modules", $"Version : {ModulesVersion}", true);
+#if DEBUG
+				embed.AddField("Debug", "Debug Build Active.");			
+#endif
 
 			await ReplyAsync(embed: embed.Build());
 		}
