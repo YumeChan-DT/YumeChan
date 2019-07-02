@@ -32,7 +32,7 @@ namespace Nodsoft.YumeChan.Core
 		public IServiceProvider Services { get; set; }
 
 		internal ModulesLoader ExternalModulesLoader { get; set; }
-		public List<IPlugin> Modules { get; set; }
+		public List<IPlugin> Plugins { get; set; }
 
 		/**
 		 * Remember to keep token private or to read it from an 
@@ -129,18 +129,18 @@ namespace Nodsoft.YumeChan.Core
 
 			Client.MessageReceived += HandleCommandAsync;
 
-			Modules = new List<IPlugin> { new Modules.InternalModule() };               // Add YumeCore internal commands
+			Plugins = new List<IPlugin> { new Modules.InternalModule() };               // Add YumeCore internal commands
 
 			await ExternalModulesLoader.LoadModuleAssemblies();
-			Modules.AddRange(await ExternalModulesLoader.LoadModuleManifests());
+			Plugins.AddRange(await ExternalModulesLoader.LoadModuleManifests());
 
-			List<IPlugin> modulesCopy = new List<IPlugin>(Modules);
+			List<IPlugin> modulesCopy = new List<IPlugin>(Plugins);
 
 			foreach (IPlugin module in modulesCopy)
 			{
 				if (module is null)
 				{
-					Modules.Remove(module);
+					Plugins.Remove(module);
 				}
 				else
 				{ 
