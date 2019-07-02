@@ -8,6 +8,6 @@ namespace Nodsoft.YumeChan.NetRunner
 	{
 		internal static IServiceProvider AppServiceProvider { get; set; }
 		internal static Logger LoggerService { get; set; } = new Logger();
-		internal static YumeCoreSingleton BotService { get; set; } = new YumeCoreSingleton(LoggerService);
+		internal static YumeCore BotService { get; set; } = YumeCore.Instance;
 	}
 }
