@@ -18,7 +18,7 @@
 	</PropertyGroup>
 
 	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
-		<OutputPath>$(SolutionDir)\build\Modules</OutputPath>
+		<OutDir>$(SolutionDir)build\Modules</OutDir>
 	</PropertyGroup>
 	
 	<ItemGroup>
@@ -29,9 +29,9 @@
 			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
 		</PackageReference>
 	</ItemGroup>
-
+	
 	<ItemGroup>
-	  <ProjectReference Include="..\Nodsoft.YumeChan.Core\Nodsoft.YumeChan.Core.csproj" />
+	  <ProjectReference Include="..\Nodsoft.YumeChan.PluginBase\Nodsoft.YumeChan.PluginBase.csproj" />
 	</ItemGroup>
 
 </Project>

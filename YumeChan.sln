@@ -6,10 +6,15 @@ MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Nodsoft.YumeChan.ConsoleRunner", "src\Nodsoft.YumeChan.ConsoleRunner\Nodsoft.YumeChan.ConsoleRunner.csproj", "{B4E6E6B5-B495-4668-BB0D-1107B457C420}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Nodsoft.YumeChan.Core", "src\Nodsoft.YumeChan.Core\Nodsoft.YumeChan.Core.csproj", "{58155AE6-D0DF-45E3-9B38-64ED0ACA8AC0}"
+	ProjectSection(ProjectDependencies) = postProject
+		{FD4B7EFA-7B34-4544-AD4A-EA67F006A1E8} = {FD4B7EFA-7B34-4544-AD4A-EA67F006A1E8}
+	EndProjectSection
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Nodsoft.YumeChan.Modules", "src\Nodsoft.YumeChan.Modules\Nodsoft.YumeChan.Modules.csproj", "{FD4B7EFA-7B34-4544-AD4A-EA67F006A1E8}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Nodsoft.YumeChan.NetRunner", "src\Nodsoft.YumeChan.NetRunner\Nodsoft.YumeChan.NetRunner.csproj", "{AD328D2F-1AD0-414A-96A0-456820765C37}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Nodsoft.YumeChan.PluginBase", "src\Nodsoft.YumeChan.PluginBase\Nodsoft.YumeChan.PluginBase.csproj", "{BA3AB42C-6875-4F32-9476-89EB8432716C}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -51,6 +56,14 @@ Global
 		{AD328D2F-1AD0-414A-96A0-456820765C37}.Release|Any CPU.Build.0 = Release|Any CPU
 		{AD328D2F-1AD0-414A-96A0-456820765C37}.Release|x64.ActiveCfg = Release|Any CPU
 		{AD328D2F-1AD0-414A-96A0-456820765C37}.Release|x64.Build.0 = Release|Any CPU
+		{BA3AB42C-6875-4F32-9476-89EB8432716C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BA3AB42C-6875-4F32-9476-89EB8432716C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BA3AB42C-6875-4F32-9476-89EB8432716C}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{BA3AB42C-6875-4F32-9476-89EB8432716C}.Debug|x64.Build.0 = Debug|Any CPU
+		{BA3AB42C-6875-4F32-9476-89EB8432716C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BA3AB42C-6875-4F32-9476-89EB8432716C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{BA3AB42C-6875-4F32-9476-89EB8432716C}.Release|x64.ActiveCfg = Release|Any CPU
+		{BA3AB42C-6875-4F32-9476-89EB8432716C}.Release|x64.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -1,48 +1,55 @@
-﻿using System;
+﻿using Nodsoft.YumeChan.PluginBase;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
 using System.Threading.Tasks;
+using System.Linq;
 
 namespace Nodsoft.YumeChan.Core
 {
 	internal class ModulesLoader
 	{
-		internal List<Assembly> ModuleAssemblies { get; set; }
-		internal List<FileInfo> ModuleFiles { get; set; }
+		internal List<Assembly> PluginAssemblies { get; set; }
+		internal List<FileInfo> PluginFiles { get; set; }
+		internal List<IPlugin> PluginManifests { get; set; }
 
-		internal DirectoryInfo ModulesLoadDirectory { get; set; }
-		internal string ModulesLoadDiscriminator { get; set; } = string.Empty;
+		internal DirectoryInfo PluginsLoadDirectory { get; set; }
+		internal string PluginsLoadDiscriminator { get; set; } = string.Empty;
 
-		public ModulesLoader(string modulesLoadDirectoryPath)
+		public ModulesLoader(string pluginsLoadDirectoryPath)
 		{
-			ModulesLoadDirectory = string.IsNullOrEmpty(modulesLoadDirectoryPath)
-				? SetDefaultModulesDirectoryEnvironmentVariable()
-				: Directory.Exists(modulesLoadDirectoryPath)
-					? new DirectoryInfo(modulesLoadDirectoryPath)
-					: Directory.CreateDirectory(modulesLoadDirectoryPath);
+			PluginsLoadDirectory = string.IsNullOrEmpty(pluginsLoadDirectoryPath)
+				? SetDefaultPluginsDirectoryEnvironmentVariable()
+				: Directory.Exists(pluginsLoadDirectoryPath)
+					? new DirectoryInfo(pluginsLoadDirectoryPath)
+					: Directory.CreateDirectory(pluginsLoadDirectoryPath);
 		}
 
-		internal DirectoryInfo SetDefaultModulesDirectoryEnvironmentVariable()
+		internal DirectoryInfo SetDefaultPluginsDirectoryEnvironmentVariable()
 		{
-			ModulesLoadDirectory = Directory.CreateDirectory(Directory.GetCurrentDirectory() + Path.DirectorySeparatorChar + "Modules" + Path.DirectorySeparatorChar);
+			FileInfo file = new FileInfo(Assembly.GetExecutingAssembly().Location);
+			PluginsLoadDirectory = Directory.CreateDirectory(file.DirectoryName + Path.DirectorySeparatorChar + "Modules" + Path.DirectorySeparatorChar);
 
-			Environment.SetEnvironmentVariable("YumeChan.ModulesLocation", ModulesLoadDirectory.FullName);
-			return ModulesLoadDirectory;
+			Environment.SetEnvironmentVariable("YumeChan.PluginsLocation", PluginsLoadDirectory.FullName);
+			return PluginsLoadDirectory;
 		}
 
 		public Task LoadModuleAssemblies()
 		{
-			ModuleFiles = new List<FileInfo>(ModulesLoadDirectory.GetFiles($"*{ModulesLoadDiscriminator}*.dll"));
+			PluginFiles = new List<FileInfo>(PluginsLoadDirectory.GetFiles($"*{PluginsLoadDiscriminator}*.dll"));
 
-			if (ModuleAssemblies is null)
+			if (PluginAssemblies is null)
 			{
-				ModuleAssemblies = new List<Assembly>();
+				PluginAssemblies = new List<Assembly>();
 			}
 
-			foreach (FileInfo file in ModuleFiles)
+			foreach (FileInfo file in PluginFiles)
 			{
-				ModuleAssemblies.Add(Assembly.LoadFile(file.ToString()));
+				if (file !is null || file.Name != "Nodsoft.YumeChan.PluginBase.dll")
+				{
+					PluginAssemblies.Add(Assembly.LoadFile(file.ToString()));
+				}
 			}
 
 			return Task.CompletedTask;
@@ -51,15 +58,34 @@ namespace Nodsoft.YumeChan.Core
 		public Task<List<IPlugin>> LoadModuleManifests()
 		{
 			List<IPlugin> manifestsList = new List<IPlugin>();
-
-			foreach (Assembly assembly in ModuleAssemblies)
+			List<Type> pluginTypes = new List<Type>();
+			foreach (Assembly assembly in PluginAssemblies)
 			{
-				foreach (Type type in assembly.ExportedTypes)
-				{
-					manifestsList.Add(type as IPlugin);
-				}
+				pluginTypes.AddRange
+				(
+					from Type t in assembly.ExportedTypes
+					where t.ImplementsInterface(typeof(IPlugin))
+					select t
+				);
 			}
+			foreach (Type pluginType in pluginTypes)
+			{
+				manifestsList.Add(InstantiateManifest(pluginType).GetAwaiter().GetResult());
+			}
+
 			return Task.FromResult(manifestsList);
+		}
+
+		internal Task<IPlugin> InstantiateManifest(Type typePlugin)
+		{
+			object obj = Activator.CreateInstance(typePlugin);
+			IPlugin pluginManifest = obj as IPlugin;
+
+			if (pluginManifest is null)
+			{
+				throw new InvalidCastException();
+			}
+			return Task.FromResult(pluginManifest);
 		}
 	}
 }

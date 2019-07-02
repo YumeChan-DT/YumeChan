@@ -1,4 +1,4 @@
-﻿using Nodsoft.YumeChan.Core;
+﻿using Nodsoft.YumeChan.PluginBase;
 using System;
 using System.Threading.Tasks;
 
@@ -12,7 +12,7 @@ namespace Nodsoft.YumeChan.Modules
 
 		public bool PluginStealth { get; } = false;
 
-		public bool PluginLoaded { get; set; }
+		public bool PluginLoaded { get; internal set; }
 
 		public Task LoadPlugin()
 		{

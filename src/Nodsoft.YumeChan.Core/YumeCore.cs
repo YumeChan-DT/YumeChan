@@ -8,6 +8,7 @@ using System.Reflection;
 using System.Threading.Tasks;
 
 using System.Collections.Generic;
+using Nodsoft.YumeChan.PluginBase;
 
 namespace Nodsoft.YumeChan.Core
 {
@@ -30,7 +31,7 @@ namespace Nodsoft.YumeChan.Core
 		public CommandService Commands { get; set; }
 		public IServiceProvider Services { get; set; }
 
-		internal ModulesLoader ExternalModulesLoader { get; set; } = new ModulesLoader(string.Empty);
+		internal ModulesLoader ExternalModulesLoader { get; set; }
 		public List<IPlugin> Modules { get; set; }
 
 		/**
@@ -124,6 +125,8 @@ namespace Nodsoft.YumeChan.Core
 
 		public async Task RegisterCommandsAsync()
 		{
+			ExternalModulesLoader = new ModulesLoader(string.Empty);
+
 			Client.MessageReceived += HandleCommandAsync;
 
 			Modules = new List<IPlugin> { new Modules.InternalModule() };               // Add YumeCore internal commands
@@ -151,6 +154,7 @@ namespace Nodsoft.YumeChan.Core
 
 		public Task ReleaseCommands()
 		{
+			Client.MessageReceived -= HandleCommandAsync;
 			Commands = new CommandService();
 			Commands.Log += Logger.Log;
 
