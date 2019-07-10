@@ -1,29 +1,31 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
-  <PropertyGroup>
-    <TargetFramework>netstandard2.1</TargetFramework>
-    <Version>0.1.3</Version>
-    <Authors>DJ Daemonix</Authors>
-    <Company>Nodsoft ES</Company>
-    <Product>YumeChan</Product>
-    <Copyright>GNU GPLv3</Copyright>
-    <NeutralLanguage>en</NeutralLanguage>
-    <RepositoryUrl>https://github.com/DJDaemonix/YumeChan</RepositoryUrl>
-    <RepositoryType>Git</RepositoryType>
-    <SignAssembly>false</SignAssembly>
-  </PropertyGroup>
+	<PropertyGroup>
+		<TargetFramework>netstandard2.1</TargetFramework>
+		<Version>0.2.0</Version>
+		<Authors>DJ Daemonix</Authors>
+		<Company>Nodsoft ES</Company>
+		<Product>YumeChan</Product>
+		<Copyright>GNU GPLv3</Copyright>
+		<NeutralLanguage>en</NeutralLanguage>
+		<RepositoryUrl>https://github.com/DJDaemonix/YumeChan</RepositoryUrl>
+		<RepositoryType>Git</RepositoryType>
+		<SignAssembly>false</SignAssembly>
+		<AssemblyVersion>0.2.0.0</AssemblyVersion>
+		<FileVersion>0.2.0.0</FileVersion>
+	</PropertyGroup>
 
-  <ItemGroup>
-    <PackageReference Include="Discord.Net" Version="2.1.0" />
-    <PackageReference Include="Discord.Net.Commands" Version="2.1.0" />
-    <PackageReference Include="SourceLink.Create.CommandLine" Version="2.8.3">
-      <PrivateAssets>all</PrivateAssets>
-      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-    </PackageReference>
-  </ItemGroup>
+	<ItemGroup>
+		<PackageReference Include="Discord.Net" Version="2.1.1" />
+		<PackageReference Include="Discord.Net.Commands" Version="2.1.1" />
+		<PackageReference Include="SourceLink.Create.CommandLine" Version="2.8.3">
+			<PrivateAssets>all</PrivateAssets>
+			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+		</PackageReference>
+	</ItemGroup>
 
-  <ItemGroup>
-    <ProjectReference Include="..\Nodsoft.YumeChan.Modules\Nodsoft.YumeChan.Modules.csproj" />
-  </ItemGroup>
+	<ItemGroup>
+	  <ProjectReference Include="..\Nodsoft.YumeChan.PluginBase\Nodsoft.YumeChan.PluginBase.csproj" />
+	</ItemGroup>
 
 </Project>

@@ -8,8 +8,8 @@ using static Nodsoft.YumeChan.NetRunner.Services;
 
 namespace Nodsoft.YumeChan.NetRunner.Controls
 {
-    public static class YumeCoreController
-    {
+	public static class YumeCoreController
+	{
 		public static Task<string[]> DisplayStatusAlert()
 		{
 			switch (BotService.CoreState)
@@ -60,5 +60,5 @@ namespace Nodsoft.YumeChan.NetRunner.Controls
 				await BotService.ReloadCommandsAsync();
 			}
 		}
-    }
+	}
 }

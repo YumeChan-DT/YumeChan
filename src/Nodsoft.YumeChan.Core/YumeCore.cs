@@ -7,7 +7,8 @@ using System.Diagnostics;
 using System.Reflection;
 using System.Threading.Tasks;
 
-using Nodsoft.YumeChan.Modules;
+using System.Collections.Generic;
+using Nodsoft.YumeChan.PluginBase;
 
 namespace Nodsoft.YumeChan.Core
 {
@@ -16,39 +17,51 @@ namespace Nodsoft.YumeChan.Core
 		Offline = 0, Online = 1, Starting = 2, Stopping = 3, Reloading = 4
 	}
 
-	public class YumeCore
+	public sealed class YumeCore
 	{
-		//Properties
+		// Properties
 
-		public YumeCoreState CoreState { get; protected set; }
+		public static YumeCore Instance { get => lazyInstance.Value; }
+
+		public YumeCoreState CoreState { get; private set; }
+
+		public static Version CoreVersion { get; } = typeof(YumeCore).Assembly.GetName().Version;
 
 		public DiscordSocketClient Client { get; set; }
 		public CommandService Commands { get; set; }
 		public IServiceProvider Services { get; set; }
 
-		// Remember to keep token private or to read it from an 
-		// external source! In this case, we are reading the token 
-		// from an environment variable. If you do not know how to set-up
-		// environment variables, you may find more information on the 
-		// Internet or by using other methods such as reading from 
-		// a configuration.
+		internal ModulesLoader ExternalModulesLoader { get; set; }
+		public List<IPlugin> Plugins { get; set; }
+
+		/**
+		 * Remember to keep token private or to read it from an 
+		 *	external source! In this case, we are reading the token 
+		 *	from an environment variable. If you do not know how to set-
+		 *	environment variables, you may find more information on 
+		 *	Internet or by using other methods such as reading 
+		 *	a configuration. 
+		 **/
 		private string BotToken { get; } = Environment.GetEnvironmentVariable("YumeChan.Token");
 
-		public ILogger Logger { get; protected set; }
+		public ILogger Logger { get; set; }
 
-		//Constructors
+		// Fields
+		private static readonly Lazy<YumeCore> lazyInstance = new Lazy<YumeCore>(() => new YumeCore());
 
-		public YumeCore(ILogger logger) => Logger = logger;
+		// Constructors
 
+		private YumeCore() { /* Use this ctor when assigning Logger berore running. */ }
+		static YumeCore() { /* Static ctor for Singleton implementation */ }
 
-		//Destructor
+		// Destructor
 		~YumeCore()
 		{
 			StopBotAsync().Wait();
 		}
 
 
-		//Methods
+		// Methods
 
 		public void RunBot()
 		{
@@ -58,6 +71,11 @@ namespace Nodsoft.YumeChan.Core
 
 		public async Task StartBotAsync()
 		{
+			if (Logger is null)
+			{
+				throw new ApplicationException();
+			}
+
 			CoreState = YumeCoreState.Starting;
 
 			Client = new DiscordSocketClient();
@@ -69,7 +87,7 @@ namespace Nodsoft.YumeChan.Core
 				.BuildServiceProvider();
 
 
-			//Event Subscriptions
+			// Event Subscriptions
 			Client.Log += Logger.Log;
 			Commands.Log += Logger.Log;
 
@@ -107,17 +125,36 @@ namespace Nodsoft.YumeChan.Core
 
 		public async Task RegisterCommandsAsync()
 		{
+			ExternalModulesLoader = new ModulesLoader(string.Empty);
+
 			Client.MessageReceived += HandleCommandAsync;
 
-			ModulesIndex.CoreVersion = typeof(YumeCore).Assembly.GetName().Version;
+			Plugins = new List<IPlugin> { new Modules.InternalPlugin() };               // Add YumeCore internal commands
 
-			await Commands.AddModulesAsync(Assembly.GetEntryAssembly(), Services);		//Add possible Commands from Entry Assembly (contextual)
-			await Commands.AddModulesAsync(typeof(YumeCore).Assembly, Services);		//Add Local Commands (if any)
-			await Commands.AddModulesAsync(typeof(ModulesIndex).Assembly, Services);	//Add Commands from Nodsoft.YumeChan.Modules
+			await ExternalModulesLoader.LoadModuleAssemblies();
+			Plugins.AddRange(await ExternalModulesLoader.LoadModuleManifests());
+
+			List<IPlugin> modulesCopy = new List<IPlugin>(Plugins);
+
+			foreach (IPlugin module in modulesCopy)
+			{
+				if (module is null)
+				{
+					Plugins.Remove(module);
+				}
+				else
+				{ 
+					await module.LoadPlugin();
+					await Commands.AddModulesAsync(module.GetType().Assembly, Services);
+				}
+			}
+
+			await Commands.AddModulesAsync(Assembly.GetEntryAssembly(), Services);      // Add possible Commands from Entry Assembly (contextual)
 		}
 
 		public Task ReleaseCommands()
 		{
+			Client.MessageReceived -= HandleCommandAsync;
 			Commands = new CommandService();
 			Commands.Log += Logger.Log;
 
@@ -137,9 +174,7 @@ namespace Nodsoft.YumeChan.Core
 
 		private async Task HandleCommandAsync(SocketMessage arg)
 		{
-			SocketUserMessage message = arg as SocketUserMessage;
-
-			if (message != null && !message.Author.IsBot)
+			if (arg is SocketUserMessage message && !message.Author.IsBot)
 			{
 				int argPosition = 0;
 
@@ -155,5 +190,8 @@ namespace Nodsoft.YumeChan.Core
 				}
 			}
 		}
+
+		// Fluent Assignments
+		public void SetLogger(ILogger logger) => Logger = logger;
 	}
 }

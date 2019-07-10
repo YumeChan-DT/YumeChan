@@ -18,8 +18,11 @@ namespace Nodsoft.YumeChan.NetRunner
 		{
 			services.AddRazorPages();
 			services.AddServerSideBlazor();
-			services.AddSingleton(BotService);
+
+			BotService.Logger = LoggerService;
+
 			services.AddSingleton(LoggerService);
+			services.AddSingleton(BotService);
 
 			AppServiceProvider = services.BuildServiceProvider();
 		}
