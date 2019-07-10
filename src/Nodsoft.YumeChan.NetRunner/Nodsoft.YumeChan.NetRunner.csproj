@@ -17,6 +17,9 @@
 	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
 		<OutDir>$(SolutionDir)build</OutDir>
 	</PropertyGroup>
+	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
+		<OutDir>$(SolutionDir)build</OutDir>
+	</PropertyGroup>
 	
 	<ItemGroup>
 		<ProjectReference Include="..\Nodsoft.YumeChan.Core\Nodsoft.YumeChan.Core.csproj" />

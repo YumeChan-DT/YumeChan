@@ -20,6 +20,9 @@
 	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
 		<OutDir>$(SolutionDir)build\Modules</OutDir>
 	</PropertyGroup>
+	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
+		<OutDir>$(SolutionDir)build\Modules</OutDir>
+	</PropertyGroup>
 	
 	<ItemGroup>
 		<PackageReference Include="Discord.Net" Version="2.1.1" />
