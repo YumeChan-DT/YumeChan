@@ -129,7 +129,7 @@ namespace Nodsoft.YumeChan.Core
 
 			Client.MessageReceived += HandleCommandAsync;
 
-			Plugins = new List<IPlugin> { new Modules.InternalModule() };               // Add YumeCore internal commands
+			Plugins = new List<IPlugin> { new Modules.InternalPlugin() };               // Add YumeCore internal commands
 
 			await ExternalModulesLoader.LoadModuleAssemblies();
 			Plugins.AddRange(await ExternalModulesLoader.LoadModuleManifests());

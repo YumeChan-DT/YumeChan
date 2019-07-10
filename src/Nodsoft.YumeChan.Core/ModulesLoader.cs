@@ -76,7 +76,7 @@ namespace Nodsoft.YumeChan.Core
 			return Task.FromResult(manifestsList);
 		}
 
-		internal Task<IPlugin> InstantiateManifest(Type typePlugin)
+		internal static Task<IPlugin> InstantiateManifest(Type typePlugin)
 		{
 			object obj = Activator.CreateInstance(typePlugin);
 			IPlugin pluginManifest = obj as IPlugin;
