@@ -12,16 +12,16 @@
 
 <h3>Core :</h3>
 <br />
-<button class="btn btn-success" onclick="@StartBotButton">Start Bot Service</button> 
-<button class="btn btn-danger" onclick="@StopBotButton">Stop Bot Service</button> 
-<button class="btn btn-warning" onclick="@RestartBotButton">Restart Bot Service</button> 
+<button class="btn btn-success" @onclick="StartBotButton">Start Bot Service</button> 
+<button class="btn btn-danger" @onclick="StopBotButton">Stop Bot Service</button> 
+<button class="btn btn-warning" ^onclick="RestartBotButton">Restart Bot Service</button> 
 
 <br />
 <br />
 
 <h3>Modules :</h3>
 <br />
-<button class="btn btn-info" onclick="@ReloadModulesButton">Reload Modules</button>
+<button class="btn btn-info" @onclick="ReloadModulesButton">Reload Modules</button>
 @functions
 {
     private string[] botStatusAlert = DisplayStatusAlert().Result;
