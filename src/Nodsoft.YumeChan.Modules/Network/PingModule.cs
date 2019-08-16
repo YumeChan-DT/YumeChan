@@ -15,7 +15,7 @@ namespace Nodsoft.YumeChan.Modules.Network
 	[Group("ping")]
 	public class PingModule : ModuleBase<SocketCommandContext>
 	{
-		[Command("")]
+		[Command("", RunMode = RunMode.Async)]
 		public async Task NetworkPingCommand(string host)
 		{
 			string contextUser = Context.User.Mention;
