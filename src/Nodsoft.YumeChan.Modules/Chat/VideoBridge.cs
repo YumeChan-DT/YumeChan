@@ -22,42 +22,30 @@ namespace Nodsoft.YumeChan.Modules.VideoBridge
 			}
 
 			// Flags settings
-			bool includeManualLink = false;
-			bool pingAllusersInChannel = false;
+			bool includeManualLink;
+			bool pingAllusersInChannel;
+			bool sendtoPrivateMessage;
 
-			if (!(arguments is null))
-			{
-				if (Array.Exists(arguments, arg => arg == "manual" ))
-				{
-					includeManualLink = true;
-				}
+			await ParseVideoBridgeArguments(Context, arguments, out includeManualLink, out pingAllusersInChannel, out sendtoPrivateMessage);
 
-				if (Array.Exists(arguments, arg => arg == "ping"))
-				{
-					SocketGuildUser user = Context.User as SocketGuildUser;
-					if (user.GuildPermissions.MentionEveryone || user.GuildPermissions.PrioritySpeaker || user.GuildPermissions.ManageChannels)
-					{
-						pingAllusersInChannel = true;
-					}
-				}
-			}
 
-			string mentionList = Context.User.Mention;
+			StringBuilder mentionList = new StringBuilder(Context.User.Mention);
 
 			if (pingAllusersInChannel)
 			{
-				mentionList += ", ";
+				mentionList.Append(", ");
 
 				var users = channel.GetUsersAsync().Flatten().GetEnumerator();
 
 				while (await users.MoveNext())
 				{
-					mentionList += users.Current.Mention + " ";
+					mentionList.Append(users.Current.Mention).Append(" ");
 				}
+				mentionList.Append("\n");
 			}
 
-			StringBuilder text = new StringBuilder(mentionList)
-				.AppendLine($"\n**Videobridge link{(includeManualLink ? "s" : null)} for ``{channel.Name}`` :**")
+			StringBuilder text = new StringBuilder(sendtoPrivateMessage ? string.Empty : mentionList.ToString())
+				.AppendLine($"**Videobridge link{(includeManualLink ? "s" : null)} for ``{channel.Name}`` :**")
 				.AppendLine("\nUniversal HTTPS Link : (Browser & Client)")
 				.AppendLine(BuildBridgeLink(LinkTypes.Https, channel));
 
@@ -69,6 +57,10 @@ namespace Nodsoft.YumeChan.Modules.VideoBridge
 
 			text.AppendLine($"\nPlease use {(includeManualLink ? "these links" : "this link")} when switching back to Video Channel.");
 
+			if (sendtoPrivateMessage)
+			{
+				await Context.User.SendMessageAsync(text.ToString());
+			}
 			await ReplyAsync(text.ToString());
 		}
 
@@ -104,6 +96,37 @@ namespace Nodsoft.YumeChan.Modules.VideoBridge
 			}
 
 			return true;
+		}
+
+		internal static Task ParseVideoBridgeArguments(SocketCommandContext context, string[] args, out bool manual, out bool ping, out bool direct)
+		{
+			manual = false;
+			ping = false;
+			direct = false;
+			if (!(args is null))
+			{
+				if (Array.Exists(args, arg => arg == "manual"))
+				{
+					manual = true;
+				}
+
+				if (Array.Exists(args, arg => arg == "ping"))
+				{
+					SocketGuildUser user = context.User as SocketGuildUser;
+					if (user.GuildPermissions.MentionEveryone || user.GuildPermissions.PrioritySpeaker || user.GuildPermissions.ManageChannels)
+					{
+						ping = true;
+					}
+				}
+
+				if (Array.Exists(args, arg => arg == "dm"))
+				{
+					direct = true;
+					ping = false;
+				}
+			}
+
+			return Task.CompletedTask;
 		}
 
 		internal enum LinkTypes 
