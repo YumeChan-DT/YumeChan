@@ -3,7 +3,7 @@
 	<PropertyGroup>
 		<TargetFramework>netstandard2.1</TargetFramework>
 		<FinalOutput>$(BIN_PATH)\Modules\</FinalOutput>
-		<Version>0.2.1</Version>
+		<Version>0.2.2</Version>
 		<Authors>DJ Daemonix</Authors>
 		<Company>Nodsoft ES</Company>
 		<Product>YumeChan Modules</Product>
@@ -13,8 +13,8 @@
 		<RepositoryUrl>https://github.com/DJDaemonix/YumeChan</RepositoryUrl>
 		<RepositoryType>Git</RepositoryType>
 		<Platforms>AnyCPU</Platforms>
-		<AssemblyVersion>0.2.1.0</AssemblyVersion>
-		<FileVersion>0.2.1.0</FileVersion>
+		<AssemblyVersion>0.2.2.0</AssemblyVersion>
+		<FileVersion>0.2.2.0</FileVersion>
 	</PropertyGroup>
 
 	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
