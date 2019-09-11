@@ -28,7 +28,7 @@ namespace Nodsoft.YumeChan.Modules.Chat
 				return;
 			}
 
-			await ParseVideoBridgeArguments(arguments);
+			ParseVideoBridgeArguments(arguments);
 
 
 
@@ -92,7 +92,7 @@ namespace Nodsoft.YumeChan.Modules.Chat
 			return true;
 		}
 
-		private async Task ParseVideoBridgeArguments(string[] args)
+		private void ParseVideoBridgeArguments(string[] args)
 		{
 			if (!(args is null))
 			{
