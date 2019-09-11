@@ -6,6 +6,8 @@ using System.Collections.Generic;
 using System.Text;
 using System.Threading.Tasks;
 
+using static Nodsoft.YumeChan.Modules.Chat.Utils;
+
 namespace Nodsoft.YumeChan.Modules.Chat
 {
 	[Group("videobridge"), Alias ("vb")]
@@ -58,11 +60,6 @@ namespace Nodsoft.YumeChan.Modules.Chat
 			}
 		}
 
-		public static IVoiceChannel FindUserCurrentVoiceChannel(SocketCommandContext context) => (context.User as IGuildUser)?.VoiceChannel;
-
-		public static ulong GetVoiceChannelId(IVoiceChannel channel) => channel.Id;
-		public static ulong GetServerId(IVoiceChannel channel) => channel.Guild.Id;
-
 		internal static string BuildBridgeLink(LinkTypes type, IVoiceChannel channel)
 		{
 			string typeStr = type switch
@@ -72,7 +69,7 @@ namespace Nodsoft.YumeChan.Modules.Chat
 				_ => throw new Exception()
 			};
 
-			return $"{typeStr}://discordapp.com/channels/{GetServerId(channel)}/{GetVoiceChannelId(channel)}";
+			return $"{typeStr}://discordapp.com/channels/{channel.GuildId}/{channel.Id}";
 		}
 
 		private async Task<bool> ValidateVideoBridgeRequestAsync()
