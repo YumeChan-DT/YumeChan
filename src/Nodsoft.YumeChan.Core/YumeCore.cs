@@ -31,7 +31,7 @@ namespace Nodsoft.YumeChan.Core
 		public CommandService Commands { get; set; }
 		public IServiceProvider Services { get; set; }
 
-		internal ModulesLoader ExternalModulesLoader { get; set; }
+		internal PluginsLoader ExternalModulesLoader { get; set; }
 		public List<IPlugin> Plugins { get; set; }
 
 		/**
@@ -95,6 +95,10 @@ namespace Nodsoft.YumeChan.Core
 			await Client.LoginAsync(TokenType.Bot, BotToken);
 			await Client.StartAsync();
 
+#if DEBUG
+			await Client.SetGameAsync("Debug Enabled - Test In Progress", null, ActivityType.Streaming);
+#endif
+
 			CoreState = YumeCoreState.Online;
 		}
 
@@ -125,14 +129,14 @@ namespace Nodsoft.YumeChan.Core
 
 		public async Task RegisterCommandsAsync()
 		{
-			ExternalModulesLoader = new ModulesLoader(string.Empty);
+			ExternalModulesLoader = new PluginsLoader(string.Empty);
 
 			Client.MessageReceived += HandleCommandAsync;
 
 			Plugins = new List<IPlugin> { new Modules.InternalPlugin() };               // Add YumeCore internal commands
 
 			await ExternalModulesLoader.LoadModuleAssemblies();
-			Plugins.AddRange(await ExternalModulesLoader.LoadModuleManifests());
+			Plugins.AddRange(await ExternalModulesLoader.LoadPluginManifests());
 
 			List<IPlugin> modulesCopy = new List<IPlugin>(Plugins);
 

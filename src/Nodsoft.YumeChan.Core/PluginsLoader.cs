@@ -8,7 +8,7 @@ using System.Linq;
 
 namespace Nodsoft.YumeChan.Core
 {
-	internal class ModulesLoader
+	internal class PluginsLoader
 	{
 		internal List<Assembly> PluginAssemblies { get; set; }
 		internal List<FileInfo> PluginFiles { get; set; }
@@ -17,7 +17,7 @@ namespace Nodsoft.YumeChan.Core
 		internal DirectoryInfo PluginsLoadDirectory { get; set; }
 		internal string PluginsLoadDiscriminator { get; set; } = string.Empty;
 
-		public ModulesLoader(string pluginsLoadDirectoryPath)
+		public PluginsLoader(string pluginsLoadDirectoryPath)
 		{
 			PluginsLoadDirectory = string.IsNullOrEmpty(pluginsLoadDirectoryPath)
 				? SetDefaultPluginsDirectoryEnvironmentVariable()
@@ -55,7 +55,7 @@ namespace Nodsoft.YumeChan.Core
 			return Task.CompletedTask;
 		}
 
-		public Task<List<IPlugin>> LoadModuleManifests()
+		public Task<List<IPlugin>> LoadPluginManifests()
 		{
 			List<IPlugin> manifestsList = new List<IPlugin>();
 			List<Type> pluginTypes = new List<Type>();
