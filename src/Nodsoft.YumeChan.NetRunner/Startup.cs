@@ -3,9 +3,10 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 
-using Nodsoft.YumeChan.Core;
-using System.Threading.Tasks;
 using static Nodsoft.YumeChan.NetRunner.Services;
+
+
+#pragma warning disable CA1052 // Static holder types should be Static or NotInheritable
 
 
 namespace Nodsoft.YumeChan.NetRunner
@@ -24,7 +25,7 @@ namespace Nodsoft.YumeChan.NetRunner
 			services.AddSingleton(LoggerService);
 			services.AddSingleton(BotService);
 
-			AppServiceProvider = services.BuildServiceProvider();
+			AppServiceCollection = services;
 		}
 
 		// This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
