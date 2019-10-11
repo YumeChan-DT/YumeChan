@@ -1,4 +1,6 @@
 ﻿@page "/BotControls"
+@attribute [Authorize]
+
 @using Nodsoft.YumeChan.NetRunner.Controls.Assets;
 @using Nodsoft.YumeChan.Core;
 
@@ -9,6 +11,7 @@
 <br />
 
 <div class=@DisplayStatusAlert()[0] role="alert">@DisplayStatusAlert()[1]</div>
+<br />
 
 <h3>Core :</h3>
 <br />
@@ -26,48 +29,48 @@
 
 @functions
 {
-	private string[] DisplayStatusAlert()
-	{
-		return BotService.CoreState switch
-		{
-			YumeCoreState.Offline   => new string[] { Alerts.danger, "Bot is offline." },
-			YumeCoreState.Online    => new string[] { Alerts.success, "Bot is online." },
-			YumeCoreState.Starting  => new string[] { Alerts.info, "Bot is starting..." },
-			YumeCoreState.Stopping  => new string[] { Alerts.warning, "Bot is Stopping..." },
-			YumeCoreState.Reloading => new string[] { Alerts.warning, "Bot is Reloading..." },
-			_                       => new string[] { Alerts.danger, "Bot Status is Unknown." },
-		};
-	}
+    private string[] DisplayStatusAlert()
+    {
+        return BotService.CoreState switch
+        {
+            YumeCoreState.Offline => new string[]   { Alerts.danger, "Bot is offline." },
+            YumeCoreState.Online => new string[]    { Alerts.success, "Bot is online." },
+            YumeCoreState.Starting => new string[]  { Alerts.info, "Bot is starting..." },
+            YumeCoreState.Stopping => new string[]  { Alerts.warning, "Bot is Stopping..." },
+            YumeCoreState.Reloading => new string[] { Alerts.warning, "Bot is Reloading..." },
+            _ => new string[]                       { Alerts.danger, "Bot Status is Unknown." },
+        };
+    }
 
-	public async Task StartBotButton()
-	{
-		if (BotService.CoreState == YumeCoreState.Offline)
-		{
-			await BotService.StartBotAsync();
-		}
-	}
+    public async Task StartBotButton()
+    {
+        if (BotService.CoreState == YumeCoreState.Offline)
+        {
+            await BotService.StartBotAsync();
+        }
+    }
 
-	public async Task StopBotButton()
-	{
-		if (BotService.CoreState != YumeCoreState.Offline)
-		{
-			await BotService.StopBotAsync();
-		}
-	}
+    public async Task StopBotButton()
+    {
+        if (BotService.CoreState != YumeCoreState.Offline)
+        {
+            await BotService.StopBotAsync();
+        }
+    }
 
-	public async Task RestartBotButton()
-	{
-		if (BotService.CoreState == YumeCoreState.Online)
-		{
-			await BotService.RestartBotAsync();
-		}
-	}
+    public async Task RestartBotButton()
+    {
+        if (BotService.CoreState == YumeCoreState.Online)
+        {
+            await BotService.RestartBotAsync();
+        }
+    }
 
-	public async Task ReloadModulesButton()
-	{
-		if (BotService.CoreState == YumeCoreState.Online)
-		{
-			await BotService.ReloadCommandsAsync();
-		}
-	}
+    public async Task ReloadModulesButton()
+    {
+        if (BotService.CoreState == YumeCoreState.Online)
+        {
+            await BotService.ReloadCommandsAsync();
+        }
+    }
 }
