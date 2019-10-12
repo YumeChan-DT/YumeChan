@@ -1,0 +1,30 @@
+﻿@page "/BotPlugins"
+@attribute [Authorize]
+
+@using static Nodsoft.YumeChan.Core.YumeCore;
+@using Nodsoft.YumeChan.PluginBase;
+
+<h1>Plugins</h1>
+<br />
+<h3>Currently Loaded : @Instance.Plugins.Count Plugins</h3>
+<br />
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>Plugin Name</th>
+            <th>Version</th>
+            <th>Active</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (IPlugin pluginManifest in Instance.Plugins)
+        {
+            <tr>
+                <td>@pluginManifest.PluginDisplayName</td>
+                <td>@pluginManifest.PluginVersion</td>
+                <td>@pluginManifest.PluginLoaded</td>
+            </tr>
+        }
+    </tbody>
+</table>
