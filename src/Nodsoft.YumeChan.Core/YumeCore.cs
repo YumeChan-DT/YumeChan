@@ -6,9 +6,10 @@ using System;
 using System.Diagnostics;
 using System.Reflection;
 using System.Threading.Tasks;
-
 using System.Collections.Generic;
+
 using Nodsoft.YumeChan.PluginBase;
+using Nodsoft.YumeChan.Core.TypeReaders;
 
 namespace Nodsoft.YumeChan.Core
 {
@@ -91,7 +92,9 @@ namespace Nodsoft.YumeChan.Core
 			Client.Log += Logger.Log;
 			Commands.Log += Logger.Log;
 
+			await RegisterTypeReadersAsync();
 			await RegisterCommandsAsync().ConfigureAwait(false);
+
 			await Client.LoginAsync(TokenType.Bot, BotToken);
 			await Client.StartAsync();
 
@@ -121,6 +124,13 @@ namespace Nodsoft.YumeChan.Core
 
 			// Start Bot
 			await StartBotAsync().ConfigureAwait(false);
+		}
+
+		public Task RegisterTypeReadersAsync()
+		{
+			Commands.AddTypeReader(typeof(IEmote), new IEmoteTypeReader());
+
+			return Task.CompletedTask;
 		}
 
 		public async Task RegisterCommandsAsync()
