@@ -11,7 +11,7 @@ namespace Nodsoft.YumeChan.Modules.Chat
 	public class PollModule : ModuleBase<SocketCommandContext>
 	{
 		public static List<Poll> DraftPolls { get; internal set; } = new List<Poll>();
-		public static List<Poll> CurrentPolls { get; internal set; } = new List<Poll>();
+		// public static List<Poll> CurrentPolls { get; internal set; } = new List<Poll>();
 
 		public Poll SelectedPoll { get => selectedPoll ?? GetUserPollAsync().Result; protected set => selectedPoll = value; }
 		private Poll selectedPoll;
@@ -61,7 +61,7 @@ namespace Nodsoft.YumeChan.Modules.Chat
 			SelectedPoll.VoteOptions.Add(new PollVoteOption { ReactionEmote = reactionEmote, Description = description });
 			await Utils.MarkCommandAsCompleted(Context);
 		}
-		[Command("setoption"), Priority(1)]
+		//[Command("setoption"), Priority(1)]
 		public async Task SetPollOptionAsync(byte index, IEmote reactionEmote, [Remainder]string description)
 		{
 			if (SelectedPoll is null) return;
@@ -70,13 +70,12 @@ namespace Nodsoft.YumeChan.Modules.Chat
 			SelectedPoll.VoteOptions[index] = new PollVoteOption { ReactionEmote = reactionEmote, Description = description };
 			await Utils.MarkCommandAsCompleted(Context);
 		}
-		[Command("setoption")]
+		//[Command("setoption")]
 		public async Task SetPollOptionAsync(IEmote reactionEmote, [Remainder]string description)
 		{
 			if (SelectedPoll is null) return;
 
-			SelectedPoll.VoteOptions[SelectedPoll.VoteOptions.FindIndex(option => option.ReactionEmote == reactionEmote)] 
-				= new PollVoteOption { ReactionEmote = reactionEmote, Description = description };
+			SelectedPoll.VoteOptions.Find(x => x.ReactionEmote == reactionEmote).Description = description; 
 
 			await Utils.MarkCommandAsCompleted(Context);
 		}
@@ -158,6 +157,9 @@ namespace Nodsoft.YumeChan.Modules.Chat
 				$"Published Poll ``{SelectedPoll.Name}`` in channel ``{SelectedPoll.PublishedPollMessage.Channel.Name}``.");
 
 			await Context.Message.DeleteAsync();
+
+			// CurrentPolls.Add(SelectedPoll);
+			DraftPolls.Remove(SelectedPoll);
 		}
 
 		public static Poll QueryUserPoll(IUser user, List<Poll> list) => list.FirstOrDefault(poll => poll.Author.Id == user.Id);
@@ -174,7 +176,7 @@ namespace Nodsoft.YumeChan.Modules.Chat
 
 			foreach (PollVoteOption option in SelectedPoll.VoteOptions)
 			{
-				embed.AddField(option.Description, option.ReactionEmote);
+				embed.AddField(option.Description, option.ReactionEmote, true);
 			}
 
 			return Task.FromResult(embed);
@@ -237,12 +239,12 @@ namespace Nodsoft.YumeChan.Modules.Chat
 
 #pragma warning disable CA1815 // Override equals and operator equals on value types
 
-	public struct PollVoteOption
+	public class PollVoteOption
 	{
 		public IEmote ReactionEmote { get; set; }
 
 		public string Description { get; set; }
 
-		public List<IGuildUser> Voters { get; internal set; }
+		// public List<IGuildUser> Voters { get; internal set; }
 	}
 }
