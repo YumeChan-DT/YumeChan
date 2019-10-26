@@ -1,2 +1,4 @@
 [submodule "src/Nodsoft.YumeChan.Essentials"]
 	url = https://github.com/YumeChan-DT/YumeChan-Essentials.git
+[submodule "src/Nodsoft.YumeChan.PluginBase"]
+	url = https://github.com/YumeChan-DT/YumeChan-PluginBase.git
