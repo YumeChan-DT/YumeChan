@@ -1,4 +1,4 @@
-﻿using Discord;
+using Discord;
 using Discord.Commands;
 using Discord.WebSocket;
 using Microsoft.Extensions.DependencyInjection;
@@ -156,6 +156,15 @@ namespace Nodsoft.YumeChan.Core
 				{ 
 					await module.LoadPlugin();
 					await Commands.AddModulesAsync(module.GetType().Assembly, Services);
+
+					if (module is IMessageTap)
+					{
+						IMessageTap tap = module as IMessageTap;
+
+						Client.MessageReceived += tap.OnMessageReceived;
+						Client.MessageUpdated += tap.OnMessageUpdated;
+						Client.MessageDeleted += tap.OnMessageDeleted;
+					}
 				}
 			}
 
@@ -165,6 +174,19 @@ namespace Nodsoft.YumeChan.Core
 		public Task ReleaseCommands()
 		{
 			Client.MessageReceived -= HandleCommandAsync;
+
+			foreach (IPlugin plugin in Plugins)
+			{
+				if (plugin is IMessageTap)
+				{
+					IMessageTap tap = plugin as IMessageTap;
+
+					Client.MessageReceived -= tap.OnMessageReceived;
+					Client.MessageUpdated -= tap.OnMessageUpdated;
+					Client.MessageDeleted -= tap.OnMessageDeleted;
+				}
+			}
+
 			Commands = new CommandService();
 			Commands.Log += Logger.Log;
 
