@@ -30,9 +30,10 @@ namespace Nodsoft.YumeChan.Core
 
 		public DiscordSocketClient Client { get; set; }
 		public CommandService Commands { get; set; }
+		public IServiceCollection ServiceCollection { get; set; }
 		public IServiceProvider Services { get; set; }
 
-		internal ModulesLoader ExternalModulesLoader { get; set; }
+		internal PluginsLoader ExternalModulesLoader { get; set; }
 		public List<IPlugin> Plugins { get; set; }
 
 		/**
@@ -82,7 +83,7 @@ namespace Nodsoft.YumeChan.Core
 			Client = new DiscordSocketClient();
 			Commands = new CommandService();
 
-			Services = new ServiceCollection()
+			Services = (ServiceCollection ??= new ServiceCollection())
 				.AddSingleton(Client)
 				.AddSingleton(Commands)
 				.BuildServiceProvider();
@@ -135,14 +136,14 @@ namespace Nodsoft.YumeChan.Core
 
 		public async Task RegisterCommandsAsync()
 		{
-			ExternalModulesLoader = new ModulesLoader(string.Empty);
+			ExternalModulesLoader = new PluginsLoader(string.Empty);
 
 			Client.MessageReceived += HandleCommandAsync;
 
 			Plugins = new List<IPlugin> { new Modules.InternalPlugin() };               // Add YumeCore internal commands
 
-			await ExternalModulesLoader.LoadModuleAssemblies();
-			Plugins.AddRange(await ExternalModulesLoader.LoadModuleManifests());
+			await ExternalModulesLoader.LoadPluginAssemblies();
+			Plugins.AddRange(await ExternalModulesLoader.LoadPluginManifests());
 
 			List<IPlugin> modulesCopy = new List<IPlugin>(Plugins);
 
@@ -208,6 +209,8 @@ namespace Nodsoft.YumeChan.Core
 
 				if (message.HasStringPrefix("==", ref argPosition) || message.HasMentionPrefix(Client.CurrentUser, ref argPosition))
 				{
+					await Logger.Log(new LogMessage(LogSeverity.Debug, "Commands", $"Command \"{message.Content}\" received from User {message.Author.Mention}."));
+
 					SocketCommandContext context = new SocketCommandContext(Client, message);
 					IResult result = await Commands.ExecuteAsync(context, argPosition, Services);
 
@@ -218,8 +221,5 @@ namespace Nodsoft.YumeChan.Core
 				}
 			}
 		}
-
-		// Fluent Assignments
-		public void SetLogger(ILogger logger) => Logger = logger;
 	}
 }
