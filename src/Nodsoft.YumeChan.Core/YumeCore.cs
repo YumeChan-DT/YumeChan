@@ -157,10 +157,8 @@ namespace Nodsoft.YumeChan.Core
 					await module.LoadPlugin();
 					await Commands.AddModulesAsync(module.GetType().Assembly, Services);
 
-					if (module is IMessageTap)
+					if (module is IMessageTap tap)
 					{
-						IMessageTap tap = module as IMessageTap;
-
 						Client.MessageReceived += tap.OnMessageReceived;
 						Client.MessageUpdated += tap.OnMessageUpdated;
 						Client.MessageDeleted += tap.OnMessageDeleted;
@@ -177,10 +175,8 @@ namespace Nodsoft.YumeChan.Core
 
 			foreach (IPlugin plugin in Plugins)
 			{
-				if (plugin is IMessageTap)
+				if (plugin is IMessageTap tap)
 				{
-					IMessageTap tap = plugin as IMessageTap;
-
 					Client.MessageReceived -= tap.OnMessageReceived;
 					Client.MessageUpdated -= tap.OnMessageUpdated;
 					Client.MessageDeleted -= tap.OnMessageDeleted;
