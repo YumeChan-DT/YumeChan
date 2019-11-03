@@ -6,7 +6,7 @@ namespace Nodsoft.YumeChan.Core.Modules
 {
 	internal class InternalPlugin : IPlugin
 	{
-		public Version PluginVersion { get; } = typeof(InternalPlugin).Assembly.GetName().Version;
+		public Version PluginVersion { get; } = typeof(YumeCore).Assembly.GetName().Version;
 
 		public string PluginDisplayName { get; } = "YumeCore Internals";
 

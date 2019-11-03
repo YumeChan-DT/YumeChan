@@ -53,7 +53,7 @@ namespace Nodsoft.YumeChan.NetRunner.Controls.Assets
 			}
 
 			builder.Append(color);
-			builder.Append(size ?? size);
+			builder.Append(size);
 
 
 			return builder.ToString();

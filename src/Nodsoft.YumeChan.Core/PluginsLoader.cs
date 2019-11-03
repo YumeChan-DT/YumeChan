@@ -85,7 +85,7 @@ namespace Nodsoft.YumeChan.Core
 			}
 			else
 			{
-			throw new InvalidCastException();
+				throw new InvalidCastException();
 			}
 		}
 	}

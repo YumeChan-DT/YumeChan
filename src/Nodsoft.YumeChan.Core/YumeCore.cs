@@ -7,9 +7,11 @@ using System.Diagnostics;
 using System.Reflection;
 using System.Threading.Tasks;
 using System.Collections.Generic;
-
+using System.Diagnostics.CodeAnalysis;
 using Nodsoft.YumeChan.PluginBase;
 using Nodsoft.YumeChan.Core.TypeReaders;
+using Microsoft.Extensions.Logging;
+
 
 namespace Nodsoft.YumeChan.Core
 {
@@ -18,11 +20,12 @@ namespace Nodsoft.YumeChan.Core
 		Offline = 0, Online = 1, Starting = 2, Stopping = 3, Reloading = 4
 	}
 
+	[SuppressMessage("ReSharper", "SuspiciousTypeConversion.Global")]
 	public sealed class YumeCore
 	{
 		// Properties
 
-		public static YumeCore Instance { get => lazyInstance.Value; }
+		public static YumeCore Instance { get; } = new Lazy<YumeCore>(() => new YumeCore()).Value;
 
 		public YumeCoreState CoreState { get; private set; }
 
@@ -30,11 +33,12 @@ namespace Nodsoft.YumeChan.Core
 
 		public DiscordSocketClient Client { get; set; }
 		public CommandService Commands { get; set; }
-		public IServiceCollection ServiceCollection { get; set; }
 		public IServiceProvider Services { get; set; }
 
 		internal PluginsLoader ExternalModulesLoader { get; set; }
 		public List<IPlugin> Plugins { get; set; }
+
+		public ILogger Logger { get; set; }
 
 		/**
 		 * Remember to keep token private or to read it from an 
@@ -46,15 +50,10 @@ namespace Nodsoft.YumeChan.Core
 		 **/
 		private string BotToken { get; } = Environment.GetEnvironmentVariable("YumeChan.Token");
 
-		public ILogger Logger { get; set; }
-
-		// Fields
-		private static readonly Lazy<YumeCore> lazyInstance = new Lazy<YumeCore>(() => new YumeCore());
 
 		// Constructors
-
-		private YumeCore() { /* Use this ctor when assigning Logger berore running. */ }
-		static YumeCore() { /* Static ctor for Singleton implementation */ }
+		private YumeCore() { /** Private ctor for Singleton implementation <see cref="Instance"> **/ }
+		static YumeCore() { /** Static ctor for Singleton implementation **/ }
 
 		// Destructor
 		~YumeCore()
@@ -65,6 +64,16 @@ namespace Nodsoft.YumeChan.Core
 
 		// Methods
 
+		public static Task<IServiceCollection> ConfigureServices(IServiceCollection services = null)
+		{
+			services ??= new ServiceCollection();
+			services.AddSingleton<DiscordSocketClient>()
+					.AddSingleton<CommandService>()
+					.AddLogging();
+
+			return Task.FromResult(services);
+		}
+
 		public void RunBot()
 		{
 			StartBotAsync().Wait();
@@ -73,21 +82,16 @@ namespace Nodsoft.YumeChan.Core
 
 		public async Task StartBotAsync()
 		{
-			if (Logger is null)
+			if (Services is null)
 			{
-				throw new ApplicationException();
+				throw new ApplicationException("Service Provider has not been defined.");
 			}
 
+			Client ??= Services.GetRequiredService<DiscordSocketClient>();
+			Commands ??= Services.GetRequiredService<CommandService>();
+			Logger ??= Services.GetRequiredService<ILoggerFactory>().CreateLogger<YumeCore>();
+
 			CoreState = YumeCoreState.Starting;
-
-			Client = new DiscordSocketClient();
-			Commands = new CommandService();
-
-			Services = (ServiceCollection ??= new ServiceCollection())
-				.AddSingleton(Client)
-				.AddSingleton(Commands)
-				.BuildServiceProvider();
-
 
 			// Event Subscriptions
 			Client.Log += Logger.Log;
@@ -129,7 +133,7 @@ namespace Nodsoft.YumeChan.Core
 
 		public Task RegisterTypeReadersAsync()
 		{
-			Commands.AddTypeReader(typeof(IEmote), new IEmoteTypeReader());
+			Commands.AddTypeReader(typeof(IEmote), new EmoteTypeReader());
 
 			return Task.CompletedTask;
 		}
@@ -147,15 +151,11 @@ namespace Nodsoft.YumeChan.Core
 
 			List<IPlugin> modulesCopy = new List<IPlugin>(Plugins);
 
+			Plugins.RemoveAll(plugin => plugin is null);
+
 			foreach (IPlugin module in modulesCopy)
 			{
-				if (module is null)
-				{
-					Plugins.Remove(module);
-				}
-				else
-				{ 
-					await module.LoadPlugin();
+				await module.LoadPlugin();
 					await Commands.AddModulesAsync(module.GetType().Assembly, Services);
 
 					if (module is IMessageTap tap)
@@ -164,7 +164,6 @@ namespace Nodsoft.YumeChan.Core
 						Client.MessageUpdated += tap.OnMessageUpdated;
 						Client.MessageDeleted += tap.OnMessageDeleted;
 					}
-				}
 			}
 
 			await Commands.AddModulesAsync(Assembly.GetEntryAssembly(), Services);      // Add possible Commands from Entry Assembly (contextual)
@@ -184,8 +183,7 @@ namespace Nodsoft.YumeChan.Core
 				}
 			}
 
-			Commands = new CommandService();
-			Commands.Log += Logger.Log;
+			Commands.RemoveModuleAsync<IPlugin>();
 
 			return Task.CompletedTask;
 		}
@@ -209,7 +207,7 @@ namespace Nodsoft.YumeChan.Core
 
 				if (message.HasStringPrefix("==", ref argPosition) || message.HasMentionPrefix(Client.CurrentUser, ref argPosition))
 				{
-					await Logger.Log(new LogMessage(LogSeverity.Debug, "Commands", $"Command \"{message.Content}\" received from User {message.Author.Mention}."));
+					await Logger.Log(new LogMessage(LogSeverity.Verbose, "Commands", $"Command \"{message.Content}\" received from User {message.Author.Mention}."));
 
 					SocketCommandContext context = new SocketCommandContext(Client, message);
 					IResult result = await Commands.ExecuteAsync(context, argPosition, Services);
