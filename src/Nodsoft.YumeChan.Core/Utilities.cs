@@ -18,6 +18,7 @@ namespace Nodsoft.YumeChan.Core
 			}
 			return false;
 		}
+
 		public static Task Log(this ILogger logger, LogMessage logMessage) // Adapting MS's ILogger.Log() for Discord.NET events
 		{
 			logger.Log

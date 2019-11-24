@@ -11,7 +11,7 @@ using System.Diagnostics.CodeAnalysis;
 using Nodsoft.YumeChan.PluginBase;
 using Nodsoft.YumeChan.Core.TypeReaders;
 using Microsoft.Extensions.Logging;
-
+using System.Linq;
 
 namespace Nodsoft.YumeChan.Core
 {
@@ -20,7 +20,6 @@ namespace Nodsoft.YumeChan.Core
 		Offline = 0, Online = 1, Starting = 2, Stopping = 3, Reloading = 4
 	}
 
-	[SuppressMessage("ReSharper", "SuspiciousTypeConversion.Global")]
 	public sealed class YumeCore
 	{
 		// Properties
@@ -76,6 +75,7 @@ namespace Nodsoft.YumeChan.Core
 
 		public void RunBot()
 		{
+			Services = ConfigureServices().GetAwaiter().GetResult().BuildServiceProvider();
 			StartBotAsync().Wait();
 			Task.Delay(-1).Wait();
 		}
@@ -94,10 +94,13 @@ namespace Nodsoft.YumeChan.Core
 			CoreState = YumeCoreState.Starting;
 
 			// Event Subscriptions
-			Client.Log += Logger.Log;
+			Client.Log   += Logger.Log;
 			Commands.Log += Logger.Log;
 
-			await RegisterTypeReadersAsync();
+			Client.MessageReceived += HandleCommandAsync;
+
+
+			await RegisterTypeReaders();
 			await RegisterCommandsAsync().ConfigureAwait(false);
 
 			await Client.LoginAsync(TokenType.Bot, BotToken);
@@ -110,8 +113,9 @@ namespace Nodsoft.YumeChan.Core
 		{
 			CoreState = YumeCoreState.Stopping;
 
-			await ReleaseCommands();
-			Commands = null;
+			Client.MessageReceived -= HandleCommandAsync;
+
+			await ReleaseCommandsAsync().ConfigureAwait(false);
 
 			await Client.LogoutAsync();
 			await Client.StopAsync();
@@ -144,52 +148,63 @@ namespace Nodsoft.YumeChan.Core
 			Plugins ??= new List<IPlugin> { new Modules.InternalPlugin() };				// Add YumeCore internal commands
 
 			await ExternalModulesLoader.LoadPluginAssemblies();
-			Plugins.AddRange(await ExternalModulesLoader.LoadPluginManifests());
 
-			List<IPlugin> modulesCopy = new List<IPlugin>(Plugins);
+			List<IPlugin> pluginsFromLoader = await ExternalModulesLoader.LoadPluginManifests();
+			pluginsFromLoader.RemoveAll(plugin => plugin is null);
 
-			Plugins.RemoveAll(plugin => plugin is null);
+			Plugins.AddRange(from IPlugin plugin
+							 in pluginsFromLoader
+							 where !Plugins.Exists(_plugin => _plugin.PluginDisplayName == plugin.PluginDisplayName)
+							 select plugin);
 
-			foreach (IPlugin module in modulesCopy)
+			foreach (IPlugin plugin in new List<IPlugin>(Plugins))
 			{
-				await module.LoadPlugin();
-					await Commands.AddModulesAsync(module.GetType().Assembly, Services);
+				await plugin.LoadPlugin();
+				await Commands.AddModulesAsync(plugin.GetType().Assembly, Services);
 
-					if (module is IMessageTap tap)
-					{
-						Client.MessageReceived += tap.OnMessageReceived;
-						Client.MessageUpdated += tap.OnMessageUpdated;
-						Client.MessageDeleted += tap.OnMessageDeleted;
-					}
+				if (plugin is IMessageTap tap)
+				{
+					Client.MessageReceived	+= tap.OnMessageReceived;
+					Client.MessageUpdated	+= tap.OnMessageUpdated;
+					Client.MessageDeleted	+= tap.OnMessageDeleted;
+				}
 			}
 
 			await Commands.AddModulesAsync(Assembly.GetEntryAssembly(), Services);      // Add possible Commands from Entry Assembly (contextual)
 		}
 
-		public Task ReleaseCommands()
+		public async Task ReleaseCommandsAsync()
 		{
-			Client.MessageReceived -= HandleCommandAsync;
-
-			foreach (IPlugin plugin in Plugins)
+			foreach (ModuleInfo module in new List<ModuleInfo>(Commands.Modules))
 			{
+				if (module !is Modules.ICoreModule)
+				{
+					await Commands.RemoveModuleAsync(module).ConfigureAwait(false);
+				}
+			}
+
+
+			foreach (IPlugin plugin in new List<IPlugin>(Plugins))
+			{
+				if (plugin is Modules.InternalPlugin) continue;
+
 				if (plugin is IMessageTap tap)
 				{
 					Client.MessageReceived -= tap.OnMessageReceived;
 					Client.MessageUpdated -= tap.OnMessageUpdated;
 					Client.MessageDeleted -= tap.OnMessageDeleted;
 				}
+
+				await plugin.UnloadPlugin();
+				Plugins.Remove(plugin);
 			}
-
-			Commands.RemoveModuleAsync<IPlugin>();
-
-			return Task.CompletedTask;
 		}
 
 		public async Task ReloadCommandsAsync()
 		{
 			CoreState = YumeCoreState.Reloading;
 
-			await ReleaseCommands().ConfigureAwait(true);
+			await ReleaseCommandsAsync().ConfigureAwait(true);
 
 			await RegisterCommandsAsync().ConfigureAwait(false);
 

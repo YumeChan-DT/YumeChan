@@ -1,10 +1,10 @@
-﻿using Nodsoft.YumeChan.PluginBase;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
-using System.Linq;
+using Nodsoft.YumeChan.PluginBase;
 
 namespace Nodsoft.YumeChan.Core
 {
@@ -26,7 +26,7 @@ namespace Nodsoft.YumeChan.Core
 					: Directory.CreateDirectory(pluginsLoadDirectoryPath);
 		}
 
-		internal DirectoryInfo SetDefaultPluginsDirectoryEnvironmentVariable()
+		private DirectoryInfo SetDefaultPluginsDirectoryEnvironmentVariable()
 		{
 			FileInfo file = new FileInfo(Assembly.GetExecutingAssembly().Location);
 			PluginsLoadDirectory = Directory.CreateDirectory(file.DirectoryName + Path.DirectorySeparatorChar + "Plugins" + Path.DirectorySeparatorChar);
@@ -83,10 +83,8 @@ namespace Nodsoft.YumeChan.Core
 			{
 				return Task.FromResult(pluginManifest);
 			}
-			else
-			{
-				throw new InvalidCastException();
-			}
+
+			throw new InvalidCastException();
 		}
 	}
 }
