@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace Nodsoft.YumeChan.Core.TypeReaders
 {
-	class IEmoteTypeReader : TypeReader
+	class EmoteTypeReader : TypeReader
 	{
 		public override Task<TypeReaderResult> ReadAsync(ICommandContext context, string input, IServiceProvider services)
 		{

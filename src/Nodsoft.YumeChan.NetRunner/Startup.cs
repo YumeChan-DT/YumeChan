@@ -5,8 +5,10 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
+using Nodsoft.YumeChan.Core;
 
-using static Nodsoft.YumeChan.NetRunner.Services;
+using static Nodsoft.YumeChan.NetRunner.Properties.AppProperties;
 
 
 #pragma warning disable CA1052 // Static holder types should be Static or NotInheritable
@@ -33,12 +35,25 @@ namespace Nodsoft.YumeChan.NetRunner
 			services.AddRazorPages();
 			services.AddServerSideBlazor();
 
-			BotService.Logger = LoggerService;
-
-			services.AddSingleton(LoggerService);
-			services.AddSingleton(BotService);
-
-			AppServiceCollection = services;
+			services.AddLogging();
+			services.AddSingleton(LoggerFactory.Create(builder => 
+			{
+				builder	.ClearProviders()
+#if DEBUG
+						.SetMinimumLevel(LogLevel.Trace)
+#endif
+						.AddConsole()
+						.AddFilter("Microsoft", LogLevel.Warning)
+						.AddFilter("System", LogLevel.Warning)
+						.AddDebug()
+						.AddEventLog(settings =>
+						{
+							settings.SourceName = AppName;
+							settings.LogName = AppName;
+						});
+			}));
+			services.AddSingleton(YumeCore.Instance);
+			YumeCore.ConfigureServices(services);
 		}
 
 		// This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -69,8 +84,6 @@ namespace Nodsoft.YumeChan.NetRunner
 				endpoints.MapBlazorHub();
 				endpoints.MapFallbackToPage("/_Host");
 			});
-
-			BotService.StartBotAsync().GetAwaiter().GetResult();
 		}
 	}
 }

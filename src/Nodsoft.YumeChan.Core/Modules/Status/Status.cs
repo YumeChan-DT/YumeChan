@@ -8,7 +8,7 @@ using Nodsoft.YumeChan.PluginBase;
 namespace Nodsoft.YumeChan.Core.Modules.Status
 {
 	[Group("status")]
-	public class Status : ModuleBase<SocketCommandContext>
+	public class Status : ModuleBase<SocketCommandContext>, ICoreModule
 	{
 		public static string MissingVersionSubstitute { get; } = "Unknown";
 

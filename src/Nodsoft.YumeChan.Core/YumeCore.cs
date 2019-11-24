@@ -7,9 +7,11 @@ using System.Diagnostics;
 using System.Reflection;
 using System.Threading.Tasks;
 using System.Collections.Generic;
-
+using System.Diagnostics.CodeAnalysis;
 using Nodsoft.YumeChan.PluginBase;
 using Nodsoft.YumeChan.Core.TypeReaders;
+using Microsoft.Extensions.Logging;
+using System.Linq;
 
 namespace Nodsoft.YumeChan.Core
 {
@@ -22,7 +24,7 @@ namespace Nodsoft.YumeChan.Core
 	{
 		// Properties
 
-		public static YumeCore Instance { get => lazyInstance.Value; }
+		public static YumeCore Instance { get; } = new Lazy<YumeCore>(() => new YumeCore()).Value;
 
 		public YumeCoreState CoreState { get; private set; }
 
@@ -32,8 +34,10 @@ namespace Nodsoft.YumeChan.Core
 		public CommandService Commands { get; set; }
 		public IServiceProvider Services { get; set; }
 
-		internal ModulesLoader ExternalModulesLoader { get; set; }
+		internal PluginsLoader ExternalModulesLoader { get; set; }
 		public List<IPlugin> Plugins { get; set; }
+
+		public ILogger Logger { get; set; }
 
 		/**
 		 * Remember to keep token private or to read it from an 
@@ -45,15 +49,10 @@ namespace Nodsoft.YumeChan.Core
 		 **/
 		private string BotToken { get; } = Environment.GetEnvironmentVariable("YumeChan.Token");
 
-		public ILogger Logger { get; set; }
-
-		// Fields
-		private static readonly Lazy<YumeCore> lazyInstance = new Lazy<YumeCore>(() => new YumeCore());
 
 		// Constructors
-
-		private YumeCore() { /* Use this ctor when assigning Logger berore running. */ }
-		static YumeCore() { /* Static ctor for Singleton implementation */ }
+		private YumeCore() { /** Private ctor for Singleton implementation <see cref="Instance"> **/ }
+		static YumeCore() { /** Static ctor for Singleton implementation **/ }
 
 		// Destructor
 		~YumeCore()
@@ -64,35 +63,37 @@ namespace Nodsoft.YumeChan.Core
 
 		// Methods
 
-		public void RunBot()
+		public static Task<IServiceCollection> ConfigureServices() => ConfigureServices(new ServiceCollection());
+		public static Task<IServiceCollection> ConfigureServices(IServiceCollection services)
 		{
-			StartBotAsync().Wait();
-			Task.Delay(-1).Wait();
+			services.AddSingleton<DiscordSocketClient>()
+					.AddSingleton<CommandService>()
+					.AddLogging();
+
+			return Task.FromResult(services);
 		}
 
 		public async Task StartBotAsync()
 		{
-			if (Logger is null)
+			if (Services is null)
 			{
-				throw new ApplicationException();
+				throw new InvalidOperationException("Service Provider has not been defined.", new ArgumentNullException("IServiceProvider Services"));
 			}
+
+			Client ??= Services.GetRequiredService<DiscordSocketClient>();
+			Commands ??= Services.GetRequiredService<CommandService>();
+			Logger ??= Services.GetRequiredService<ILoggerFactory>().CreateLogger<YumeCore>();
 
 			CoreState = YumeCoreState.Starting;
 
-			Client = new DiscordSocketClient();
-			Commands = new CommandService();
-
-			Services = new ServiceCollection()
-				.AddSingleton(Client)
-				.AddSingleton(Commands)
-				.BuildServiceProvider();
-
-
 			// Event Subscriptions
-			Client.Log += Logger.Log;
+			Client.Log   += Logger.Log;
 			Commands.Log += Logger.Log;
 
-			await RegisterTypeReadersAsync();
+			Client.MessageReceived += HandleCommandAsync;
+
+
+			await RegisterTypeReaders();
 			await RegisterCommandsAsync().ConfigureAwait(false);
 
 			await Client.LoginAsync(TokenType.Bot, BotToken);
@@ -105,14 +106,15 @@ namespace Nodsoft.YumeChan.Core
 		{
 			CoreState = YumeCoreState.Stopping;
 
-			Services = null;
-			Commands = null;
+			Client.MessageReceived -= HandleCommandAsync;
+
+			await ReleaseCommandsAsync().ConfigureAwait(false);
 
 			await Client.LogoutAsync();
 			await Client.StopAsync();
 
-			Client.Dispose();
-			Client = null;
+			Client.Log   -= Logger.Log;
+			Commands.Log -= Logger.Log;
 
 			CoreState = YumeCoreState.Offline;
 		}
@@ -126,74 +128,76 @@ namespace Nodsoft.YumeChan.Core
 			await StartBotAsync().ConfigureAwait(false);
 		}
 
-		public Task RegisterTypeReadersAsync()
-		{
-			Commands.AddTypeReader(typeof(IEmote), new IEmoteTypeReader());
+		public Task RegisterTypeReaders()
+		{	
+			Commands.AddTypeReader(typeof(IEmote), new EmoteTypeReader());
 
 			return Task.CompletedTask;
 		}
 
 		public async Task RegisterCommandsAsync()
 		{
-			ExternalModulesLoader = new ModulesLoader(string.Empty);
+			ExternalModulesLoader ??= new PluginsLoader(string.Empty);
+			Plugins ??= new List<IPlugin> { new Modules.InternalPlugin() };				// Add YumeCore internal commands
 
-			Client.MessageReceived += HandleCommandAsync;
+			await ExternalModulesLoader.LoadPluginAssemblies();
 
-			Plugins = new List<IPlugin> { new Modules.InternalPlugin() };               // Add YumeCore internal commands
+			List<IPlugin> pluginsFromLoader = await ExternalModulesLoader.LoadPluginManifests();
+			pluginsFromLoader.RemoveAll(plugin => plugin is null);
 
-			await ExternalModulesLoader.LoadModuleAssemblies();
-			Plugins.AddRange(await ExternalModulesLoader.LoadModuleManifests());
+			Plugins.AddRange(from IPlugin plugin
+							 in pluginsFromLoader
+							 where !Plugins.Exists(_plugin => _plugin.PluginDisplayName == plugin.PluginDisplayName)
+							 select plugin);
 
-			List<IPlugin> modulesCopy = new List<IPlugin>(Plugins);
-
-			foreach (IPlugin module in modulesCopy)
+			foreach (IPlugin plugin in new List<IPlugin>(Plugins))
 			{
-				if (module is null)
-				{
-					Plugins.Remove(module);
-				}
-				else
-				{ 
-					await module.LoadPlugin();
-					await Commands.AddModulesAsync(module.GetType().Assembly, Services);
+				await plugin.LoadPlugin();
+				await Commands.AddModulesAsync(plugin.GetType().Assembly, Services);
 
-					if (module is IMessageTap tap)
-					{
-						Client.MessageReceived += tap.OnMessageReceived;
-						Client.MessageUpdated += tap.OnMessageUpdated;
-						Client.MessageDeleted += tap.OnMessageDeleted;
-					}
+				if (plugin is IMessageTap tap)
+				{
+					Client.MessageReceived	+= tap.OnMessageReceived;
+					Client.MessageUpdated	+= tap.OnMessageUpdated;
+					Client.MessageDeleted	+= tap.OnMessageDeleted;
 				}
 			}
 
 			await Commands.AddModulesAsync(Assembly.GetEntryAssembly(), Services);      // Add possible Commands from Entry Assembly (contextual)
 		}
 
-		public Task ReleaseCommands()
+		public async Task ReleaseCommandsAsync()
 		{
-			Client.MessageReceived -= HandleCommandAsync;
-
-			foreach (IPlugin plugin in Plugins)
+			foreach (ModuleInfo module in new List<ModuleInfo>(Commands.Modules))
 			{
+				if (module !is Modules.ICoreModule)
+				{
+					await Commands.RemoveModuleAsync(module).ConfigureAwait(false);
+				}
+			}
+
+
+			foreach (IPlugin plugin in new List<IPlugin>(Plugins))
+			{
+				if (plugin is Modules.InternalPlugin) continue;
+
 				if (plugin is IMessageTap tap)
 				{
 					Client.MessageReceived -= tap.OnMessageReceived;
 					Client.MessageUpdated -= tap.OnMessageUpdated;
 					Client.MessageDeleted -= tap.OnMessageDeleted;
 				}
+
+				await plugin.UnloadPlugin();
+				Plugins.Remove(plugin);
 			}
-
-			Commands = new CommandService();
-			Commands.Log += Logger.Log;
-
-			return Task.CompletedTask;
 		}
 
 		public async Task ReloadCommandsAsync()
 		{
 			CoreState = YumeCoreState.Reloading;
 
-			await ReleaseCommands().ConfigureAwait(true);
+			await ReleaseCommandsAsync().ConfigureAwait(true);
 
 			await RegisterCommandsAsync().ConfigureAwait(false);
 
@@ -208,6 +212,8 @@ namespace Nodsoft.YumeChan.Core
 
 				if (message.HasStringPrefix("==", ref argPosition) || message.HasMentionPrefix(Client.CurrentUser, ref argPosition))
 				{
+					await Logger.Log(new LogMessage(LogSeverity.Verbose, "Commands", $"Command \"{message.Content}\" received from User {message.Author.Mention}."));
+
 					SocketCommandContext context = new SocketCommandContext(Client, message);
 					IResult result = await Commands.ExecuteAsync(context, argPosition, Services);
 
@@ -218,8 +224,5 @@ namespace Nodsoft.YumeChan.Core
 				}
 			}
 		}
-
-		// Fluent Assignments
-		public void SetLogger(ILogger logger) => Logger = logger;
 	}
 }
