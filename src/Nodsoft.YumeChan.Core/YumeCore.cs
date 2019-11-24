@@ -63,9 +63,9 @@ namespace Nodsoft.YumeChan.Core
 
 		// Methods
 
-		public static Task<IServiceCollection> ConfigureServices(IServiceCollection services = null)
+		public static Task<IServiceCollection> ConfigureServices() => ConfigureServices(new ServiceCollection());
+		public static Task<IServiceCollection> ConfigureServices(IServiceCollection services)
 		{
-			services ??= new ServiceCollection();
 			services.AddSingleton<DiscordSocketClient>()
 					.AddSingleton<CommandService>()
 					.AddLogging();
@@ -73,18 +73,11 @@ namespace Nodsoft.YumeChan.Core
 			return Task.FromResult(services);
 		}
 
-		public void RunBot()
-		{
-			Services = ConfigureServices().GetAwaiter().GetResult().BuildServiceProvider();
-			StartBotAsync().Wait();
-			Task.Delay(-1).Wait();
-		}
-
 		public async Task StartBotAsync()
 		{
 			if (Services is null)
 			{
-				throw new ApplicationException("Service Provider has not been defined.");
+				throw new InvalidOperationException("Service Provider has not been defined.", new ArgumentNullException("IServiceProvider Services"));
 			}
 
 			Client ??= Services.GetRequiredService<DiscordSocketClient>();
