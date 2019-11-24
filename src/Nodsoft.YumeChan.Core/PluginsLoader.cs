@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using Nodsoft.YumeChan.PluginBase;
 
@@ -12,7 +13,7 @@ namespace Nodsoft.YumeChan.Core
 	{
 		internal List<Assembly> PluginAssemblies { get; set; }
 		internal List<FileInfo> PluginFiles { get; set; }
-		internal List<IPlugin> PluginManifests { get; set; }
+		internal List<Plugin> PluginManifests { get; set; }
 
 		internal DirectoryInfo PluginsLoadDirectory { get; set; }
 		internal string PluginsLoadDiscriminator { get; set; } = string.Empty;
@@ -31,33 +32,32 @@ namespace Nodsoft.YumeChan.Core
 			FileInfo file = new FileInfo(Assembly.GetExecutingAssembly().Location);
 			PluginsLoadDirectory = Directory.CreateDirectory(file.DirectoryName + Path.DirectorySeparatorChar + "Plugins" + Path.DirectorySeparatorChar);
 
-			Environment.SetEnvironmentVariable("YumeChan.PluginsLocation", PluginsLoadDirectory.FullName);
+			if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+			{
+				Environment.SetEnvironmentVariable("YumeChan.PluginsLocation", PluginsLoadDirectory.FullName, EnvironmentVariableTarget.User);
+			}
 			return PluginsLoadDirectory;
 		}
 
 		public Task LoadPluginAssemblies()
 		{
 			PluginFiles = new List<FileInfo>(PluginsLoadDirectory.GetFiles($"*{PluginsLoadDiscriminator}*.dll"));
-
-			if (PluginAssemblies is null)
-			{
-				PluginAssemblies = new List<Assembly>();
-			}
+			PluginAssemblies ??= new List<Assembly>();
 
 
 			PluginAssemblies.AddRange
 			(
 				from FileInfo file in PluginFiles
-				where file! is null || file.Name != Path.GetFileName(typeof(IPlugin).Assembly.Location)
+				where file! is null || file.Name != Path.GetFileName(typeof(Plugin).Assembly.Location)
 				select Assembly.LoadFile(file.ToString())
 			);
 
 			return Task.CompletedTask;
 		}
 
-		public async Task<List<IPlugin>> LoadPluginManifests()
+		public async Task<List<Plugin>> LoadPluginManifests()
 		{
-			List<IPlugin> manifestsList = new List<IPlugin>();
+			List<Plugin> manifestsList = new List<Plugin>();
 			List<Type> pluginTypes = new List<Type>();
 
 			foreach (Assembly assembly in PluginAssemblies)
@@ -65,7 +65,7 @@ namespace Nodsoft.YumeChan.Core
 				pluginTypes.AddRange
 				(
 					from Type t in assembly.ExportedTypes
-					where t.ImplementsInterface(typeof(IPlugin))
+					where t.IsSubclassOf(typeof(Plugin))
 					select t
 				);
 			}
@@ -77,9 +77,9 @@ namespace Nodsoft.YumeChan.Core
 			return manifestsList;
 		}
 
-		internal static Task<IPlugin> InstantiateManifest(Type typePlugin)
+		internal static Task<Plugin> InstantiateManifest(Type typePlugin)
 		{
-			if (Activator.CreateInstance(typePlugin) is IPlugin pluginManifest)
+			if (Activator.CreateInstance(typePlugin) is Plugin pluginManifest)
 			{
 				return Task.FromResult(pluginManifest);
 			}

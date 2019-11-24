@@ -18,8 +18,8 @@ namespace Nodsoft.YumeChan.Core.Modules.Status
 			EmbedBuilder embed = new EmbedBuilder()
 				.WithTitle("Yume-Chan")
 				.WithDescription($"Status : {Instance.CoreState.ToString()}")
-				.AddField("Core", $"Version : {(CoreVersion != null ? CoreVersion.ToString() : MissingVersionSubstitute)}", true)
-				.AddField("Loaded Modules", $"Count : {(Instance.Plugins != null ? Instance.Plugins.Count.ToString() : "None")}", true);
+				.AddField("Core", $"Version : {CoreVersion.ToString() ?? MissingVersionSubstitute}", true)
+				.AddField("Loaded Modules", $"Count : {(Instance.Plugins is null ? "None" : Instance.Plugins.Count.ToString())}", true);
 #if DEBUG
 			embed.AddField("Debug", "Debug Build Active.");
 #endif
@@ -34,10 +34,11 @@ namespace Nodsoft.YumeChan.Core.Modules.Status
 				.WithTitle("Plugins")
 				.WithDescription($"Currently Loaded : **{Instance.Plugins.Count}** Plugins.");
 
-			foreach (IPlugin pluginManifest in Instance.Plugins)
+			foreach (Plugin pluginManifest in Instance.Plugins)
 			{
 				embed.AddField(pluginManifest.PluginDisplayName,
-					$"Version : {(pluginManifest.PluginVersion != null ? pluginManifest.PluginVersion.ToString() : MissingVersionSubstitute)}\n" +
+					$"({pluginManifest.PluginAssemblyName})\n" +
+					$"Version : {pluginManifest.PluginVersion.ToString() ?? MissingVersionSubstitute}\n" +
 					$"Loaded : {(pluginManifest.PluginLoaded ? "Yes" : "No")}", true);
 			}
 
