@@ -1,12 +1,12 @@
 ﻿@page "/BotPlugins"
 @attribute [Authorize]
+@inject Nodsoft.YumeChan.Core.YumeCore BotService
 
-@using static Nodsoft.YumeChan.Core.YumeCore;
 @using Nodsoft.YumeChan.PluginBase;
 
 <h1>Plugins</h1>
 <br />
-<h3>Currently Loaded : @Instance.Plugins.Count Plugins</h3>
+<h3>Currently Loaded : @BotService.Plugins.Count Plugins</h3>
 <br />
 
 <table class="table">
@@ -18,12 +18,12 @@
         </tr>
     </thead>
     <tbody>
-        @foreach (IPlugin pluginManifest in Instance.Plugins)
+        @foreach (IPlugin pluginManifest in BotService.Plugins)
         {
             <tr>
                 <td>@pluginManifest.PluginDisplayName</td>
                 <td>@pluginManifest.PluginVersion</td>
-                <td>@pluginManifest.PluginLoaded</td>
+                <td>@(pluginManifest.PluginLoaded ? "Yes" : "No")</td>
             </tr>
         }
     </tbody>

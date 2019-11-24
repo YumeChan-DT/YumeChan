@@ -110,14 +110,14 @@ namespace Nodsoft.YumeChan.Core
 		{
 			CoreState = YumeCoreState.Stopping;
 
-			Services = null;
+			await ReleaseCommands();
 			Commands = null;
 
 			await Client.LogoutAsync();
 			await Client.StopAsync();
 
-			Client.Dispose();
-			Client = null;
+			Client.Log   -= Logger.Log;
+			Commands.Log -= Logger.Log;
 
 			CoreState = YumeCoreState.Offline;
 		}
@@ -131,8 +131,8 @@ namespace Nodsoft.YumeChan.Core
 			await StartBotAsync().ConfigureAwait(false);
 		}
 
-		public Task RegisterTypeReadersAsync()
-		{
+		public Task RegisterTypeReaders()
+		{	
 			Commands.AddTypeReader(typeof(IEmote), new EmoteTypeReader());
 
 			return Task.CompletedTask;
@@ -140,11 +140,8 @@ namespace Nodsoft.YumeChan.Core
 
 		public async Task RegisterCommandsAsync()
 		{
-			ExternalModulesLoader = new PluginsLoader(string.Empty);
-
-			Client.MessageReceived += HandleCommandAsync;
-
-			Plugins = new List<IPlugin> { new Modules.InternalPlugin() };               // Add YumeCore internal commands
+			ExternalModulesLoader ??= new PluginsLoader(string.Empty);
+			Plugins ??= new List<IPlugin> { new Modules.InternalPlugin() };				// Add YumeCore internal commands
 
 			await ExternalModulesLoader.LoadPluginAssemblies();
 			Plugins.AddRange(await ExternalModulesLoader.LoadPluginManifests());
