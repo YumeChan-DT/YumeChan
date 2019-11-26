@@ -12,6 +12,8 @@ using Nodsoft.YumeChan.PluginBase;
 using Nodsoft.YumeChan.Core.TypeReaders;
 using Microsoft.Extensions.Logging;
 using System.Linq;
+using System.IO;
+using System.Runtime.InteropServices;
 
 namespace Nodsoft.YumeChan.Core
 {
@@ -51,8 +53,17 @@ namespace Nodsoft.YumeChan.Core
 
 
 		// Constructors
-		private YumeCore() { /** Private ctor for Singleton implementation <see cref="Instance"> **/ }
 		static YumeCore() { /** Static ctor for Singleton implementation **/ }
+		private YumeCore() 
+		{
+#if DEBUG
+			if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+			{
+				Environment.SetEnvironmentVariable("YumeChan.Path", new FileInfo(Assembly.GetExecutingAssembly().Location).DirectoryName, EnvironmentVariableTarget.User);
+			}
+#endif
+		}
+
 
 		// Destructor
 		~YumeCore()
