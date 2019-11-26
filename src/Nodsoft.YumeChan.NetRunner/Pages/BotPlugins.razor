@@ -12,15 +12,17 @@
 <table class="table">
     <thead>
         <tr>
+            <th>Assembly</th>
             <th>Plugin Name</th>
             <th>Version</th>
             <th>Active</th>
         </tr>
     </thead>
     <tbody>
-        @foreach (IPlugin pluginManifest in BotService.Plugins)
+        @foreach (Plugin pluginManifest in BotService.Plugins)
         {
             <tr>
+                <td>@pluginManifest.PluginAssemblyName</td>
                 <td>@pluginManifest.PluginDisplayName</td>
                 <td>@pluginManifest.PluginVersion</td>
                 <td>@(pluginManifest.PluginLoaded ? "Yes" : "No")</td>

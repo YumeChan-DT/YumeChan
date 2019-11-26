@@ -4,26 +4,20 @@ using System.Threading.Tasks;
 
 namespace Nodsoft.YumeChan.Core.Modules
 {
-	internal class InternalPlugin : IPlugin
+	internal class InternalPlugin : Plugin
 	{
-		public Version PluginVersion { get; } = typeof(YumeCore).Assembly.GetName().Version;
+		public override string PluginDisplayName { get; } = "YumeCore Internals";
 
-		public string PluginDisplayName { get; } = "YumeCore Internals";
+		public override bool PluginStealth { get; } = false;
 
-		public bool PluginStealth { get; } = false;
-
-		public bool PluginLoaded { get; internal set; }
-
-		public Task LoadPlugin()
+		public override async Task LoadPlugin()
 		{
-			PluginLoaded = true;
-			return Task.CompletedTask;
+			await base.LoadPlugin();
 		}
 
-		public Task UnloadPlugin()
+		public override async Task UnloadPlugin()
 		{
-			PluginLoaded = false;
-			return Task.CompletedTask;
+			await base.UnloadPlugin();
 		}
 	}
 }

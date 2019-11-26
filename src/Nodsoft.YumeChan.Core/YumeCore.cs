@@ -12,6 +12,8 @@ using Nodsoft.YumeChan.PluginBase;
 using Nodsoft.YumeChan.Core.TypeReaders;
 using Microsoft.Extensions.Logging;
 using System.Linq;
+using System.IO;
+using System.Runtime.InteropServices;
 
 namespace Nodsoft.YumeChan.Core
 {
@@ -35,7 +37,7 @@ namespace Nodsoft.YumeChan.Core
 		public IServiceProvider Services { get; set; }
 
 		internal PluginsLoader ExternalModulesLoader { get; set; }
-		public List<IPlugin> Plugins { get; set; }
+		public List<Plugin> Plugins { get; set; }
 
 		public ILogger Logger { get; set; }
 
@@ -51,8 +53,17 @@ namespace Nodsoft.YumeChan.Core
 
 
 		// Constructors
-		private YumeCore() { /** Private ctor for Singleton implementation <see cref="Instance"> **/ }
 		static YumeCore() { /** Static ctor for Singleton implementation **/ }
+		private YumeCore() 
+		{
+#if DEBUG
+			if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+			{
+				Environment.SetEnvironmentVariable("YumeChan.Path", new FileInfo(Assembly.GetExecutingAssembly().Location).DirectoryName, EnvironmentVariableTarget.User);
+			}
+#endif
+		}
+
 
 		// Destructor
 		~YumeCore()
@@ -138,19 +149,19 @@ namespace Nodsoft.YumeChan.Core
 		public async Task RegisterCommandsAsync()
 		{
 			ExternalModulesLoader ??= new PluginsLoader(string.Empty);
-			Plugins ??= new List<IPlugin> { new Modules.InternalPlugin() };				// Add YumeCore internal commands
+			Plugins ??= new List<Plugin> { new Modules.InternalPlugin() };				// Add YumeCore internal commands
 
 			await ExternalModulesLoader.LoadPluginAssemblies();
 
-			List<IPlugin> pluginsFromLoader = await ExternalModulesLoader.LoadPluginManifests();
+			List<Plugin> pluginsFromLoader = await ExternalModulesLoader.LoadPluginManifests();
 			pluginsFromLoader.RemoveAll(plugin => plugin is null);
 
-			Plugins.AddRange(from IPlugin plugin
+			Plugins.AddRange(from Plugin plugin
 							 in pluginsFromLoader
-							 where !Plugins.Exists(_plugin => _plugin.PluginDisplayName == plugin.PluginDisplayName)
+							 where !Plugins.Exists(_plugin => _plugin.PluginAssemblyName == plugin.PluginAssemblyName)
 							 select plugin);
 
-			foreach (IPlugin plugin in new List<IPlugin>(Plugins))
+			foreach (Plugin plugin in new List<Plugin>(Plugins))
 			{
 				await plugin.LoadPlugin();
 				await Commands.AddModulesAsync(plugin.GetType().Assembly, Services);
@@ -177,7 +188,7 @@ namespace Nodsoft.YumeChan.Core
 			}
 
 
-			foreach (IPlugin plugin in new List<IPlugin>(Plugins))
+			foreach (Plugin plugin in new List<Plugin>(Plugins))
 			{
 				if (plugin is Modules.InternalPlugin) continue;
 
