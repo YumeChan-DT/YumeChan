@@ -5,6 +5,7 @@ using System.Linq;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
+using Microsoft.Extensions.DependencyInjection;
 using Nodsoft.YumeChan.PluginBase;
 
 namespace Nodsoft.YumeChan.Core
@@ -79,7 +80,7 @@ namespace Nodsoft.YumeChan.Core
 
 		internal static Task<Plugin> InstantiateManifest(Type typePlugin)
 		{
-			if (Activator.CreateInstance(typePlugin) is Plugin pluginManifest)
+			if (ActivatorUtilities.CreateInstance(YumeCore.Instance.Services, typePlugin) is Plugin pluginManifest)
 			{
 				return Task.FromResult(pluginManifest);
 			}
