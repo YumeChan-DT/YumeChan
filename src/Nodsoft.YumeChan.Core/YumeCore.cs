@@ -57,9 +57,17 @@ namespace Nodsoft.YumeChan.Core
 		private YumeCore() 
 		{
 #if DEBUG
-			if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+			try
 			{
-				Environment.SetEnvironmentVariable("YumeChan.Path", new FileInfo(Assembly.GetExecutingAssembly().Location).DirectoryName, EnvironmentVariableTarget.User);
+				Environment.SetEnvironmentVariable("YumeChan.Path", new FileInfo(Assembly.GetExecutingAssembly().Location).DirectoryName);
+				if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+				{
+					Environment.SetEnvironmentVariable("YumeChan.Path", new FileInfo(Assembly.GetExecutingAssembly().Location).DirectoryName, EnvironmentVariableTarget.User);
+				}
+			}
+			catch (System.Security.SecurityException e)
+			{
+				Logger.LogWarning(e, "Failed to write Environment Variable \"YumeChan.PluginsLocation\".");
 			}
 #endif
 		}

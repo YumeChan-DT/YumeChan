@@ -7,6 +7,8 @@ using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
 using Nodsoft.YumeChan.PluginBase;
+using Microsoft.Extensions.Logging;
+using System.Security;
 
 namespace Nodsoft.YumeChan.Core
 {
@@ -33,9 +35,17 @@ namespace Nodsoft.YumeChan.Core
 			FileInfo file = new FileInfo(Assembly.GetExecutingAssembly().Location);
 			PluginsLoadDirectory = Directory.CreateDirectory(file.DirectoryName + Path.DirectorySeparatorChar + "Plugins" + Path.DirectorySeparatorChar);
 
-			if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+			try
 			{
-				Environment.SetEnvironmentVariable("YumeChan.PluginsLocation", PluginsLoadDirectory.FullName, EnvironmentVariableTarget.User);
+				Environment.SetEnvironmentVariable("YumeChan.PluginsLocation", PluginsLoadDirectory.FullName);
+				if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+				{
+					Environment.SetEnvironmentVariable("YumeChan.PluginsLocation", PluginsLoadDirectory.FullName, EnvironmentVariableTarget.User);
+				}
+			}
+			catch (SecurityException e)
+			{
+				YumeCore.Instance.Logger.Log(LogLevel.Warning, e, "Failed to write Environment Variable \"YumeChan.PluginsLocation\".");
 			}
 			return PluginsLoadDirectory;
 		}
