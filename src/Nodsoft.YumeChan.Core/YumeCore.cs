@@ -7,9 +7,9 @@ using System.Diagnostics;
 using System.Reflection;
 using System.Threading.Tasks;
 using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
 using Nodsoft.YumeChan.PluginBase;
 using Nodsoft.YumeChan.Core.TypeReaders;
+using Nodsoft.YumeChan.Core.Config;
 using Microsoft.Extensions.Logging;
 using System.Linq;
 using System.IO;
@@ -51,26 +51,11 @@ namespace Nodsoft.YumeChan.Core
 		 **/
 		private string BotToken { get; } = Environment.GetEnvironmentVariable("YumeChan.Token");
 
+		internal ConfigurationProvider ConfigProvider { get; private set; }
+		public CoreProperties CoreProperties { get; private set; }
 
 		// Constructors
 		static YumeCore() { /** Static ctor for Singleton implementation **/ }
-		private YumeCore() 
-		{
-#if DEBUG
-			try
-			{
-				Environment.SetEnvironmentVariable("YumeChan.Path", new FileInfo(Assembly.GetExecutingAssembly().Location).DirectoryName);
-				if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-				{
-					Environment.SetEnvironmentVariable("YumeChan.Path", new FileInfo(Assembly.GetExecutingAssembly().Location).DirectoryName, EnvironmentVariableTarget.User);
-				}
-			}
-			catch (System.Security.SecurityException e)
-			{
-				Logger.LogWarning(e, "Failed to write Environment Variable \"YumeChan.PluginsLocation\".");
-			}
-#endif
-		}
 
 
 		// Destructor
@@ -87,6 +72,7 @@ namespace Nodsoft.YumeChan.Core
 		{
 			services.AddSingleton<DiscordSocketClient>()
 					.AddSingleton<CommandService>()
+					.AddSingleton<ConfigurationProvider>()
 					.AddLogging();
 
 			return Task.FromResult(services);
@@ -102,6 +88,14 @@ namespace Nodsoft.YumeChan.Core
 			Client ??= Services.GetRequiredService<DiscordSocketClient>();
 			Commands ??= Services.GetRequiredService<CommandService>();
 			Logger ??= Services.GetRequiredService<ILoggerFactory>().CreateLogger<YumeCore>();
+			ConfigProvider ??= Services.GetRequiredService<ConfigurationProvider>();
+
+			CoreProperties ??= new CoreProperties(ConfigProvider);
+			ConfigProvider.BindConfigToProperties(CoreProperties);
+
+			CoreProperties.Path_Core	??= Directory.GetCurrentDirectory();
+			CoreProperties.Path_Plugins ??= CoreProperties.Path_Core + Path.DirectorySeparatorChar + "Plugins";
+			CoreProperties.Path_Config	??= CoreProperties.Path_Core + Path.DirectorySeparatorChar + "Config";
 
 			CoreState = YumeCoreState.Starting;
 
@@ -115,7 +109,11 @@ namespace Nodsoft.YumeChan.Core
 			await RegisterTypeReaders();
 			await RegisterCommandsAsync().ConfigureAwait(false);
 
-			await Client.LoginAsync(TokenType.Bot, BotToken);
+			string _token = string.IsNullOrWhiteSpace(CoreProperties.BotToken)
+							? Environment.GetEnvironmentVariable(CoreProperties.AppInternalName + ".Token") 
+							: CoreProperties.BotToken;
+
+			await Client.LoginAsync(TokenType.Bot, _token);
 			await Client.StartAsync();
 
 			CoreState = YumeCoreState.Online;
