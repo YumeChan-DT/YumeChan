@@ -1,38 +1,21 @@
-﻿using System.Collections.Generic;
+﻿using System.Configuration;
 using System.IO;
-using Microsoft.Extensions.Configuration;
+using Config.Net;
 
 namespace Nodsoft.YumeChan.Core.Config
 {
 	internal class ConfigurationProvider
 	{
-		internal IConfigurationBuilder ConfigBuilder { get; private set; }
-
-		internal IConfigurationRoot Configuration { get; private set; }
+		internal ConfigurationBuilder<ICoreProperties> ConfigBuilder { get; private set; }
+		public ICoreProperties Configuration { get; private set; }
 
 		public ConfigurationProvider()
 		{
-			ConfigBuilder = InitDefaultConfiguration();
-			Configuration = ConfigBuilder.Build();
+			Configuration = InitDefaultConfiguration().Build();
 		}
-
-		public IConfigurationBuilder InitDefaultConfiguration()
+		public ConfigurationBuilder<ICoreProperties> InitDefaultConfiguration()
 		{
-			return new ConfigurationBuilder()
-						.SetBasePath(Directory.GetCurrentDirectory() + Path.DirectorySeparatorChar + "Config")
-						.AddJsonFile("botconfig.json", false, true);
-		}
-
-		internal void BindConfigToProperties(CoreProperties properties) => Configuration.Bind(properties, options => options.BindNonPublicProperties = true);
-
-		internal object this[string key]
-		{
-			get => Configuration.GetSection(nameof(CoreProperties))[key];
-			set
-			{
-				Configuration.GetSection(nameof(CoreProperties))[key] = value as string;
-				Configuration.Reload();
-			}
+			return new ConfigurationBuilder<ICoreProperties>().UseJsonFile("Config" + Path.DirectorySeparatorChar + "coreconfig.json");
 		}
 	}
 }

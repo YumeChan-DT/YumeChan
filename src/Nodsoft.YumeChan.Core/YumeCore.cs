@@ -13,7 +13,6 @@ using Nodsoft.YumeChan.Core.Config;
 using Microsoft.Extensions.Logging;
 using System.Linq;
 using System.IO;
-using System.Runtime.InteropServices;
 
 namespace Nodsoft.YumeChan.Core
 {
@@ -52,7 +51,7 @@ namespace Nodsoft.YumeChan.Core
 		private string BotToken { get; } = Environment.GetEnvironmentVariable("YumeChan.Token");
 
 		internal ConfigurationProvider ConfigProvider { get; private set; }
-		public CoreProperties CoreProperties { get; private set; }
+		public ICoreProperties CoreProperties { get; private set; }
 
 		// Constructors
 		static YumeCore() { /** Static ctor for Singleton implementation **/ }
@@ -89,9 +88,7 @@ namespace Nodsoft.YumeChan.Core
 			Commands ??= Services.GetRequiredService<CommandService>();
 			Logger ??= Services.GetRequiredService<ILoggerFactory>().CreateLogger<YumeCore>();
 			ConfigProvider ??= Services.GetRequiredService<ConfigurationProvider>();
-
-			CoreProperties ??= new CoreProperties(ConfigProvider);
-			ConfigProvider.BindConfigToProperties(CoreProperties);
+			CoreProperties = ConfigProvider.Configuration;
 
 			CoreProperties.Path_Core	??= Directory.GetCurrentDirectory();
 			CoreProperties.Path_Plugins ??= CoreProperties.Path_Core + Path.DirectorySeparatorChar + "Plugins";
