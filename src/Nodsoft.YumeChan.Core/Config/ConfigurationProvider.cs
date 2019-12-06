@@ -1,5 +1,4 @@
-﻿using System.Configuration;
-using System.IO;
+﻿using System.IO;
 using Config.Net;
 
 namespace Nodsoft.YumeChan.Core.Config
