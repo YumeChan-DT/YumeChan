@@ -17,8 +17,11 @@
 	</PropertyGroup>
 
 	<ItemGroup>
+		<PackageReference Include="Config.Net" Version="4.14.14" />
+		<PackageReference Include="Config.Net.Json" Version="4.14.14" />
 		<PackageReference Include="Discord.Net" Version="2.1.1" />
 		<PackageReference Include="Discord.Net.Commands" Version="2.1.1" />
+		<PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="3.1.0-preview3.19553.2" />
 		<PackageReference Include="Microsoft.Extensions.Logging" Version="3.1.0-preview3.19553.2" />
 		<PackageReference Include="SourceLink.Create.CommandLine" Version="2.8.3">
 			<PrivateAssets>all</PrivateAssets>
@@ -37,5 +40,13 @@
 	    <PackagePath></PackagePath>
 	  </None>
 	</ItemGroup>
+
+	<ItemGroup>
+	  <None Update="Config\botconfig.json">
+	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  </None>
+	</ItemGroup>
+
+	<ProjectExtensions><VisualStudio><UserProperties config_4botconfig_1json__JsonSchema="http://json.schemastore.org/config" /></VisualStudio></ProjectExtensions>
 
 </Project>

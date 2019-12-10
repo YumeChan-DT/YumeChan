@@ -16,7 +16,7 @@ namespace Nodsoft.YumeChan.Core.Modules.Status
 		public async Task CoreStatusAsync()
 		{
 			EmbedBuilder embed = new EmbedBuilder()
-				.WithTitle("Yume-Chan")
+				.WithTitle(Instance.CoreProperties.AppDisplayName)
 				.WithDescription($"Status : {Instance.CoreState.ToString()}")
 				.AddField("Core", $"Version : {CoreVersion.ToString() ?? MissingVersionSubstitute}", true)
 				.AddField("Loaded Modules", $"Count : {(Instance.Plugins is null ? "None" : Instance.Plugins.Count.ToString())}", true);
