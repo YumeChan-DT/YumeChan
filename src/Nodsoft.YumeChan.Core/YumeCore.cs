@@ -40,17 +40,7 @@ namespace Nodsoft.YumeChan.Core
 
 		public ILogger Logger { get; set; }
 
-		/**
-		 * Remember to keep token private or to read it from an 
-		 *	external source! In this case, we are reading the token 
-		 *	from an environment variable. If you do not know how to set-
-		 *	environment variables, you may find more information on 
-		 *	Internet or by using other methods such as reading 
-		 *	a configuration. 
-		 **/
-		private string BotToken { get; } = Environment.GetEnvironmentVariable("YumeChan.Token");
-
-		internal ConfigurationProvider ConfigProvider { get; private set; }
+		internal ConfigurationProvider<ICoreProperties> ConfigProvider { get; private set; }
 		public ICoreProperties CoreProperties { get; private set; }
 
 		// Constructors
@@ -71,7 +61,7 @@ namespace Nodsoft.YumeChan.Core
 		{
 			services.AddSingleton<DiscordSocketClient>()
 					.AddSingleton<CommandService>()
-					.AddSingleton<ConfigurationProvider>()
+					.AddTransient(typeof(PluginBase.Tools.IConfigProvider<>), typeof(ConfigurationProvider<>))
 					.AddLogging();
 
 			return Task.FromResult(services);
@@ -87,8 +77,8 @@ namespace Nodsoft.YumeChan.Core
 			Client ??= Services.GetRequiredService<DiscordSocketClient>();
 			Commands ??= Services.GetRequiredService<CommandService>();
 			Logger ??= Services.GetRequiredService<ILoggerFactory>().CreateLogger<YumeCore>();
-			ConfigProvider ??= Services.GetRequiredService<ConfigurationProvider>();
-			CoreProperties = ConfigProvider.Configuration;
+			ConfigProvider ??= Services.GetRequiredService<PluginBase.Tools.IConfigProvider<ICoreProperties>>() as ConfigurationProvider<ICoreProperties>;
+			CoreProperties = ConfigProvider.InitConfig("coreconfig.json", true).PopulateCoreProperties();
 
 			CoreProperties.Path_Core	??= Directory.GetCurrentDirectory();
 			CoreProperties.Path_Plugins ??= CoreProperties.Path_Core + Path.DirectorySeparatorChar + "Plugins";
@@ -106,11 +96,7 @@ namespace Nodsoft.YumeChan.Core
 			await RegisterTypeReaders();
 			await RegisterCommandsAsync().ConfigureAwait(false);
 
-			string _token = string.IsNullOrWhiteSpace(CoreProperties.BotToken)
-							? Environment.GetEnvironmentVariable(CoreProperties.AppInternalName + ".Token") 
-							: CoreProperties.BotToken;
-
-			await Client.LoginAsync(TokenType.Bot, _token);
+			await Client.LoginAsync(TokenType.Bot, await GetBotTokenAsync());
 			await Client.StartAsync();
 
 			CoreState = YumeCoreState.Online;
@@ -237,6 +223,32 @@ namespace Nodsoft.YumeChan.Core
 					}
 				}
 			}
+		}
+
+		private Task<string> GetBotTokenAsync()
+		{
+			string token = CoreProperties.BotToken;
+
+			if (string.IsNullOrWhiteSpace(token))
+			{
+				string envVarName = CoreProperties.AppInternalName + ".Token";
+
+				token = Environment.GetEnvironmentVariable(envVarName);
+
+				if (string.IsNullOrWhiteSpace(token))
+				{
+					ApplicationException e = new ApplicationException("No Bot Token supplied.");
+					Logger.LogCritical(e,	$"Bot Token was not found in \"coreproperties.json\" Config File, and Environment Variable \"{envVarName}\" is empty. " +
+											$"Please set a Bot Token before launching the Bot.");
+					throw e;
+				}
+				else
+				{
+					Logger.LogInformation($"Bot Token was read from Environment Variable \"{envVarName}\", instead of \"coreproperties.json\" Config File.");
+				}
+			}
+
+			return Task.FromResult(token);
 		}
 	}
 }

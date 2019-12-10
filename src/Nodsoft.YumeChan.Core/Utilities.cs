@@ -1,5 +1,6 @@
 ﻿using Discord;
 using Microsoft.Extensions.Logging;
+using Nodsoft.YumeChan.Core.Config;
 using System;
 using System.Threading.Tasks;
 
@@ -39,6 +40,15 @@ namespace Nodsoft.YumeChan.Core
 			);
 
 			return Task.CompletedTask;
+		}
+
+		public static ICoreProperties PopulateCoreProperties(this ICoreProperties properties)
+		{
+			properties.AppInternalName ??= "YumeChan";
+			properties.AppDisplayName ??= "Yume-Chan";
+			properties.BotToken ??= string.Empty;
+
+			return properties;
 		}
 	}
 }
