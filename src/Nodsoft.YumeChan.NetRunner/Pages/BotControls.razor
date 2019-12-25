@@ -2,6 +2,7 @@
 @attribute [Authorize]
 
 @using Nodsoft.YumeChan.NetRunner.Controls.Assets;
+@using Nodsoft.YumeChan.NetRunner.Models;
 @using Nodsoft.YumeChan.Core;
 
 @inject YumeCore BotService
@@ -26,8 +27,25 @@
 <br />
 <button class="btn btn-info" @onclick="ReloadModulesButton">Reload Modules</button>
 
+<br />
+<br />
 
-@functions
+<h4>Bot Status :</h4>
+
+<EditForm Model="Model" OnValidSubmit="HandleValidSubmit">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+
+    <div class="form-group">
+        <label for="text">Change Text :</label>
+        <InputText Id="text" Class="form-control" @bind-Value="Model.StatusMessage" />
+    </div>
+
+    <button class="btn btn-outline-info" type="submit">Change</button>
+</EditForm>
+
+
+@code
 {
     private string[] DisplayStatusAlert()
     {
@@ -41,6 +59,7 @@
             _ => new string[]                       { Alerts.danger, "Bot Status is Unknown." },
         };
     }
+
 
     public async Task StartBotButton()
     {
@@ -72,5 +91,13 @@
         {
             await BotService.ReloadCommandsAsync();
         }
+    }
+
+
+    StatusModel Model = new StatusModel();
+
+    protected void HandleValidSubmit()
+    {
+        BotService.Client.SetGameAsync(Model.StatusMessage);
     }
 }
