@@ -8,24 +8,45 @@
 @inject YumeCore BotService
 
 <h1>Bot Controls</h1>
-<br />
-<br />
-
-<div class=@DisplayStatusAlert()[0] role="alert">@DisplayStatusAlert()[1]</div>
-<br />
-
-<h3>Core :</h3>
-<br />
-<button class="btn btn-success" @onclick="StartBotButton">Start Bot Service</button>
-<button class="btn btn-danger" @onclick="StopBotButton">Stop Bot Service</button>
-<button class="btn btn-warning" @onclick="RestartBotButton">Restart Bot Service</button>
 
 <br />
-<br />
 
-<h3>Modules :</h3>
-<br />
-<button class="btn btn-info" @onclick="ReloadModulesButton">Reload Modules</button>
+<div class="card-group">
+    <div class="card">
+        <h3 class="card-header">Core</h3>
+
+        <div class="card-body">
+            <div class="d-flex justify-content-between">
+                <div class="p-2 bd-highlight">
+                    <p><b>Core Version :</b> @YumeCore.CoreVersion.ToString()</p>
+                </div>
+                <div class="p-2 bd-highlight"><p class=@DisplayStatusAlert()[0]>@DisplayStatusAlert()[1]</p></div>
+            </div>
+        </div>
+        <div class="card-footer">
+            <button class="btn btn-success" @onclick="StartBotButton">Start Bot Service</button>
+            <button class="btn btn-danger" @onclick="StopBotButton">Stop Bot Service</button>
+            <button class="btn btn-warning" @onclick="RestartBotButton">Restart Bot Service</button>
+        </div>
+    </div>
+
+    <div class="card">
+        <h3 class="card-header">Modules</h3>
+        <div class="card-body">
+            <div class="d-flex justify-content-between">
+                <div class="p-2 bd-highlight">
+                    <p><b>PluginBase Version :</b> @typeof(Nodsoft.YumeChan.PluginBase.Plugin).Assembly.GetName().Version.ToString()</p>
+                </div>
+                <div class="p-2 bd-highlight">
+                    <p><b>Loaded Plugins :</b> @BotService.Plugins.Count</p>
+                </div>
+            </div>
+        </div>
+        <div class="card-footer">
+            <button class="btn btn-info" @onclick="ReloadModulesButton">Reload Modules</button>
+        </div>
+    </div>
+</div>
 
 <br />
 <br />
@@ -51,12 +72,12 @@
     {
         return BotService.CoreState switch
         {
-            YumeCoreState.Offline => new string[]   { Alerts.danger, "Bot is offline." },
-            YumeCoreState.Online => new string[]    { Alerts.success, "Bot is online." },
-            YumeCoreState.Starting => new string[]  { Alerts.info, "Bot is starting..." },
-            YumeCoreState.Stopping => new string[]  { Alerts.warning, "Bot is Stopping..." },
-            YumeCoreState.Reloading => new string[] { Alerts.warning, "Bot is Reloading..." },
-            _ => new string[]                       { Alerts.danger, "Bot Status is Unknown." },
+            YumeCoreState.Offline => new string[]   { "text-danger", "Bot is offline." },
+            YumeCoreState.Online => new string[]    { "text-success", "Bot is online." },
+            YumeCoreState.Starting => new string[]  { "text-info", "Bot is starting..." },
+            YumeCoreState.Stopping => new string[]  { "text-warning", "Bot is Stopping..." },
+            YumeCoreState.Reloading => new string[] { "text-warning", "Bot is Reloading..." },
+            _ => new string[]                       { "text-danger", "Bot Status is Unknown." },
         };
     }
 
