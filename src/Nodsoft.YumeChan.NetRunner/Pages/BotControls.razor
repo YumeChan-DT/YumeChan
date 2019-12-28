@@ -12,36 +12,36 @@
 <br />
 
 <div class="card-group">
-    <div class="card">
-        <h3 class="card-header">Core</h3>
+	<div class="card">
+		<h3 class="card-header">Core</h3>
 
-        <div class="card-body">
-            <div class="d-flex justify-content-between">
-                <div class="p-2 bd-highlight"><p>@((MarkupString)DisplayAssembly(typeof(YumeCore).Assembly))</p></div>
-                <div class="p-2 bd-highlight"><p class=@DisplayStatusAlert()[0]>@DisplayStatusAlert()[1]</p></div>
-            </div>
-        </div>
-        <div class="card-footer">
-            <button class="btn btn-success" @onclick="StartBotButton">Start Bot Service</button>
-            <button class="btn btn-danger" @onclick="StopBotButton">Stop Bot Service</button>
-            <button class="btn btn-warning" @onclick="RestartBotButton">Restart Bot Service</button>
-        </div>
-    </div>
+		<div class="card-body">
+			<div class="d-flex justify-content-between">
+				<div class="p-2 bd-highlight"><p>@((MarkupString)DisplayAssembly(typeof(YumeCore).Assembly))</p></div>
+				<div class="p-2 bd-highlight"><p class=@DisplayStatusAlert()[0]>@DisplayStatusAlert()[1]</p></div>
+			</div>
+		</div>
+		<div class="card-footer">
+			<button class="btn btn-success" @onclick="StartBotButton">Start Bot Service</button>
+			<button class="btn btn-danger" @onclick="StopBotButton">Stop Bot Service</button>
+			<button class="btn btn-warning" @onclick="RestartBotButton">Restart Bot Service</button>
+		</div>
+	</div>
 
-    <div class="card">
-        <h3 class="card-header">Plugins</h3>
-        <div class="card-body">
-            <div class="d-flex justify-content-between">
-                <div class="p-2 bd-highlight"><p>@((MarkupString)DisplayAssembly(typeof(Nodsoft.YumeChan.PluginBase.Plugin).Assembly))</p></div>
-                <div class="p-2 bd-highlight">
-                    <p><b>Loaded Plugins :</b> @BotService.Plugins.Count</p>
-                </div>
-            </div>
-        </div>
-        <div class="card-footer">
-            <button class="btn btn-info" @onclick="ReloadModulesButton">Reload Plugins</button>
-        </div>
-    </div>
+	<div class="card">
+		<h3 class="card-header">Plugins</h3>
+		<div class="card-body">
+			<div class="d-flex justify-content-between">
+				<div class="p-2 bd-highlight"><p>@((MarkupString)DisplayAssembly(typeof(Nodsoft.YumeChan.PluginBase.Plugin).Assembly))</p></div>
+				<div class="p-2 bd-highlight">
+					<p><b>Loaded Plugins :</b> @BotService.Plugins.Count</p>
+				</div>
+			</div>
+		</div>
+		<div class="card-footer">
+			<button class="btn btn-info" @onclick="ReloadModulesButton">Reload Plugins</button>
+		</div>
+	</div>
 </div>
 
 <br />
@@ -52,92 +52,107 @@
 <br />
 
 <div class="d-inline-flex">
-    <div class="card">
-        <h5 class="card-header">Bot Status</h5>
+	<div class="card">
+		<h5 class="card-header">Bot Status</h5>
 
-        <div class="card-footer">
-            <EditForm Model="Model" OnValidSubmit="HandleValidSubmit" class="form-inline">
-                <DataAnnotationsValidator />
-                <ValidationSummary />
+		<div class="card-body">
+			<p class="card-text">
+				<b>Current Status :</b>&ensp;
+				@if (BotService.Client.Activity is null)
+				{
+					<div class="text-muted">None</div>
+				}
+				else
+				{
+					<div class="text-secondary">@BotService.Client.Activity.Type.ToString()</div>
+					@BotService.Client.Activity.Name
+				}
+			</p>
+		</div>
 
-                <div class="form-group mb-2">
-                    <b>Change Status :</b>
-                </div>
+		<div class="card-footer">
+			<EditForm Model="Model" OnValidSubmit="HandleValidSubmit" class="form-inline">
+				<DataAnnotationsValidator />
+				<ValidationSummary />
 
-                <div class="form-group mb-2 mx-sm-4">
-                    <label class="sr-only" for="text">New Status</label>
-                    <InputText Id="text" @bind-Value="Model.StatusMessage" class="form-control" placeholder="New Status" />
-                </div>
+				<div class="form-group mb-2">
+					<b>Change Status :</b>
+				</div>
 
-                <div class="form-group mb-2"><button class="btn btn-outline-info" type="submit">Change</button></div>
-            </EditForm>
-        </div>
-    </div>
+				<div class="form-group mb-2 mx-sm-4">
+					<label class="sr-only" for="text">New Status</label>
+					<InputText Id="text" @bind-Value="Model.StatusMessage" class="form-control" placeholder="New Status" />
+				</div>
+
+				<div class="form-group mb-2"><button class="btn btn-outline-info" type="submit">Change</button></div>
+			</EditForm>
+		</div>
+	</div>
 </div>
 
 
 @code
 {
-    private string[] DisplayStatusAlert()
-    {
-        return BotService.CoreState switch
-        {
-            YumeCoreState.Offline => new string[] { "text-danger", "Bot is offline." },
-            YumeCoreState.Online => new string[] { "text-success", "Bot is online." },
-            YumeCoreState.Starting => new string[] { "text-info", "Bot is starting..." },
-            YumeCoreState.Stopping => new string[] { "text-warning", "Bot is Stopping..." },
-            YumeCoreState.Reloading => new string[] { "text-warning", "Bot is Reloading..." },
-            _ => new string[] { "text-danger", "Bot Status is Unknown." },
-        };
-    }
+	private string[] DisplayStatusAlert()
+	{
+		return BotService.CoreState switch
+		{
+			YumeCoreState.Offline => new string[] { "text-danger", "Bot is offline." },
+			YumeCoreState.Online => new string[] { "text-success", "Bot is online." },
+			YumeCoreState.Starting => new string[] { "text-info", "Bot is starting..." },
+			YumeCoreState.Stopping => new string[] { "text-warning", "Bot is Stopping..." },
+			YumeCoreState.Reloading => new string[] { "text-warning", "Bot is Reloading..." },
+			_ => new string[] { "text-danger", "Bot Status is Unknown." },
+		};
+	}
 
 
-    public async Task StartBotButton()
-    {
-        if (BotService.CoreState == YumeCoreState.Offline)
-        {
-            await BotService.StartBotAsync();
-        }
-    }
+	public async Task StartBotButton()
+	{
+		if (BotService.CoreState == YumeCoreState.Offline)
+		{
+			await BotService.StartBotAsync();
+		}
+	}
 
-    public async Task StopBotButton()
-    {
-        if (BotService.CoreState != YumeCoreState.Offline)
-        {
-            await BotService.StopBotAsync();
-        }
-    }
+	public async Task StopBotButton()
+	{
+		if (BotService.CoreState != YumeCoreState.Offline)
+		{
+			await BotService.StopBotAsync();
+		}
+	}
 
-    public async Task RestartBotButton()
-    {
-        if (BotService.CoreState == YumeCoreState.Online)
-        {
-            await BotService.RestartBotAsync();
-        }
-    }
+	public async Task RestartBotButton()
+	{
+		if (BotService.CoreState == YumeCoreState.Online)
+		{
+			await BotService.RestartBotAsync();
+		}
+	}
 
-    public async Task ReloadModulesButton()
-    {
-        if (BotService.CoreState == YumeCoreState.Online)
-        {
-            await BotService.ReloadCommandsAsync();
-        }
-    }
+	public async Task ReloadModulesButton()
+	{
+		if (BotService.CoreState == YumeCoreState.Online)
+		{
+			await BotService.ReloadCommandsAsync();
+		}
+	}
 
 
-    private StatusModel Model = new StatusModel();
+	private StatusModel Model = new StatusModel();
 
-    protected void HandleValidSubmit()
-    {
-        BotService.Client.SetGameAsync(Model.StatusMessage);
-    }
-    private string DisplayAssembly(System.Reflection.Assembly assembly)
-    {
-        System.Text.StringBuilder builder = new System.Text.StringBuilder();
-        builder.AppendLine($"<b>{assembly.GetName().Name}</b><br />");
-        builder.AppendLine("<br />");
-        builder.AppendLine($"<b>Version :</b> {assembly.GetName().Version}<br />");
-        return builder.ToString();
-    }
+	protected void HandleValidSubmit()
+	{
+		BotService.Client.SetGameAsync(Model.StatusMessage);
+	}
+	private string DisplayAssembly(System.Reflection.Assembly assembly)
+	{
+		System.Text.StringBuilder builder = new System.Text.StringBuilder();
+		builder.AppendLine($"<b>{assembly.GetName().Name}</b><br />");
+		builder.AppendLine("<br />");
+		builder.AppendLine($"<b>Version :</b> {assembly.GetName().Version}<br />");
+		return builder.ToString();
+	}
 
 }
