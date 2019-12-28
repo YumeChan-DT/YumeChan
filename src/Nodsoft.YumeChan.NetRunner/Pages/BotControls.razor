@@ -17,9 +17,7 @@
 
         <div class="card-body">
             <div class="d-flex justify-content-between">
-                <div class="p-2 bd-highlight">
-                    <p><b>Core Version :</b> @YumeCore.CoreVersion.ToString()</p>
-                </div>
+                <div class="p-2 bd-highlight"><p>@((MarkupString)DisplayAssembly(typeof(YumeCore).Assembly))</p></div>
                 <div class="p-2 bd-highlight"><p class=@DisplayStatusAlert()[0]>@DisplayStatusAlert()[1]</p></div>
             </div>
         </div>
@@ -31,19 +29,17 @@
     </div>
 
     <div class="card">
-        <h3 class="card-header">Modules</h3>
+        <h3 class="card-header">Plugins</h3>
         <div class="card-body">
             <div class="d-flex justify-content-between">
-                <div class="p-2 bd-highlight">
-                    <p><b>PluginBase Version :</b> @typeof(Nodsoft.YumeChan.PluginBase.Plugin).Assembly.GetName().Version.ToString()</p>
-                </div>
+                <div class="p-2 bd-highlight"><p>@((MarkupString)DisplayAssembly(typeof(Nodsoft.YumeChan.PluginBase.Plugin).Assembly))</p></div>
                 <div class="p-2 bd-highlight">
                     <p><b>Loaded Plugins :</b> @BotService.Plugins.Count</p>
                 </div>
             </div>
         </div>
         <div class="card-footer">
-            <button class="btn btn-info" @onclick="ReloadModulesButton">Reload Modules</button>
+            <button class="btn btn-info" @onclick="ReloadModulesButton">Reload Plugins</button>
         </div>
     </div>
 </div>
@@ -51,19 +47,33 @@
 <br />
 <br />
 
-<h4>Bot Status :</h4>
+<h2>Settings</h2>
 
-<EditForm Model="Model" OnValidSubmit="HandleValidSubmit">
-    <DataAnnotationsValidator />
-    <ValidationSummary />
+<br />
 
-    <div class="form-group">
-        <label for="text">Change Text :</label>
-        <InputText Id="text" Class="form-control" @bind-Value="Model.StatusMessage" />
+<div class="d-inline-flex">
+    <div class="card">
+        <h5 class="card-header">Bot Status</h5>
+
+        <div class="card-footer">
+            <EditForm Model="Model" OnValidSubmit="HandleValidSubmit" class="form-inline">
+                <DataAnnotationsValidator />
+                <ValidationSummary />
+
+                <div class="form-group mb-2">
+                    <b>Change Status :</b>
+                </div>
+
+                <div class="form-group mb-2 mx-sm-4">
+                    <label class="sr-only" for="text">New Status</label>
+                    <InputText Id="text" @bind-Value="Model.StatusMessage" class="form-control" placeholder="New Status" />
+                </div>
+
+                <div class="form-group mb-2"><button class="btn btn-outline-info" type="submit">Change</button></div>
+            </EditForm>
+        </div>
     </div>
-
-    <button class="btn btn-outline-info" type="submit">Change</button>
-</EditForm>
+</div>
 
 
 @code
@@ -72,12 +82,12 @@
     {
         return BotService.CoreState switch
         {
-            YumeCoreState.Offline => new string[]   { "text-danger", "Bot is offline." },
-            YumeCoreState.Online => new string[]    { "text-success", "Bot is online." },
-            YumeCoreState.Starting => new string[]  { "text-info", "Bot is starting..." },
-            YumeCoreState.Stopping => new string[]  { "text-warning", "Bot is Stopping..." },
+            YumeCoreState.Offline => new string[] { "text-danger", "Bot is offline." },
+            YumeCoreState.Online => new string[] { "text-success", "Bot is online." },
+            YumeCoreState.Starting => new string[] { "text-info", "Bot is starting..." },
+            YumeCoreState.Stopping => new string[] { "text-warning", "Bot is Stopping..." },
             YumeCoreState.Reloading => new string[] { "text-warning", "Bot is Reloading..." },
-            _ => new string[]                       { "text-danger", "Bot Status is Unknown." },
+            _ => new string[] { "text-danger", "Bot Status is Unknown." },
         };
     }
 
@@ -115,10 +125,19 @@
     }
 
 
-    StatusModel Model = new StatusModel();
+    private StatusModel Model = new StatusModel();
 
     protected void HandleValidSubmit()
     {
         BotService.Client.SetGameAsync(Model.StatusMessage);
     }
+    private string DisplayAssembly(System.Reflection.Assembly assembly)
+    {
+        System.Text.StringBuilder builder = new System.Text.StringBuilder();
+        builder.AppendLine($"<b>{assembly.GetName().Name}</b><br />");
+        builder.AppendLine("<br />");
+        builder.AppendLine($"<b>Version :</b> {assembly.GetName().Version}<br />");
+        return builder.ToString();
+    }
+
 }
