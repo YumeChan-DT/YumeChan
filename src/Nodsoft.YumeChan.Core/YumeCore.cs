@@ -13,6 +13,7 @@ using Nodsoft.YumeChan.Core.Config;
 using Microsoft.Extensions.Logging;
 using System.Linq;
 using System.IO;
+using System.Runtime.InteropServices;
 
 namespace Nodsoft.YumeChan.Core
 {
@@ -226,30 +227,56 @@ namespace Nodsoft.YumeChan.Core
 			}
 		}
 
-		private Task<string> GetBotTokenAsync()
+		private async Task<string> GetBotTokenAsync()
 		{
 			string token = CoreProperties.BotToken;
 
 			if (string.IsNullOrWhiteSpace(token))
 			{
-				string envVarName = CoreProperties.AppInternalName + ".Token";
+				string envVarName = $"{CoreProperties.AppInternalName}.Token";
 
-				token = Environment.GetEnvironmentVariable(envVarName);
-
-				if (string.IsNullOrWhiteSpace(token))
+				if (await TryBotTokenFromEnvironment(envVarName, out token, out EnvironmentVariableTarget target))
 				{
-					ApplicationException e = new ApplicationException("No Bot Token supplied.");
-					Logger.LogCritical(e,	$"Bot Token was not found in \"coreproperties.json\" Config File, and Environment Variable \"{envVarName}\" is empty. " +
-											$"Please set a Bot Token before launching the Bot.");
-					throw e;
+					Logger.LogInformation($"Bot Token was read from {target} Environment Variable \"{envVarName}\", instead of \"coreproperties.json\" Config File.");
 				}
 				else
 				{
-					Logger.LogInformation($"Bot Token was read from Environment Variable \"{envVarName}\", instead of \"coreproperties.json\" Config File.");
+					ApplicationException e = new ApplicationException("No Bot Token supplied.");
+					Logger.LogCritical(e, $"No Bot Token was found in \"coreproperties.json\" Config File, and Environment Variables \"{envVarName}\" from relevant targets are empty. " +
+											$"\nPlease set a Bot Token before launching the Bot.");
+					throw e;
 				}
 			}
 
-			return Task.FromResult(token);
+			return token;
+		}
+
+		private static Task<bool> TryBotTokenFromEnvironment(string envVarName, out string token, out EnvironmentVariableTarget foundFromTarget)
+		{
+			if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+			{
+				foreach (EnvironmentVariableTarget target in typeof(EnvironmentVariableTarget).GetEnumValues())
+				{
+					token = Environment.GetEnvironmentVariable(envVarName, target);
+
+					if (token is not null)
+					{
+						foundFromTarget = target;
+						return Task.FromResult(true);
+					}
+				}
+
+				token = null;
+				foundFromTarget = default;
+				return Task.FromResult(false);
+			}
+			else
+			{
+				token = Environment.GetEnvironmentVariable(envVarName);
+
+				foundFromTarget = EnvironmentVariableTarget.Process;
+				return Task.FromResult(token is not null);
+			}
 		}
 	}
 }
