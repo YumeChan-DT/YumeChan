@@ -9,15 +9,5 @@ namespace Nodsoft.YumeChan.Core.Modules
 		public override string PluginDisplayName { get; } = "YumeCore Internals";
 
 		public override bool PluginStealth { get; } = false;
-
-		public override async Task LoadPlugin()
-		{
-			await base.LoadPlugin();
-		}
-
-		public override async Task UnloadPlugin()
-		{
-			await base.UnloadPlugin();
-		}
 	}
 }

@@ -19,15 +19,14 @@ namespace Nodsoft.YumeChan.Core.Config
 		internal T InitConfig(string filename, bool placeFileAtConfigRoot)
 		{
 			const string fileExtension = ".json";
-
 			string rootDirectory;
+
 			try
 			{
 				rootDirectory = YumeCore.Instance.CoreProperties.Path_Config + Path.DirectorySeparatorChar;
 			}
-			catch (NullReferenceException e)
+			catch (NullReferenceException)
 			{
-				_ = e; // Make these warnings stahp ! Please !	(CA1031)
 				rootDirectory = "Config" + Path.DirectorySeparatorChar;
 			}
 

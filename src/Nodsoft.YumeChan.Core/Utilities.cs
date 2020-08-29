@@ -47,6 +47,7 @@ namespace Nodsoft.YumeChan.Core
 			properties.AppInternalName ??= "YumeChan";
 			properties.AppDisplayName ??= "Yume-Chan";
 			properties.BotToken ??= string.Empty;
+			properties.CommandPrefix ??= "==";
 
 			return properties;
 		}

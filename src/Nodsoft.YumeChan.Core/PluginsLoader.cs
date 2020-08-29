@@ -59,7 +59,7 @@ namespace Nodsoft.YumeChan.Core
 			PluginAssemblies.AddRange
 			(
 				from FileInfo file in PluginFiles
-				where file! is null || file.Name != Path.GetFileName(typeof(Plugin).Assembly.Location)
+				where file is not null || file.Name != Path.GetFileName(typeof(Plugin).Assembly.Location)
 				select Assembly.LoadFile(file.ToString())
 			);
 
@@ -95,7 +95,7 @@ namespace Nodsoft.YumeChan.Core
 				return Task.FromResult(pluginManifest);
 			}
 
-			throw new InvalidCastException();
+			throw new InvalidCastException(nameof(typePlugin));
 		}
 	}
 }
