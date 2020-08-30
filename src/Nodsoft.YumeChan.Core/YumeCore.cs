@@ -217,11 +217,16 @@ namespace Nodsoft.YumeChan.Core
 					await Logger.Log(new LogMessage(LogSeverity.Verbose, "Commands", $"Command \"{message.Content}\" received from User {message.Author.Mention}."));
 
 					SocketCommandContext context = new SocketCommandContext(Client, message);
-					IResult result = await Commands.ExecuteAsync(context, argPosition, Services);
+					IResult result = await Commands.ExecuteAsync(context, argPosition, Services).ConfigureAwait(false);
 
 					if (!result.IsSuccess)
 					{
-						await Logger.Log(new LogMessage(LogSeverity.Error, new StackTrace().GetFrame(1).GetMethod().Name, result.ErrorReason));
+						await context.Channel.SendMessageAsync($"{context.User.Mention} {result.ErrorReason}").ConfigureAwait(false);
+
+						LogMessage logMessage = new(LogSeverity.Verbose, new StackTrace().GetFrame(1).GetMethod().Name,
+							$"{context.User.Mention} : {message} \n{result}");
+
+						await Logger.Log(logMessage).ConfigureAwait(false);
 					}
 				}
 			}
