@@ -10,7 +10,7 @@ namespace Nodsoft.YumeChan.Core.Modules.Status
 	[Group("status")]
 	public class Status : ModuleBase<SocketCommandContext>, ICoreModule
 	{
-		public const string MissingVersionSubstitute = "Unknown";
+		internal const string MissingVersionSubstitute = "Unknown";
 
 		[Command]
 		public async Task CoreStatusAsync()
