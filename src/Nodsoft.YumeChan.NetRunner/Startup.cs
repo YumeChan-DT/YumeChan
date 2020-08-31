@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.AzureADB2C.UI;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -9,9 +10,6 @@ using Microsoft.Extensions.Logging;
 using Nodsoft.YumeChan.Core;
 
 using static Nodsoft.YumeChan.NetRunner.Properties.AppProperties;
-
-
-#pragma warning disable CA1052 // Static holder types should be Static or NotInheritable
 
 
 namespace Nodsoft.YumeChan.NetRunner
@@ -29,11 +27,18 @@ namespace Nodsoft.YumeChan.NetRunner
 		// For more information on how to configure your application, visit https://go.microsoft.com/fwlink/?LinkID=398940
 		public void ConfigureServices(IServiceCollection services)
 		{
+			#pragma warning disable CS0618 // Le type ou le membre est obsolète
 			services.AddAuthentication(AzureADB2CDefaults.AuthenticationScheme)
 					.AddAzureADB2C(options => Configuration.Bind("AzureAdB2C", options));
+			#pragma warning restore CS0618 // Le type ou le membre est obsolète
 
 			services.AddRazorPages();
 			services.AddServerSideBlazor();
+			services.AddHttpsRedirection(options =>
+			{
+				options.RedirectStatusCode = StatusCodes.Status307TemporaryRedirect;
+				options.HttpsPort = 5001;
+			});
 
 			services.AddLogging();
 			services.AddSingleton(LoggerFactory.Create(builder => 

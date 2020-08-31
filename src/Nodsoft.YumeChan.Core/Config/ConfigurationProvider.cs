@@ -20,14 +20,12 @@ namespace Nodsoft.YumeChan.Core.Config
 		{
 			const string fileExtension = ".json";
 
-			string rootDirectory;
-			try
+			if (YumeCore.Instance.CoreProperties?.Path_Config is string rootDirectory and not null)
 			{
-				rootDirectory = YumeCore.Instance.CoreProperties.Path_Config + Path.DirectorySeparatorChar;
+				rootDirectory += Path.DirectorySeparatorChar;
 			}
-			catch (NullReferenceException e)
+			else
 			{
-				_ = e; // Make these warnings stahp ! Please !	(CA1031)
 				rootDirectory = "Config" + Path.DirectorySeparatorChar;
 			}
 

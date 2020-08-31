@@ -28,12 +28,7 @@ namespace Nodsoft.YumeChan.ConsoleRunner
 #if DEBUG
 						.SetMinimumLevel(LogLevel.Trace)
 #endif
-						.AddConsole(config => 
-							new ConsoleLoggerOptions 
-							{ 
-								IncludeScopes = true, 
-								LogToStandardErrorThreshold = LogLevel.Trace
-							})
+						.AddConsole()
 						.AddFilter("Microsoft", LogLevel.Warning)
 						.AddFilter("System", LogLevel.Warning)
 						.AddDebug();
@@ -42,6 +37,6 @@ namespace Nodsoft.YumeChan.ConsoleRunner
 			services.AddSingleton(YumeCore.Instance);
 
 			return Task.FromResult(services);
-			}
+		}
 	}
 }

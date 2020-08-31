@@ -10,14 +10,14 @@ namespace Nodsoft.YumeChan.Core.Modules.Status
 	[Group("status")]
 	public class Status : ModuleBase<SocketCommandContext>, ICoreModule
 	{
-		public static string MissingVersionSubstitute { get; } = "Unknown";
+		internal const string MissingVersionSubstitute = "Unknown";
 
 		[Command]
 		public async Task CoreStatusAsync()
 		{
 			EmbedBuilder embed = new EmbedBuilder()
 				.WithTitle(Instance.CoreProperties.AppDisplayName)
-				.WithDescription($"Status : {Instance.CoreState.ToString()}")
+				.WithDescription($"Status : {Instance.CoreState}")
 				.AddField("Core", $"Version : {CoreVersion.ToString() ?? MissingVersionSubstitute}", true)
 				.AddField("Loaded Modules", $"Count : {(Instance.Plugins is null ? "None" : Instance.Plugins.Count.ToString())}", true);
 #if DEBUG

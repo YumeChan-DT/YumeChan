@@ -13,6 +13,7 @@ using Nodsoft.YumeChan.Core.Config;
 using Microsoft.Extensions.Logging;
 using System.Linq;
 using System.IO;
+using System.Runtime.InteropServices;
 
 namespace Nodsoft.YumeChan.Core
 {
@@ -25,7 +26,7 @@ namespace Nodsoft.YumeChan.Core
 	{
 		// Properties
 
-		public static YumeCore Instance { get; } = new Lazy<YumeCore>(() => new YumeCore()).Value;
+		public static YumeCore Instance { get; } = new Lazy<YumeCore>(() => new()).Value;
 
 		public YumeCoreState CoreState { get; private set; }
 
@@ -44,7 +45,7 @@ namespace Nodsoft.YumeChan.Core
 		public ICoreProperties CoreProperties { get; private set; }
 
 		// Constructors
-		static YumeCore() { /** Static ctor for Singleton implementation **/ }
+		static YumeCore() { /* Static ctor for Singleton implementation */ }
 
 
 		// Destructor
@@ -170,7 +171,7 @@ namespace Nodsoft.YumeChan.Core
 		{
 			foreach (ModuleInfo module in new List<ModuleInfo>(Commands.Modules))
 			{
-				if (module !is Modules.ICoreModule)
+				if (module is not Modules.ICoreModule)
 				{
 					await Commands.RemoveModuleAsync(module).ConfigureAwait(false);
 				}
@@ -179,17 +180,18 @@ namespace Nodsoft.YumeChan.Core
 
 			foreach (Plugin plugin in new List<Plugin>(Plugins))
 			{
-				if (plugin is Modules.InternalPlugin) continue;
-
-				if (plugin is IMessageTap tap)
+				if (plugin is not Modules.InternalPlugin)
 				{
-					Client.MessageReceived -= tap.OnMessageReceived;
-					Client.MessageUpdated -= tap.OnMessageUpdated;
-					Client.MessageDeleted -= tap.OnMessageDeleted;
-				}
+					if (plugin is IMessageTap tap)
+					{
+						Client.MessageReceived -= tap.OnMessageReceived;
+						Client.MessageUpdated -= tap.OnMessageUpdated;
+						Client.MessageDeleted -= tap.OnMessageDeleted;
+					}
 
-				await plugin.UnloadPlugin();
-				Plugins.Remove(plugin);
+					await plugin.UnloadPlugin();
+					Plugins.Remove(plugin);
+				}
 			}
 		}
 
@@ -210,45 +212,76 @@ namespace Nodsoft.YumeChan.Core
 			{
 				int argPosition = 0;
 
-				if (message.HasStringPrefix("==", ref argPosition) || message.HasMentionPrefix(Client.CurrentUser, ref argPosition))
+				if (message.HasStringPrefix(CoreProperties.CommandPrefix, ref argPosition) || message.HasMentionPrefix(Client.CurrentUser, ref argPosition))
 				{
 					await Logger.Log(new LogMessage(LogSeverity.Verbose, "Commands", $"Command \"{message.Content}\" received from User {message.Author.Mention}."));
 
 					SocketCommandContext context = new SocketCommandContext(Client, message);
-					IResult result = await Commands.ExecuteAsync(context, argPosition, Services);
+					IResult result = await Commands.ExecuteAsync(context, argPosition, Services).ConfigureAwait(false);
 
 					if (!result.IsSuccess)
 					{
-						await Logger.Log(new LogMessage(LogSeverity.Error, new StackTrace().GetFrame(1).GetMethod().Name, result.ErrorReason));
+						await context.Channel.SendMessageAsync($"{context.User.Mention} {result.ErrorReason}").ConfigureAwait(false);
+
+						LogMessage logMessage = new(LogSeverity.Verbose, new StackTrace().GetFrame(1).GetMethod().Name,
+							$"{context.User.Mention} : {message} \n{result}");
+
+						await Logger.Log(logMessage).ConfigureAwait(false);
 					}
 				}
 			}
 		}
 
-		private Task<string> GetBotTokenAsync()
+		private async Task<string> GetBotTokenAsync()
 		{
 			string token = CoreProperties.BotToken;
 
 			if (string.IsNullOrWhiteSpace(token))
 			{
-				string envVarName = CoreProperties.AppInternalName + ".Token";
+				string envVarName = $"{CoreProperties.AppInternalName}.Token";
 
-				token = Environment.GetEnvironmentVariable(envVarName);
-
-				if (string.IsNullOrWhiteSpace(token))
+				if (await TryBotTokenFromEnvironment(envVarName, out token, out EnvironmentVariableTarget target))
 				{
-					ApplicationException e = new ApplicationException("No Bot Token supplied.");
-					Logger.LogCritical(e,	$"Bot Token was not found in \"coreproperties.json\" Config File, and Environment Variable \"{envVarName}\" is empty. " +
-											$"Please set a Bot Token before launching the Bot.");
-					throw e;
+					Logger.LogInformation($"Bot Token was read from {target} Environment Variable \"{envVarName}\", instead of \"coreproperties.json\" Config File.");
 				}
 				else
 				{
-					Logger.LogInformation($"Bot Token was read from Environment Variable \"{envVarName}\", instead of \"coreproperties.json\" Config File.");
+					ApplicationException e = new ApplicationException("No Bot Token supplied.");
+					Logger.LogCritical(e, $"No Bot Token was found in \"coreproperties.json\" Config File, and Environment Variables \"{envVarName}\" from relevant targets are empty. " +
+											$"\nPlease set a Bot Token before launching the Bot.");
+					throw e;
 				}
 			}
 
-			return Task.FromResult(token);
+			return token;
+		}
+
+		private static Task<bool> TryBotTokenFromEnvironment(string envVarName, out string token, out EnvironmentVariableTarget foundFromTarget)
+		{
+			if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+			{
+				foreach (EnvironmentVariableTarget target in typeof(EnvironmentVariableTarget).GetEnumValues())
+				{
+					token = Environment.GetEnvironmentVariable(envVarName, target);
+
+					if (token is not null)
+					{
+						foundFromTarget = target;
+						return Task.FromResult(true);
+					}
+				}
+
+				token = null;
+				foundFromTarget = default;
+				return Task.FromResult(false);
+			}
+			else
+			{
+				token = Environment.GetEnvironmentVariable(envVarName);
+
+				foundFromTarget = EnvironmentVariableTarget.Process;
+				return Task.FromResult(token is not null);
+			}
 		}
 	}
 }
