@@ -21,6 +21,12 @@ namespace Nodsoft.YumeChan.Core.Tools
 			collection = database.GetCollection<TDocument>(GetCollectionName(typeof(TDocument)) ?? typeof(TDocument).Name);
 		}
 
+		public EntityRepository(string connectionString, string databaseName)
+		{
+			IMongoDatabase database = new MongoClient(connectionString).GetDatabase(databaseName);
+			collection = database.GetCollection<TDocument>(GetCollectionName(typeof(TDocument)) ?? typeof(TDocument).Name);
+		}
+
 		private protected string GetCollectionName(Type documentType)
 		{
 			return ((BsonCollectionAttribute)documentType.GetCustomAttributes(
