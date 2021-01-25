@@ -4,8 +4,11 @@ using Discord.WebSocket;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Nodsoft.YumeChan.Core.Config;
+using Nodsoft.YumeChan.Core.Tools;
 using Nodsoft.YumeChan.Core.TypeReaders;
 using Nodsoft.YumeChan.PluginBase;
+using Nodsoft.YumeChan.PluginBase.Tools;
+using Nodsoft.YumeChan.PluginBase.Tools.Data;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -55,7 +58,8 @@ namespace Nodsoft.YumeChan.Core
 			.AddSingleton<DiscordSocketClient>()
 			.AddSingleton<CommandService>()
 			.AddSingleton<CommandHandler>()
-			.AddTransient(typeof(PluginBase.Tools.IConfigProvider<>), typeof(ConfigurationProvider<>))
+			.AddSingleton(typeof(IDatabaseProvider<>), typeof(DatabaseProvider<>))
+			.AddSingleton(typeof(IConfigProvider<>), typeof(ConfigurationProvider<>))
 			.AddLogging();
 
 		public async Task StartBotAsync()
@@ -173,7 +177,7 @@ namespace Nodsoft.YumeChan.Core
 			Client ??= Services.GetRequiredService<DiscordSocketClient>();
 			CommandHandler ??= Services.GetRequiredService<CommandHandler>();
 			Logger ??= Services.GetRequiredService<ILoggerFactory>().CreateLogger<YumeCore>();
-			ConfigProvider ??= Services.GetRequiredService<PluginBase.Tools.IConfigProvider<ICoreProperties>>() as ConfigurationProvider<ICoreProperties>;
+			ConfigProvider ??= Services.GetRequiredService<IConfigProvider<ICoreProperties>>() as ConfigurationProvider<ICoreProperties>;
 			CoreProperties = ConfigProvider.InitConfig("coreconfig.json", true).PopulateCoreProperties();
 
 			CoreProperties.Path_Core ??= Directory.GetCurrentDirectory();

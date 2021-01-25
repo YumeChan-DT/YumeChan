@@ -1,11 +1,9 @@
-﻿using System;
-using System.IO;
+﻿using System.IO;
 using Config.Net;
-using Discord;
 using Nodsoft.YumeChan.PluginBase.Tools;
 
 
-namespace Nodsoft.YumeChan.Core.Config
+namespace Nodsoft.YumeChan.Core.Tools
 {
 	public class ConfigurationProvider<T> : IConfigProvider<T> where T : class
 	{

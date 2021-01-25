@@ -48,6 +48,8 @@ namespace Nodsoft.YumeChan.Core
 			properties.AppDisplayName ??= "Yume-Chan";
 			properties.BotToken ??= string.Empty;
 			properties.CommandPrefix ??= "==";
+			properties.DatabaseProperties.ConnectionString = "mongodb://localhost:27017";
+			properties.DatabaseProperties.DatabaseName = "yc-default";
 
 			return properties;
 		}

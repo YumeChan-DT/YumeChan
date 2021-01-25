@@ -16,5 +16,13 @@ namespace Nodsoft.YumeChan.Core.Config
 		public string Path_Plugins { get; internal set; }
 
 		public string CommandPrefix { get; internal set; }
+
+		internal ICoreDatabaseProperties DatabaseProperties { get; set; }
+	}
+
+	public interface ICoreDatabaseProperties
+	{
+		string DatabaseName { get; set; }
+		string ConnectionString { get; set; }
 	}
 }

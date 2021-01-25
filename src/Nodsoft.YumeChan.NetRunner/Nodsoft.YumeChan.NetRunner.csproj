@@ -24,9 +24,13 @@
 	</PropertyGroup>
 	<ItemGroup>
 	  <Compile Remove="build\**" />
+	  <Compile Remove="Data\**" />
 	  <Content Remove="build\**" />
+	  <Content Remove="Data\**" />
 	  <EmbeddedResource Remove="build\**" />
+	  <EmbeddedResource Remove="Data\**" />
 	  <None Remove="build\**" />
+	  <None Remove="Data\**" />
 	</ItemGroup>
 	
 	<ItemGroup>
