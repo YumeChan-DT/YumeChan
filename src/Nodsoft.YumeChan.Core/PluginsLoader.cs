@@ -32,7 +32,7 @@ namespace Nodsoft.YumeChan.Core
 
 		private DirectoryInfo SetDefaultPluginsDirectoryEnvironmentVariable()
 		{
-			FileInfo file = new FileInfo(Assembly.GetExecutingAssembly().Location);
+			FileInfo file = new(Assembly.GetExecutingAssembly().Location);
 			PluginsLoadDirectory = Directory.CreateDirectory(file.DirectoryName + Path.DirectorySeparatorChar + "Plugins" + Path.DirectorySeparatorChar);
 
 			try
@@ -68,8 +68,8 @@ namespace Nodsoft.YumeChan.Core
 
 		public async Task<List<Plugin>> LoadPluginManifests()
 		{
-			List<Plugin> manifestsList = new List<Plugin>();
-			List<Type> pluginTypes = new List<Type>();
+			List<Plugin> manifestsList = new();
+			List<Type> pluginTypes = new();
 
 			foreach (Assembly assembly in PluginAssemblies)
 			{
@@ -90,12 +90,9 @@ namespace Nodsoft.YumeChan.Core
 
 		internal static Task<Plugin> InstantiateManifest(Type typePlugin)
 		{
-			if (ActivatorUtilities.CreateInstance(YumeCore.Instance.Services, typePlugin) is Plugin pluginManifest)
-			{
-				return Task.FromResult(pluginManifest);
-			}
-
-			throw new InvalidCastException(nameof(typePlugin));
+			return ActivatorUtilities.CreateInstance(YumeCore.Instance.Services, typePlugin) is Plugin pluginManifest
+				? Task.FromResult(pluginManifest)
+				: throw new InvalidCastException(nameof(typePlugin));
 		}
 	}
 }

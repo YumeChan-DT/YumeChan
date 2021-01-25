@@ -19,7 +19,7 @@ namespace Nodsoft.YumeChan.Core.Modules.Status
 				.WithTitle(Instance.CoreProperties.AppDisplayName)
 				.WithDescription($"Status : {Instance.CoreState}")
 				.AddField("Core", $"Version : {CoreVersion.ToString() ?? MissingVersionSubstitute}", true)
-				.AddField("Loaded Modules", $"Count : {(Instance.Plugins is null ? "None" : Instance.Plugins.Count.ToString())}", true);
+				.AddField("Loaded Modules", $"Count : {(Instance.CommandHandler.Plugins is null ? "None" : Instance.CommandHandler.Plugins.Count.ToString())}", true);
 #if DEBUG
 			embed.AddField("Debug", "Debug Build Active.");
 #endif
@@ -32,9 +32,9 @@ namespace Nodsoft.YumeChan.Core.Modules.Status
 		{
 			EmbedBuilder embed = new EmbedBuilder()
 				.WithTitle("Plugins")
-				.WithDescription($"Currently Loaded : **{Instance.Plugins.Count}** Plugins.");
+				.WithDescription($"Currently Loaded : **{Instance.CommandHandler.Plugins.Count}** Plugins.");
 
-			foreach (Plugin pluginManifest in Instance.Plugins)
+			foreach (Plugin pluginManifest in Instance.CommandHandler.Plugins)
 			{
 				embed.AddField(pluginManifest.PluginDisplayName,
 					$"({pluginManifest.PluginAssemblyName})\n" +

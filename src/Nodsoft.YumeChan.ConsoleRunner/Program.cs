@@ -10,7 +10,7 @@ namespace Nodsoft.YumeChan.ConsoleRunner
 		public static async Task Main(string[] _)
 		{
 			IServiceCollection services = await ConfigureServices(new ServiceCollection());
-			await YumeCore.ConfigureServices(services);
+			YumeCore.ConfigureServices(services);
 
 			YumeCore.Instance.Services = services.BuildServiceProvider();
 

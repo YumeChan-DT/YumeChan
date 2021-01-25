@@ -34,20 +34,19 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<Folder Include="Data\" />
 		<PackageReference Include="Microsoft.AspNetCore.Authentication" Version="2.2.0" />
-		<PackageReference Include="Microsoft.AspNetCore.Authentication.AzureADB2C.UI" Version="5.0.0-preview.8.20414.8" />
-		<PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="5.0.0-preview.8.20407.4" />
-		<PackageReference Include="Microsoft.Extensions.Logging" Version="5.0.0-preview.8.20407.11" />
-		<PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="5.0.0-preview.8.20407.11" />
-		<PackageReference Include="Microsoft.Identity.Web" Version="0.3.1-preview" />
+		<PackageReference Include="Microsoft.AspNetCore.Authentication.AzureADB2C.UI" Version="5.0.2" />
+		<PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="5.0.2" />
+		<PackageReference Include="Microsoft.Extensions.Logging" Version="5.0.0" />
+		<PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="5.0.0" />
+		<PackageReference Include="Microsoft.Identity.Web" Version="1.5.1" />
 		<PackageReference Include="Microsoft.VisualStudio.Web.BrowserLink" Version="2.2.0" />
-		<PackageReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Design" Version="5.0.0-preview.8.20419.1" />
+		<PackageReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Design" Version="5.0.1" />
 		<PackageReference Include="SourceLink.Create.CommandLine" Version="2.8.3">
 			<PrivateAssets>all</PrivateAssets>
 			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
 		</PackageReference>
-		<PackageReference Include="System.Configuration.ConfigurationManager" Version="5.0.0-preview.8.20407.11" />
+		<PackageReference Include="System.Configuration.ConfigurationManager" Version="5.0.0" />
 	</ItemGroup>
 
 	<ProjectExtensions><VisualStudio><UserProperties /></VisualStudio></ProjectExtensions>

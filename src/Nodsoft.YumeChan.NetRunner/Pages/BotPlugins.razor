@@ -6,7 +6,7 @@
 
 <h1>Plugins</h1>
 <br />
-<h3>Currently Loaded : @BotService.Plugins.Count Plugins</h3>
+<h3>Currently Loaded : @BotService.CommandHandler.Plugins.Count Plugins</h3>
 <br />
 
 <table class="table">
@@ -19,7 +19,7 @@
         </tr>
     </thead>
     <tbody>
-        @foreach (Plugin pluginManifest in BotService.Plugins)
+        @foreach (Plugin pluginManifest in BotService.CommandHandler.Plugins)
         {
             <tr>
                 <td>@pluginManifest.PluginAssemblyName</td>
