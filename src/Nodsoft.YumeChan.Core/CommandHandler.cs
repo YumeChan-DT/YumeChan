@@ -41,14 +41,20 @@ namespace Nodsoft.YumeChan.Core
 
 		public async Task InstallCommandsAsync()
 		{
-			client.MessageReceived += HandleCommandAsync;
-			await RegisterCommandsAsync().ConfigureAwait(false);
+			Commands.Log += LogAsync; // Hook exception logging
+			Commands.CommandExecuted += OnCommandExecutedAsync; // Hook execution event
+			client.MessageReceived += HandleCommandAsync; // Hook command handler
+
+			await RegisterCommandsAsync();
 		}
 
 		public async Task UninstallCommandsAsync()
 		{
+			Commands.Log -= LogAsync;
+			Commands.CommandExecuted -= OnCommandExecutedAsync;
 			client.MessageReceived -= HandleCommandAsync;
-			await ReleaseCommandsAsync().ConfigureAwait(false);
+
+			await ReleaseCommandsAsync();
 		}
 
 
@@ -61,9 +67,7 @@ namespace Nodsoft.YumeChan.Core
 
 		public async Task RegisterCommandsAsync()
 		{
-			
-			Plugins = new() { new Modules.InternalPlugin() };              // Add YumeCore internal commands
-
+			Plugins = new() { new Modules.InternalPlugin() }; // Add YumeCore internal commands
 			await externalModulesLoader.LoadPluginAssemblies();
 
 			Plugins.AddRange(from Plugin plugin
@@ -84,7 +88,7 @@ namespace Nodsoft.YumeChan.Core
 				}
 			}
 
-			await Commands.AddModulesAsync(Assembly.GetEntryAssembly(), services);      // Add possible Commands from Entry Assembly (contextual)
+			await Commands.AddModulesAsync(Assembly.GetEntryAssembly(), services); // Add possible Commands from Entry Assembly (contextual)
 		}
 
 
@@ -115,27 +119,49 @@ namespace Nodsoft.YumeChan.Core
 
 		private async Task HandleCommandAsync(SocketMessage arg)
 		{
-			if (arg is SocketUserMessage message && !message.Author.IsBot)
+			if (arg is SocketUserMessage message /*&& !message.Author.IsBot*/)
 			{
 				int argPosition = 0;
 
 				if (message.HasStringPrefix(Config.CommandPrefix, ref argPosition) || message.HasMentionPrefix(client.CurrentUser, ref argPosition))
 				{
-					await logger.Log(new LogMessage(LogSeverity.Verbose, "Commands", $"Command \"{message.Content}\" received from User {message.Author.Mention}."));
-
 					SocketCommandContext context = new(client, message);
-					IResult result = await Commands.ExecuteAsync(context, argPosition, services).ConfigureAwait(false);
 
-					if (!result.IsSuccess)
-					{
-						await context.Channel.SendMessageAsync($"{context.User.Mention} {result.ErrorReason}").ConfigureAwait(false);
-
-						LogMessage logMessage = new(LogSeverity.Verbose, new StackTrace().GetFrame(1).GetMethod().Name,
-							$"{context.User.Mention} : {message} \n{result}");
-
-						await logger.Log(logMessage).ConfigureAwait(false);
-					}
+					await Commands.ExecuteAsync(context, argPosition, services).ConfigureAwait(false);
 				}
+			}
+		}
+
+		public async Task OnCommandExecutedAsync(Optional<CommandInfo> command, ICommandContext context, IResult result)
+		{
+			// We have access to the information of the command executed,
+			// the context of the command, and the result returned from the
+			// execution in this event.
+
+			// We can tell the user what went wrong
+			if (!string.IsNullOrEmpty(result?.ErrorReason))
+			{
+				await context.Channel.SendMessageAsync(result.ErrorReason);
+			}
+
+			// Log the result
+			await logger.Log(new LogMessage(LogSeverity.Verbose, "Commands", $"Command '{context.Message.Content}' received from User {context.User}."));
+		}
+
+		public async Task LogAsync(LogMessage logMessage)
+		{
+			if (logMessage.Exception is CommandException cmdException)
+			{
+				// Inform the user that something unexpected has happened
+#if DEBUG
+				await cmdException.Context.Channel.SendMessageAsync(cmdException.ToString());
+#else
+				await cmdException.Context.Channel.SendMessageAsync("Something went wrong.");
+#endif
+
+				// Log the incident
+				Console.WriteLine($"{cmdException.Context.User} failed to execute '{cmdException.Command.Name}' in {cmdException.Context.Channel}.");
+				Console.WriteLine(cmdException.ToString());
 			}
 		}
 	}

@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 
 using static Nodsoft.YumeChan.Core.YumeCore;
 using Nodsoft.YumeChan.PluginBase;
+using System;
 
 namespace Nodsoft.YumeChan.Core.Modules.Status
 {
@@ -44,5 +45,8 @@ namespace Nodsoft.YumeChan.Core.Modules.Status
 
 			await ReplyAsync(embed: embed.Build());
 		}
+
+		[Command("throw"), RequireOwner]
+		public Task ThrowAsync() => throw new ApplicationException();
 	}
 }
