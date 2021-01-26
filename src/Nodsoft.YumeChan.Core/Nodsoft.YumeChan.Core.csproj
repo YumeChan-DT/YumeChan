@@ -1,8 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
 	<PropertyGroup>
-		<TargetFramework>netstandard2.1</TargetFramework>
-		<Version>0.2.5</Version>
+		<Version>0.3.0</Version>
 		<Authors>DJ Daemonix</Authors>
 		<Company>Nodsoft ES</Company>
 		<Product>YumeChan</Product>
@@ -11,10 +10,19 @@
 		<RepositoryUrl>https://github.com/DJDaemonix/YumeChan</RepositoryUrl>
 		<RepositoryType>Git</RepositoryType>
 		<SignAssembly>false</SignAssembly>
-		<AssemblyVersion>0.2.5.0</AssemblyVersion>
+		<AssemblyVersion>0.3.0.0</AssemblyVersion>
 		<FileVersion>0.2.5.0</FileVersion>
 		<PackageLicenseFile>LICENSE</PackageLicenseFile>
 		<LangVersion>preview</LangVersion>
+		<TargetFramework>net5.0</TargetFramework>
+	</PropertyGroup>
+
+	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+	  <PlatformTarget>AnyCPU</PlatformTarget>
+	</PropertyGroup>
+
+	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
+	  <PlatformTarget>AnyCPU</PlatformTarget>
 	</PropertyGroup>
 
 	<ItemGroup>
@@ -22,12 +30,16 @@
 		<PackageReference Include="Config.Net.Json" Version="4.15.0" />
 		<PackageReference Include="Discord.Net" Version="2.2.0" />
 		<PackageReference Include="Discord.Net.Commands" Version="2.2.0" />
-		<PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="5.0.0-preview.8.20407.11" />
-		<PackageReference Include="Microsoft.Extensions.Logging" Version="5.0.0-preview.8.20407.11" />
+		<PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="5.0.0" />
+		<PackageReference Include="Microsoft.Extensions.Http" Version="5.0.0" />
+		<PackageReference Include="Microsoft.Extensions.Logging" Version="5.0.0" />
+		<PackageReference Include="MongoDB.Bson.signed" Version="2.11.2" />
+		<PackageReference Include="MongoDB.Driver" Version="2.12.0-beta1" />
 		<PackageReference Include="SourceLink.Create.CommandLine" Version="2.8.3">
 			<PrivateAssets>all</PrivateAssets>
 			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
 		</PackageReference>
+		<PackageReference Include="System.Net.Http" Version="4.3.4" />
 		<PackageReference Include="Unicode.net" Version="0.1.2" />
 	</ItemGroup>
 
