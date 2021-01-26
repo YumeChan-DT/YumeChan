@@ -5,13 +5,9 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Nodsoft.YumeChan.Core.Config;
 using Nodsoft.YumeChan.Core.Tools;
-using Nodsoft.YumeChan.Core.TypeReaders;
-using Nodsoft.YumeChan.PluginBase;
 using Nodsoft.YumeChan.PluginBase.Tools;
 using Nodsoft.YumeChan.PluginBase.Tools.Data;
 using System;
-using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
@@ -58,6 +54,7 @@ namespace Nodsoft.YumeChan.Core
 			.AddSingleton<DiscordSocketClient>()
 			.AddSingleton<CommandService>()
 			.AddSingleton<CommandHandler>()
+			.AddHttpClient()
 			.AddSingleton(typeof(IDatabaseProvider<>), typeof(DatabaseProvider<>))
 			.AddSingleton(typeof(IConfigProvider<>), typeof(ConfigurationProvider<>))
 			.AddLogging();
