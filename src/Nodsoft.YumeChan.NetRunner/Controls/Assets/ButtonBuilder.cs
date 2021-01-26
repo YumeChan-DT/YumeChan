@@ -45,7 +45,7 @@ namespace Nodsoft.YumeChan.NetRunner.Controls.Assets
 					break;
 			}
 
-			StringBuilder builder = new StringBuilder("btn btn-");
+			StringBuilder builder = new("btn btn-");
 
 			if (IsOutline)
 			{

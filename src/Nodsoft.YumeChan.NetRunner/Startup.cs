@@ -34,11 +34,6 @@ namespace Nodsoft.YumeChan.NetRunner
 
 			services.AddRazorPages();
 			services.AddServerSideBlazor();
-			services.AddHttpsRedirection(options =>
-			{
-				options.RedirectStatusCode = StatusCodes.Status307TemporaryRedirect;
-				options.HttpsPort = 5001;
-			});
 
 			services.AddLogging();
 			services.AddSingleton(LoggerFactory.Create(builder => 

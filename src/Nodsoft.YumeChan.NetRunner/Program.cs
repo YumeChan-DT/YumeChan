@@ -21,21 +21,21 @@ namespace Nodsoft.YumeChan.NetRunner
 		}
 		public static IHostBuilder CreateHostBuilder(string[] args)
 		{
-			return Host	.CreateDefaultBuilder(args)
-						.ConfigureLogging(builder =>
+			return Host.CreateDefaultBuilder(args)
+				.ConfigureLogging(builder =>
+				{
+					builder.ClearProviders()
+						.AddConsole()
+						.AddFilter("Microsoft", LogLevel.Warning)
+						.AddFilter("System", LogLevel.Warning)
+						.AddDebug()
+						.AddEventLog(settings => 
 						{
-							builder.ClearProviders()
-									.AddConsole()
-									.AddFilter("Microsoft", LogLevel.Warning)
-									.AddFilter("System", LogLevel.Warning)
-									.AddDebug()
-									.AddEventLog(settings => 
-									{
-										settings.SourceName = AppName;
-										settings.LogName = AppName;
-									});
-						})
-						.ConfigureWebHostDefaults(webBuilder => webBuilder.UseStartup<Startup>());
+							settings.SourceName = AppName;
+							settings.LogName = AppName;
+						});
+				})
+				.ConfigureWebHostDefaults(webBuilder => webBuilder.UseStartup<Startup>());
 		}
 	}
 }
