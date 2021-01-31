@@ -45,12 +45,7 @@ namespace Nodsoft.YumeChan.NetRunner
 						.AddConsole()
 						.AddFilter("Microsoft", LogLevel.Warning)
 						.AddFilter("System", LogLevel.Warning)
-						.AddDebug()
-						.AddEventLog(settings =>
-						{
-							settings.SourceName = AppName;
-							settings.LogName = AppName;
-						});
+						.AddDebug();
 			}));
 			services.AddSingleton(YumeCore.Instance);
 			YumeCore.ConfigureServices(services);
