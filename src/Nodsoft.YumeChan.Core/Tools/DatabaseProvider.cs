@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Data;
+using MongoDbGenericRepository;
 using Nodsoft.YumeChan.Core.Config;
 using Nodsoft.YumeChan.PluginBase;
 using Nodsoft.YumeChan.PluginBase.Tools.Data;
@@ -24,6 +25,12 @@ namespace Nodsoft.YumeChan.Core.Tools
 			this.databaseName = databaseName;
 		}
 
-		public IEntityRepository<TEntity> GetEntityRepository<TEntity>() where TEntity : IDocument => new EntityRepository<TEntity>(connectionString, databaseName);
+
+		public IEntityRepository<TDocument, TKey> GetEntityRepository<TDocument, TKey>()
+			where TDocument : IDocument<TKey>
+			where TKey : IEquatable<TKey>
+		{ 
+			return new EntityRepository<TDocument, TKey>(connectionString, databaseName); 
+		}
 	}
 }
