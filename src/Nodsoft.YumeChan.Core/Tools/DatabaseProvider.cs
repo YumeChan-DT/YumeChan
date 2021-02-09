@@ -1,9 +1,9 @@
 ﻿using System;
-using System.Data;
-using MongoDbGenericRepository;
 using Nodsoft.YumeChan.Core.Config;
 using Nodsoft.YumeChan.PluginBase;
 using Nodsoft.YumeChan.PluginBase.Tools.Data;
+
+
 
 namespace Nodsoft.YumeChan.Core.Tools
 {
