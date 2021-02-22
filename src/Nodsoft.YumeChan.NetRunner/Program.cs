@@ -5,6 +5,8 @@ using System.Threading.Tasks;
 using Nodsoft.YumeChan.Core;
 
 using static Nodsoft.YumeChan.NetRunner.Properties.AppProperties;
+using Lamar.Microsoft.DependencyInjection;
+using Lamar;
 
 namespace Nodsoft.YumeChan.NetRunner
 {
@@ -14,7 +16,7 @@ namespace Nodsoft.YumeChan.NetRunner
 		{
 			IHost host = CreateHostBuilder(args).Build();
 
-			YumeCore.Instance.Services = host.Services;
+			YumeCore.Instance.Services = host.Services as Container;
 
 			await YumeCore.Instance.StartBotAsync();
 			await host.RunAsync();
@@ -22,6 +24,7 @@ namespace Nodsoft.YumeChan.NetRunner
 		public static IHostBuilder CreateHostBuilder(string[] args)
 		{
 			return Host.CreateDefaultBuilder(args)
+				.UseLamar()
 				.ConfigureLogging(builder =>
 				{
 					builder.ClearProviders()

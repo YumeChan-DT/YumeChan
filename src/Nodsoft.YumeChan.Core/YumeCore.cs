@@ -1,6 +1,7 @@
 using Discord;
 using Discord.Commands;
 using Discord.WebSocket;
+using Lamar;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Nodsoft.YumeChan.Core.Config;
@@ -29,7 +30,7 @@ namespace Nodsoft.YumeChan.Core
 
 		public DiscordSocketClient Client { get; set; }
 		public CommandHandler CommandHandler { get; set; }
-		public IServiceProvider Services { get; set; }
+		public IContainer Services { get; set; }
 
 		internal ILogger Logger { get; set; }
 
@@ -49,7 +50,7 @@ namespace Nodsoft.YumeChan.Core
 
 		// Methods
 
-		public static IServiceCollection ConfigureServices() => ConfigureServices(new ServiceCollection());
+		public static IServiceCollection ConfigureServices() => ConfigureServices(new ServiceRegistry());
 		public static IServiceCollection ConfigureServices(IServiceCollection services) => services
 			.AddSingleton<DiscordSocketClient>()
 			.AddSingleton<CommandService>()
@@ -171,10 +172,10 @@ namespace Nodsoft.YumeChan.Core
 
 		private void ResolveCoreComponents()
 		{
-			Client ??= Services.GetRequiredService<DiscordSocketClient>();
-			CommandHandler ??= Services.GetRequiredService<CommandHandler>();
-			Logger ??= Services.GetRequiredService<ILoggerFactory>().CreateLogger<YumeCore>();
-			ConfigProvider ??= Services.GetRequiredService<IConfigProvider<ICoreProperties>>() as ConfigurationProvider<ICoreProperties>;
+			Client ??= Services.GetInstance<DiscordSocketClient>();
+			CommandHandler ??= Services.GetInstance<CommandHandler>();
+			Logger ??= Services.GetInstance<ILoggerFactory>().CreateLogger<YumeCore>();
+			ConfigProvider ??= Services.GetInstance<IConfigProvider<ICoreProperties>>() as ConfigurationProvider<ICoreProperties>;
 			CoreProperties = ConfigProvider.InitConfig("coreconfig.json", true).PopulateCoreProperties();
 
 			CoreProperties.Path_Core ??= Directory.GetCurrentDirectory();

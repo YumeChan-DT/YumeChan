@@ -1,4 +1,5 @@
 ﻿using System.Threading.Tasks;
+using Lamar;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Nodsoft.YumeChan.Core;
@@ -9,20 +10,20 @@ namespace Nodsoft.YumeChan.ConsoleRunner
 	{
 		public static async Task Main(string[] _)
 		{
-			IServiceCollection services = await ConfigureServices(new ServiceCollection());
+			ServiceRegistry services = ConfigureServices(new());
 			YumeCore.ConfigureServices(services);
 
-			YumeCore.Instance.Services = services.BuildServiceProvider();
+			YumeCore.Instance.Services = new Container(services);
 
 			await YumeCore.Instance.StartBotAsync().ConfigureAwait(true);
 			await Task.Delay(-1);
 		}
 
-		public static Task<IServiceCollection> ConfigureServices(IServiceCollection services)
+		public static ServiceRegistry ConfigureServices(ServiceRegistry services)
 		{
-			services.AddLogging();
-			services.AddSingleton(LoggerFactory.Create(builder =>
-			{
+			services.AddLogging()
+				.AddSingleton(LoggerFactory.Create(builder =>
+				{
 				builder.ClearProviders()
 #if DEBUG
 						.SetMinimumLevel(LogLevel.Trace)
@@ -31,11 +32,10 @@ namespace Nodsoft.YumeChan.ConsoleRunner
 						.AddFilter("Microsoft", LogLevel.Warning)
 						.AddFilter("System", LogLevel.Warning)
 						.AddDebug();
-			}));
+				}))
+				.AddSingleton(YumeCore.Instance);
 
-			services.AddSingleton(YumeCore.Instance);
-
-			return Task.FromResult(services);
+			return services;
 		}
 	}
 }
