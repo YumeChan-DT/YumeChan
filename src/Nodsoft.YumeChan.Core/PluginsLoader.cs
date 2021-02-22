@@ -50,7 +50,7 @@ namespace Nodsoft.YumeChan.Core
 			return PluginsLoadDirectory;
 		}
 
-		public Task LoadPluginAssemblies()
+		public void LoadPluginAssemblies()
 		{
 			PluginFiles = new List<FileInfo>(PluginsLoadDirectory.GetFiles($"*{PluginsLoadDiscriminator}*.dll"));
 			PluginAssemblies ??= new List<Assembly>();
@@ -62,13 +62,10 @@ namespace Nodsoft.YumeChan.Core
 				where file is not null || file.Name != Path.GetFileName(typeof(Plugin).Assembly.Location)
 				select Assembly.LoadFile(file.ToString())
 			);
-
-			return Task.CompletedTask;
 		}
 
-		public async Task<List<Plugin>> LoadPluginManifests()
+		public IEnumerable<Plugin> LoadPluginManifests()
 		{
-			List<Plugin> manifestsList = new();
 			List<Type> pluginTypes = new();
 
 			foreach (Assembly assembly in PluginAssemblies)
@@ -80,19 +77,20 @@ namespace Nodsoft.YumeChan.Core
 					select t
 				);
 			}
-			foreach (Type pluginType in pluginTypes)
-			{
-				manifestsList.Add(await InstantiateManifest(pluginType));
-			}
 
-			return manifestsList;
+			return pluginTypes.Select(pluginType => InstantiateManifest(pluginType));
+
 		}
 
-		internal static Task<Plugin> InstantiateManifest(Type typePlugin)
+		public static IServiceCollection ConfigurePluginDependencies(IServiceCollection services, IEnumerable<Plugin> plugins)
 		{
-			return ActivatorUtilities.CreateInstance(YumeCore.Instance.Services, typePlugin) is Plugin pluginManifest
-				? Task.FromResult(pluginManifest)
-				: throw new InvalidCastException(nameof(typePlugin));
+			foreach (Plugin plugin in plugins)
+			{
+				plugin.ConfigureServices(services);
+			}
+			return services;
 		}
+
+		internal static Plugin InstantiateManifest(Type typePlugin) => ActivatorUtilities.CreateInstance(YumeCore.Instance.Services, typePlugin) as Plugin;
 	}
 }

@@ -1,6 +1,7 @@
 ﻿using Discord;
 using Discord.Commands;
 using Discord.WebSocket;
+using Lamar;
 using Microsoft.Extensions.Logging;
 using Nodsoft.YumeChan.Core.Config;
 using Nodsoft.YumeChan.Core.TypeReaders;
@@ -25,15 +26,17 @@ namespace Nodsoft.YumeChan.Core
 
 		private readonly DiscordSocketClient client;
 		private readonly IServiceProvider services;
+		private readonly ServiceRegistry descriptors;
 		private readonly ILogger logger;
 		private readonly PluginsLoader externalModulesLoader;
 
 
-		public CommandHandler(DiscordSocketClient client, CommandService commands, ILogger<CommandHandler> logger, IServiceProvider services)
+		public CommandHandler(DiscordSocketClient client, CommandService commands, ILogger<CommandHandler> logger, ServiceRegistry services)
 		{
 			Commands = commands;
 			this.client = client;
-			this.services = services;
+			this.services = new Container(services);
+			descriptors = services;
 			this.logger = logger;
 			externalModulesLoader = new(string.Empty);
 		}
@@ -68,15 +71,16 @@ namespace Nodsoft.YumeChan.Core
 		public async Task RegisterCommandsAsync()
 		{
 			Plugins = new() { new Modules.InternalPlugin() }; // Add YumeCore internal commands
-			await externalModulesLoader.LoadPluginAssemblies();
+			externalModulesLoader.LoadPluginAssemblies();
 
 			Plugins.AddRange(from Plugin plugin
-							 in await externalModulesLoader.LoadPluginManifests()
+							 in externalModulesLoader.LoadPluginManifests()
 							 where !Plugins.Exists(p => p?.PluginAssemblyName == plugin.PluginAssemblyName)
 							 select plugin);
 
-			foreach (Plugin plugin in new List<Plugin>(Plugins))
+			foreach (Plugin plugin in Plugins)
 			{
+				plugin.ConfigureServices(descriptors);
 				await plugin.LoadPlugin();
 				await Commands.AddModulesAsync(plugin.GetType().Assembly, services);
 
@@ -113,9 +117,6 @@ namespace Nodsoft.YumeChan.Core
 				Plugins.Remove(plugin);
 			}
 		}
-
-
-
 
 		private async Task HandleCommandAsync(SocketMessage arg)
 		{
