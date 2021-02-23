@@ -1,6 +1,5 @@
 ﻿@page "/"
 
-@using Nodsoft.YumeChan.NetRunner.Controls.Assets
 @using static Nodsoft.YumeChan.NetRunner.Properties.AppProperties
 
 <h1>@AppName</h1>
@@ -12,11 +11,11 @@ Welcome to @AppName's Control Panel. Here will be presented useful data on @AppN
 
 <AuthorizeView>
     <NotAuthorized>
-        <div class="@Alerts.info" role="alert">In order to access some options, logging-in may be required. You may do so here : 
+        <div class="alert alert-info" role="alert">In order to access some options, logging-in may be required. You may do so here : 
         <wbr /><a href="#" class="alert-link"><LoginDisplay/></a></div>
     </NotAuthorized>
     <Authorized>
-        <div class="@Alerts.success" role="alert">You are now logged in. All administrative operations have now been unlocked for @AppName.</div>
+        <div class="alert alert-success" role="alert">You are now logged in. All administrative operations have now been unlocked for @AppName.</div>
     </Authorized>
 </AuthorizeView>
 
