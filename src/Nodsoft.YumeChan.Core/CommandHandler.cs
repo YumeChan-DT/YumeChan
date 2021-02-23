@@ -1,4 +1,4 @@
-﻿using Discord;
+using Discord;
 using Discord.Commands;
 using Discord.WebSocket;
 using Lamar;
@@ -104,7 +104,7 @@ namespace Nodsoft.YumeChan.Core
 			}
 
 
-			foreach (Plugin plugin in Plugins.Where(p => p is not Modules.InternalPlugin))
+			foreach (Plugin plugin in new List<Plugin>(Plugins.Where(p => p is not Modules.InternalPlugin)))
 			{
 				if (plugin is IMessageTap tap)
 				{
@@ -146,7 +146,7 @@ namespace Nodsoft.YumeChan.Core
 			}
 
 			// Log the result
-			await logger.Log(new LogMessage(LogSeverity.Verbose, "Commands", $"Command '{context.Message.Content}' received from User {context.User}."));
+			await logger.Log(new LogMessage(LogSeverity.Verbose, "Commands", $"Command '{context.Message.Content}' received from User '{context.User}'."));
 		}
 
 		public async Task LogAsync(LogMessage logMessage)
@@ -161,8 +161,7 @@ namespace Nodsoft.YumeChan.Core
 #endif
 
 				// Log the incident
-				Console.WriteLine($"{cmdException.Context.User} failed to execute '{cmdException.Command.Name}' in {cmdException.Context.Channel}.");
-				Console.WriteLine(cmdException.ToString());
+				await logger.Log(new LogMessage(LogSeverity.Error, "Commands", $"{cmdException.Context.User} failed to execute '{cmdException.Command.Name}' in channel {cmdException.Context.Channel}.", cmdException));
 			}
 		}
 	}
