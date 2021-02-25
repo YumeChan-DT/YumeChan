@@ -1,24 +1,15 @@
-﻿using Discord;
+using Discord;
 using Microsoft.Extensions.Logging;
 using Nodsoft.YumeChan.Core.Config;
 using System;
 using System.Threading.Tasks;
+using System.Linq;
 
 namespace Nodsoft.YumeChan.Core
 {
 	public static class Utilities
 	{
-		public static bool ImplementsInterface(this Type type, Type interfaceType)
-		{
-			foreach (Type t in type.GetInterfaces())
-			{
-				if (t == interfaceType)
-				{
-					return true;
-				}
-			}
-			return false;
-		}
+		public static bool ImplementsInterface(this Type type, Type interfaceType) => type.GetInterfaces().Where(t => t == interfaceType).Select(t => new { }).Any();
 
 		public static Task Log(this ILogger logger, LogMessage logMessage) // Adapting MS's ILogger.Log() for Discord.NET events
 		{
