@@ -2,6 +2,8 @@ using Discord;
 using Discord.Commands;
 using Discord.WebSocket;
 using Lamar;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Logging;
 using Nodsoft.YumeChan.Core.Config;
 using Nodsoft.YumeChan.Core.TypeReaders;
@@ -26,17 +28,17 @@ namespace Nodsoft.YumeChan.Core
 
 		private readonly DiscordSocketClient client;
 		private readonly IServiceProvider services;
-		private readonly ServiceRegistry descriptors;
+		private readonly ServiceRegistry registry;
 		private readonly ILogger logger;
 		private readonly PluginsLoader externalModulesLoader;
 
 
-		public CommandHandler(DiscordSocketClient client, CommandService commands, ILogger<CommandHandler> logger, ServiceRegistry services)
+		public CommandHandler(DiscordSocketClient client, CommandService commands, ILogger<CommandHandler> logger, IServiceProvider services, ServiceRegistry registry)
 		{
 			Commands = commands;
 			this.client = client;
-			this.services = new Container(services);
-			descriptors = services;
+			this.services = services;
+			this.registry = registry;
 			this.logger = logger;
 			externalModulesLoader = new(string.Empty);
 		}
@@ -80,7 +82,7 @@ namespace Nodsoft.YumeChan.Core
 
 			foreach (Plugin plugin in Plugins)
 			{
-				plugin.ConfigureServices(descriptors);
+				plugin.ConfigureServices(registry);
 				await plugin.LoadPlugin();
 				await Commands.AddModulesAsync(plugin.GetType().Assembly, services);
 
