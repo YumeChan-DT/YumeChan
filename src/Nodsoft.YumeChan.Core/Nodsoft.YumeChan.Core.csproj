@@ -1,28 +1,28 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
 	<PropertyGroup>
-		<Version>0.3.0</Version>
-		<Authors>DJ Daemonix</Authors>
-		<Company>Nodsoft ES</Company>
+		<TargetFramework>net5.0</TargetFramework>
+		<Version>0.3.1</Version>
+		<Authors>Sakura Isayeki</Authors>
+		<Company>Nodsoft Systems</Company>
 		<Product>YumeChan</Product>
 		<Copyright>GNU GPLv3</Copyright>
 		<NeutralLanguage>en</NeutralLanguage>
-		<RepositoryUrl>https://github.com/DJDaemonix/YumeChan</RepositoryUrl>
+		<RepositoryUrl>https://github.com/YumeChan-DT/YumeChan</RepositoryUrl>
 		<RepositoryType>Git</RepositoryType>
 		<SignAssembly>false</SignAssembly>
-		<AssemblyVersion>0.3.0.0</AssemblyVersion>
-		<FileVersion>0.2.5.0</FileVersion>
+		<AssemblyVersion>0.3.1.0</AssemblyVersion>
+		<FileVersion>0.3.1.0</FileVersion>
 		<PackageLicenseFile>LICENSE</PackageLicenseFile>
 		<LangVersion>preview</LangVersion>
-		<TargetFramework>net5.0</TargetFramework>
 	</PropertyGroup>
 
 	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
-	  <PlatformTarget>AnyCPU</PlatformTarget>
+		<PlatformTarget>AnyCPU</PlatformTarget>
 	</PropertyGroup>
 
 	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
-	  <PlatformTarget>AnyCPU</PlatformTarget>
+		<PlatformTarget>AnyCPU</PlatformTarget>
 	</PropertyGroup>
 
 	<ItemGroup>
@@ -46,20 +46,20 @@
 	</ItemGroup>
 
 	<ItemGroup>
-	  <ProjectReference Include="..\Nodsoft.YumeChan.PluginBase\Nodsoft.YumeChan.PluginBase.csproj" />
+		<ProjectReference Include="..\Nodsoft.YumeChan.PluginBase\Nodsoft.YumeChan.PluginBase.csproj" />
 	</ItemGroup>
 
 	<ItemGroup>
-	  <None Include="D:\Code\Source\YumeChan\LICENSE">
-	    <Pack>True</Pack>
-	    <PackagePath></PackagePath>
-	  </None>
+		<None Include="D:\Code\Source\YumeChan\LICENSE">
+			<Pack>True</Pack>
+			<PackagePath></PackagePath>
+		</None>
 	</ItemGroup>
 
 	<ItemGroup>
-	  <None Update="Config\botconfig.json">
-	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-	  </None>
+		<None Update="Config\botconfig.json">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</None>
 	</ItemGroup>
 
 	<ProjectExtensions><VisualStudio><UserProperties config_4botconfig_1json__JsonSchema="http://json.schemastore.org/config" /></VisualStudio></ProjectExtensions>

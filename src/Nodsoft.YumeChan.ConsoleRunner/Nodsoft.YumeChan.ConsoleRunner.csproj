@@ -4,12 +4,12 @@
 		<OutputType>Exe</OutputType>
 		<TargetFramework>net5.0</TargetFramework>
 		<LangVersion>preview</LangVersion>
-		<Version>0.1.4</Version>
-		<Authors>DJ Daemonix</Authors>
-		<Company>Nodsoft ES</Company>
+		<Version>0.1.5</Version>
+		<Authors>Sakura Isayeki</Authors>
+		<Company>Nodsoft Systems</Company>
 		<Product>YumeChan</Product>
 		<Copyright>GNU GPLv3</Copyright>
-		<RepositoryUrl>https://github.com/DJDaemonix/YumeChan</RepositoryUrl>
+		<RepositoryUrl>https://github.com/YumeChan-DT/YumeChan</RepositoryUrl>
 		<RepositoryType>Git</RepositoryType>
 	</PropertyGroup>
 
