@@ -53,9 +53,8 @@ namespace Nodsoft.YumeChan.Core
 		public void LoadPluginAssemblies()
 		{
 			PluginFiles = new List<FileInfo>(PluginsLoadDirectory.GetFiles($"*{PluginsLoadDiscriminator}*.dll"));
+			
 			PluginAssemblies ??= new List<Assembly>();
-
-
 			PluginAssemblies.AddRange
 			(
 				from FileInfo file in PluginFiles
@@ -64,32 +63,11 @@ namespace Nodsoft.YumeChan.Core
 			);
 		}
 
-		public IEnumerable<Plugin> LoadPluginManifests()
-		{
-			List<Type> pluginTypes = new();
-
-			foreach (Assembly assembly in PluginAssemblies)
-			{
-				pluginTypes.AddRange
-				(
-					from Type t in assembly.ExportedTypes
-					where t.IsSubclassOf(typeof(Plugin))
-					select t
-				);
-			}
-
-			return pluginTypes.Select(pluginType => InstantiateManifest(pluginType));
-
-		}
-
-		public static IServiceCollection ConfigurePluginDependencies(IServiceCollection services, IEnumerable<Plugin> plugins)
-		{
-			foreach (Plugin plugin in plugins)
-			{
-				plugin.ConfigureServices(services);
-			}
-			return services;
-		}
+		public IEnumerable<Plugin> LoadPluginManifests() =>
+			from Assembly a in PluginAssemblies
+			from Type t in a.ExportedTypes
+			where t.IsSubclassOf(typeof(Plugin))
+			select InstantiateManifest(t);
 
 		internal static Plugin InstantiateManifest(Type typePlugin) => ActivatorUtilities.CreateInstance(YumeCore.Instance.Services, typePlugin) as Plugin;
 	}

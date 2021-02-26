@@ -75,11 +75,11 @@ namespace Nodsoft.YumeChan.Core
 			Client.Log += Logger.Log;
 			CommandHandler.Commands.Log += Logger.Log;
 
-			await CommandHandler.RegisterTypeReaders();
-			await CommandHandler.InstallCommandsAsync();
-
 			await Client.LoginAsync(TokenType.Bot, await GetBotTokenAsync());
 			await Client.StartAsync();
+
+			await CommandHandler.RegisterTypeReaders();
+			await CommandHandler.InstallCommandsAsync();
 
 			CoreState = YumeCoreState.Online;
 		}
@@ -88,7 +88,7 @@ namespace Nodsoft.YumeChan.Core
 		{
 			CoreState = YumeCoreState.Stopping;
 
-
+			await CommandHandler.ReleaseCommandsAsync();
 
 			await Client.LogoutAsync();
 			await Client.StopAsync();
@@ -102,10 +102,10 @@ namespace Nodsoft.YumeChan.Core
 		public async Task RestartBotAsync()
 		{
 			// Stop Bot
-			await StopBotAsync().ConfigureAwait(true);
+			await StopBotAsync();
 
 			// Start Bot
-			await StartBotAsync().ConfigureAwait(false);
+			await StartBotAsync();
 		}
 
 

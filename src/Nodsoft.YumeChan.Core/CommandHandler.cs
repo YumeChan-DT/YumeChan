@@ -92,6 +92,8 @@ namespace Nodsoft.YumeChan.Core
 					client.MessageUpdated += tap.OnMessageUpdated;
 					client.MessageDeleted += tap.OnMessageDeleted;
 				}
+
+				logger.LogInformation("Loaded Plugin '{Plugin}'.", plugin.PluginAssemblyName);
 			}
 
 			await Commands.AddModulesAsync(Assembly.GetEntryAssembly(), services); // Add possible Commands from Entry Assembly (contextual)
