@@ -86,13 +86,6 @@ namespace Nodsoft.YumeChan.Core
 				await plugin.LoadPlugin();
 				await Commands.AddModulesAsync(plugin.GetType().Assembly, services);
 
-				if (plugin is IMessageTap tap)
-				{
-					client.MessageReceived += tap.OnMessageReceived;
-					client.MessageUpdated += tap.OnMessageUpdated;
-					client.MessageDeleted += tap.OnMessageDeleted;
-				}
-
 				logger.LogInformation("Loaded Plugin '{Plugin}'.", plugin.PluginAssemblyName);
 			}
 
@@ -110,15 +103,10 @@ namespace Nodsoft.YumeChan.Core
 
 			foreach (Plugin plugin in new List<Plugin>(Plugins.Where(p => p is not Modules.InternalPlugin)))
 			{
-				if (plugin is IMessageTap tap)
-				{
-					client.MessageReceived -= tap.OnMessageReceived;
-					client.MessageUpdated -= tap.OnMessageUpdated;
-					client.MessageDeleted -= tap.OnMessageDeleted;
-				}
-
 				await plugin.UnloadPlugin();
 				Plugins.Remove(plugin);
+
+				logger.LogInformation("Removed Plugin '{Plugin}'.", plugin.PluginAssemblyName);
 			}
 		}
 
