@@ -133,7 +133,7 @@ namespace Nodsoft.YumeChan.Core
 				else
 				{
 					ApplicationException e = new("No Bot Token supplied.");
-					Logger.LogCritical(e, $"No Bot Token was found in \"coreproperties.json\" Config File, and Environment Variables \"{envVarName}\" from relevant targets are empty. " +
+					Logger.LogCritical(e, $"No Bot Token was found in \"coreconfig.json\" Config File, and Environment Variables \"{envVarName}\" from relevant targets are empty. " +
 											$"\nPlease set a Bot Token before launching the Bot.");
 					throw e;
 				}
