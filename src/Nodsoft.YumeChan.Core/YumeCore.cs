@@ -1,6 +1,4 @@
-using Discord;
-using Discord.Commands;
-using Discord.WebSocket;
+using DSharpPlus;
 using Lamar;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -22,38 +20,41 @@ namespace Nodsoft.YumeChan.Core
 
 	public sealed class YumeCore
 	{
-		// Properties
+		public static YumeCore Instance => instance ??= new();
+		private static YumeCore instance;
 
-		public static YumeCore Instance { get; } = new Lazy<YumeCore>(() => new()).Value;
 		public YumeCoreState CoreState { get; private set; }
 		public static Version CoreVersion { get; } = typeof(YumeCore).Assembly.GetName().Version;
 
-		public DiscordSocketClient Client { get; set; }
+		public DiscordClient Client { get; set; }
 		public CommandHandler CommandHandler { get; set; }
 		public IContainer Services { get; set; }
 
+		internal ILoggerFactory LoggerFactory { get; set; }
 		internal ILogger Logger { get; set; }
 
 		internal ConfigurationProvider<ICoreProperties> ConfigProvider { get; private set; }
 		public ICoreProperties CoreProperties { get; private set; }
 
-		// Constructors
-		static YumeCore() { /* Static ctor for Singleton implementation */ }
 
+		public YumeCore() {	}
 
-		// Destructor
 		~YumeCore()
 		{
 			StopBotAsync().Wait();
 		}
 
 
-		// Methods
-
-		public static IServiceCollection ConfigureServices() => ConfigureServices(new ServiceRegistry());
-		public static IServiceCollection ConfigureServices(IServiceCollection services) => services
-			.AddSingleton<DiscordSocketClient>()
-			.AddSingleton<CommandService>()
+		public IServiceCollection ConfigureServices() => ConfigureServices(new ServiceRegistry());
+		public IServiceCollection ConfigureServices(IServiceCollection services) => services
+			.AddSingleton(c => new DiscordClient(new()
+			{
+				Intents = DiscordIntents.All,
+				TokenType = TokenType.Bot,
+				Token = GetBotTokenAsync().GetAwaiter().GetResult(), //TODO : Cleanup
+				LoggerFactory = LoggerFactory,
+				MinimumLogLevel = LogLevel.Information
+			}))
 			.AddSingleton<CommandHandler>()
 			.AddHttpClient()
 			.AddSingleton(typeof(IDatabaseProvider<>), typeof(DatabaseProvider<>))
@@ -71,14 +72,12 @@ namespace Nodsoft.YumeChan.Core
 
 			CoreState = YumeCoreState.Starting;
 
-			// Event Subscriptions
-			Client.Log += Logger.Log;
-			CommandHandler.Commands.Log += Logger.Log;
 
-			await Client.LoginAsync(TokenType.Bot, await GetBotTokenAsync());
-			await Client.StartAsync();
+			await Client.ConnectAsync();
+			await Client.InitializeAsync();
 
-			await CommandHandler.RegisterTypeReaders();
+//			await CommandHandler.RegisterTypeReaders();
+
 			await CommandHandler.InstallCommandsAsync();
 
 			CoreState = YumeCoreState.Online;
@@ -90,11 +89,8 @@ namespace Nodsoft.YumeChan.Core
 
 			await CommandHandler.ReleaseCommandsAsync();
 
-			await Client.LogoutAsync();
-			await Client.StopAsync();
-
-			Client.Log -= Logger.Log;
-			CommandHandler.Commands.Log -= Logger.Log;
+			await Client.DisconnectAsync();
+			Client.Dispose();
 
 			CoreState = YumeCoreState.Offline;
 		}
@@ -172,15 +168,17 @@ namespace Nodsoft.YumeChan.Core
 
 		private void ResolveCoreComponents()
 		{
-			Client ??= Services.GetInstance<DiscordSocketClient>();
-			CommandHandler ??= Services.GetInstance<CommandHandler>();
-			Logger ??= Services.GetInstance<ILoggerFactory>().CreateLogger<YumeCore>();
-			ConfigProvider ??= Services.GetInstance<IConfigProvider<ICoreProperties>>() as ConfigurationProvider<ICoreProperties>;
+			LoggerFactory = Services.GetInstance<ILoggerFactory>();
+			Logger ??= LoggerFactory.CreateLogger<YumeCore>();
+			ConfigProvider ??= new();
 			CoreProperties = ConfigProvider.InitConfig("coreconfig.json", true).PopulateCoreProperties();
 
 			CoreProperties.Path_Core ??= Directory.GetCurrentDirectory();
-			CoreProperties.Path_Plugins ??= CoreProperties.Path_Core + Path.DirectorySeparatorChar + "Plugins";
-			CoreProperties.Path_Config ??= CoreProperties.Path_Core + Path.DirectorySeparatorChar + "Config";
+			CoreProperties.Path_Plugins ??= Path.Combine(CoreProperties.Path_Core, "Plugins");
+			CoreProperties.Path_Config ??= Path.Combine(CoreProperties.Path_Core, "Config");
+
+			Client ??= Services.GetInstance<DiscordClient>();
+			CommandHandler ??= Services.GetInstance<CommandHandler>();
 
 			CommandHandler.Config ??= CoreProperties;
 		}

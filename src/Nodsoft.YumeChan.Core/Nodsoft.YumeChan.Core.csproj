@@ -30,6 +30,8 @@
 		<PackageReference Include="Config.Net.Json" Version="4.15.0" />
 		<PackageReference Include="Discord.Net" Version="2.3.0" />
 		<PackageReference Include="Discord.Net.Commands" Version="2.3.0" />
+		<PackageReference Include="DSharpPlus" Version="4.0.0" />
+		<PackageReference Include="DSharpPlus.CommandsNext" Version="4.0.0" />
 		<PackageReference Include="Lamar" Version="5.0.3" />
 		<PackageReference Include="Lamar.Microsoft.DependencyInjection" Version="5.0.3" />
 		<PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="5.0.0" />

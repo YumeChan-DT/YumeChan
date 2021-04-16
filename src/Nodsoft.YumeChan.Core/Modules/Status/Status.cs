@@ -1,22 +1,23 @@
-﻿using Discord;
-using Discord.Commands;
-using System.Threading.Tasks;
-
-using static Nodsoft.YumeChan.Core.YumeCore;
+﻿using DSharpPlus.CommandsNext;
+using DSharpPlus.CommandsNext.Attributes;
+using DSharpPlus.Entities;
 using Nodsoft.YumeChan.PluginBase;
 using System;
+using System.Threading.Tasks;
+using static Nodsoft.YumeChan.Core.YumeCore;
+
 
 namespace Nodsoft.YumeChan.Core.Modules.Status
 {
 	[Group("status")]
-	public class Status : ModuleBase<SocketCommandContext>, ICoreModule
+	public class Status : BaseCommandModule, ICoreModule
 	{
 		internal const string MissingVersionSubstitute = "Unknown";
 
 		[Command]
-		public async Task CoreStatusAsync()
+		public async Task CoreStatusAsync(CommandContext context)
 		{
-			EmbedBuilder embed = new EmbedBuilder()
+			DiscordEmbedBuilder embed = new DiscordEmbedBuilder()
 				.WithTitle(Instance.CoreProperties.AppDisplayName)
 				.WithDescription($"Status : {Instance.CoreState}")
 				.AddField("Core", $"Version : {CoreVersion.ToString() ?? MissingVersionSubstitute}", true)
@@ -25,13 +26,13 @@ namespace Nodsoft.YumeChan.Core.Modules.Status
 			embed.AddField("Debug", "Debug Build Active.");
 #endif
 
-			await ReplyAsync(embed: embed.Build());
+			await context.RespondAsync(embed: embed.Build());
 		}
 
 		[Command("plugins")]
-		public async Task PluginsStatusAsync()
+		public async Task PluginsStatusAsync(CommandContext context)
 		{
-			EmbedBuilder embed = new EmbedBuilder()
+			DiscordEmbedBuilder embed = new DiscordEmbedBuilder()
 				.WithTitle("Plugins")
 				.WithDescription($"Currently Loaded : **{Instance.CommandHandler.Plugins.Count}** Plugins.");
 
@@ -43,7 +44,7 @@ namespace Nodsoft.YumeChan.Core.Modules.Status
 					$"Loaded : {(pluginManifest.PluginLoaded ? "Yes" : "No")}", true);
 			}
 
-			await ReplyAsync(embed: embed.Build());
+			await context.RespondAsync(embed: embed.Build());
 		}
 
 		[Command("throw"), RequireOwner]

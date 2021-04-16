@@ -1,16 +1,11 @@
-using Discord;
-using Discord.Commands;
-using Discord.WebSocket;
+using DSharpPlus;
+using DSharpPlus.CommandsNext;
 using Lamar;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Logging;
 using Nodsoft.YumeChan.Core.Config;
-using Nodsoft.YumeChan.Core.TypeReaders;
 using Nodsoft.YumeChan.PluginBase;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
@@ -21,54 +16,61 @@ namespace Nodsoft.YumeChan.Core
 {
 	public class CommandHandler
 	{
-		public CommandService Commands { get; internal set; }
+		public CommandsNextExtension Commands { get; internal set; }
+		public CommandsNextConfiguration CommandsConfiguration { get; internal set; }
+
 		public List<Plugin> Plugins { get; internal set; }
 
 		internal ICoreProperties Config { get; set; }
 
-		private readonly DiscordSocketClient client;
+		private readonly DiscordClient client;
 		private readonly IServiceProvider services;
 		private readonly ServiceRegistry registry;
 		private readonly ILogger logger;
 		private readonly PluginsLoader externalModulesLoader;
 
 
-		public CommandHandler(DiscordSocketClient client, CommandService commands, ILogger<CommandHandler> logger, IServiceProvider services, ServiceRegistry registry)
+		public CommandHandler(DiscordClient client, ILogger<CommandHandler> logger, IServiceProvider services, ServiceRegistry registry)
 		{
-			Commands = commands;
 			this.client = client;
 			this.services = services;
 			this.registry = registry;
 			this.logger = logger;
+
 			externalModulesLoader = new(string.Empty);
 		}
 
 
 		public async Task InstallCommandsAsync()
 		{
-			Commands.Log += LogAsync; // Hook exception logging
-			Commands.CommandExecuted += OnCommandExecutedAsync; // Hook execution event
-			client.MessageReceived += HandleCommandAsync; // Hook command handler
+			CommandsConfiguration = new()
+			{
+				Services = services,
+				StringPrefixes = new[] { Config.CommandPrefix }
+			};
+
+			Commands = client.UseCommandsNext(CommandsConfiguration);
+
+			//			Commands.CommandExecuted += OnCommandExecutedAsync; // Hook execution event
+			//			client.MessageReceived += HandleCommandAsync; // Hook command handler
 
 			await RegisterCommandsAsync();
 		}
 
 		public async Task UninstallCommandsAsync()
 		{
-			Commands.Log -= LogAsync;
-			Commands.CommandExecuted -= OnCommandExecutedAsync;
-			client.MessageReceived -= HandleCommandAsync;
+//			Commands.CommandExecuted -= OnCommandExecutedAsync;
+//			client.MessageReceived -= HandleCommandAsync;
 
 			await ReleaseCommandsAsync();
 		}
 
 
-		public Task RegisterTypeReaders()
+/*		public void RegisterTypeReaders()
 		{
-			Commands.AddTypeReader(typeof(IEmote), new EmoteTypeReader());
-
-			return Task.CompletedTask;
+			
 		}
+*/
 
 		public async Task RegisterCommandsAsync()
 		{
@@ -84,22 +86,17 @@ namespace Nodsoft.YumeChan.Core
 			{
 				plugin.ConfigureServices(registry);
 				await plugin.LoadPlugin();
-				await Commands.AddModulesAsync(plugin.GetType().Assembly, services);
-
+				Commands.RegisterCommands(plugin.GetType().Assembly);
 				logger.LogInformation("Loaded Plugin '{Plugin}'.", plugin.PluginAssemblyName);
 			}
 
-			await Commands.AddModulesAsync(Assembly.GetEntryAssembly(), services); // Add possible Commands from Entry Assembly (contextual)
+			Commands.RegisterCommands(Assembly.GetEntryAssembly()); // Add possible Commands from Entry Assembly (contextual)
 		}
 
 
 		public async Task ReleaseCommandsAsync()
 		{
-			foreach (ModuleInfo module in Commands.Modules.Where(m => m is not Modules.ICoreModule))
-			{
-				await Commands.RemoveModuleAsync(module).ConfigureAwait(false);
-			}
-
+			Commands.UnregisterCommands(Commands.RegisteredCommands.Values.ToArray());
 
 			foreach (Plugin plugin in new List<Plugin>(Plugins.Where(p => p is not Modules.InternalPlugin)))
 			{
@@ -110,9 +107,9 @@ namespace Nodsoft.YumeChan.Core
 			}
 		}
 
-		private async Task HandleCommandAsync(SocketMessage arg)
+/*	private async Task HandleCommandAsync(SocketMessage arg)
 		{
-			if (arg is SocketUserMessage message /*&& !message.Author.IsBot*/)
+			if (arg is SocketUserMessage message)
 			{
 				int argPosition = 0;
 
@@ -124,8 +121,9 @@ namespace Nodsoft.YumeChan.Core
 				}
 			}
 		}
+*/
 
-		public async Task OnCommandExecutedAsync(Optional<CommandInfo> command, ICommandContext context, IResult result)
+/*		public async Task OnCommandExecutedAsync(Optional<CommandInfo> command, ICommandContext context, IResult result)
 		{
 			// We have access to the information of the command executed,
 			// the context of the command, and the result returned from the
@@ -140,8 +138,9 @@ namespace Nodsoft.YumeChan.Core
 			// Log the result
 			await logger.Log(new LogMessage(LogSeverity.Verbose, "Commands", $"Command '{context.Message.Content}' received from User '{context.User}'."));
 		}
+*/
 
-		public async Task LogAsync(LogMessage logMessage)
+/*		public async Task LogAsync(LogMessage logMessage)
 		{
 			if (logMessage.Exception is CommandException cmdException)
 			{
@@ -156,5 +155,6 @@ namespace Nodsoft.YumeChan.Core
 				await logger.Log(new LogMessage(LogSeverity.Error, "Commands", $"{cmdException.Context.User} failed to execute '{cmdException.Command.Name}' in channel {cmdException.Context.Channel}.", cmdException));
 			}
 		}
+*/
 	}
 }

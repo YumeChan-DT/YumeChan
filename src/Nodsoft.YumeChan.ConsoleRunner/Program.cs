@@ -11,7 +11,7 @@ namespace Nodsoft.YumeChan.ConsoleRunner
 		public static async Task Main(string[] _)
 		{
 			ServiceRegistry services = ConfigureServices(new());
-			YumeCore.ConfigureServices(services);
+			YumeCore.Instance.ConfigureServices(services);
 
 			YumeCore.Instance.Services = new Container(services);
 
@@ -24,14 +24,14 @@ namespace Nodsoft.YumeChan.ConsoleRunner
 			services.AddLogging()
 				.AddSingleton(LoggerFactory.Create(builder =>
 				{
-				builder.ClearProviders()
-#if DEBUG
-						.SetMinimumLevel(LogLevel.Trace)
-#endif
-						.AddConsole()
-						.AddFilter("Microsoft", LogLevel.Warning)
-						.AddFilter("System", LogLevel.Warning)
-						.AddDebug();
+					builder.ClearProviders()
+	#if DEBUG
+							.SetMinimumLevel(LogLevel.Trace)
+	#endif
+							.AddConsole()
+							.AddFilter("Microsoft", LogLevel.Warning)
+							.AddFilter("System", LogLevel.Warning)
+							.AddDebug();
 				}))
 				.AddSingleton(YumeCore.Instance);
 
