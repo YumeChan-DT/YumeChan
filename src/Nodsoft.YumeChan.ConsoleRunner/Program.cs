@@ -1,8 +1,12 @@
 ﻿using System.Threading.Tasks;
 using Lamar;
+using Lamar.Microsoft.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Nodsoft.YumeChan.Core;
+using Serilog;
+using Serilog.Events;
 
 namespace Nodsoft.YumeChan.ConsoleRunner
 {
@@ -10,32 +14,40 @@ namespace Nodsoft.YumeChan.ConsoleRunner
 	{
 		public static async Task Main(string[] _)
 		{
-			ServiceRegistry services = ConfigureServices(new());
-			YumeCore.Instance.ConfigureServices(services);
+			Log.Logger = new LoggerConfiguration()
+				.MinimumLevel.Override("Microsoft", LogEventLevel.Information)
+				.Enrich.FromLogContext()
+				.WriteTo.Console()
+				.CreateLogger();
 
-			YumeCore.Instance.Services = new Container(services);
+			ServiceRegistry services = new();
 
-			await YumeCore.Instance.StartBotAsync().ConfigureAwait(true);
-			await Task.Delay(-1);
+			IHost host = CreateHostBuilder(services).Build();
+
+			Container container = host.Services as Container;
+
+			container.GetInstance<ILoggerFactory>().CreateLogger(nameof(Program)).LogInformation("Testing Logger");
+
+			
+			YumeCore.Instance.Services = container;
+
+			await YumeCore.Instance.StartBotAsync().ConfigureAwait(false);
+			await host.RunAsync();
 		}
 
-		public static ServiceRegistry ConfigureServices(ServiceRegistry services)
+		public static IHostBuilder CreateHostBuilder(ServiceRegistry serviceRegistry = null)
 		{
-			services.AddLogging()
-				.AddSingleton(LoggerFactory.Create(builder =>
+			return new HostBuilder()
+				.UseLamar(serviceRegistry ?? new())
+				.ConfigureAppConfiguration(builder =>
 				{
-					builder.ClearProviders()
-	#if DEBUG
-							.SetMinimumLevel(LogLevel.Trace)
-	#endif
-							.AddConsole()
-							.AddFilter("Microsoft", LogLevel.Warning)
-							.AddFilter("System", LogLevel.Warning)
-							.AddDebug();
-				}))
-				.AddSingleton(YumeCore.Instance);
 
-			return services;
+				})
+				.ConfigureContainer<ServiceRegistry>((context, services) =>
+				{
+					YumeCore.Instance.ConfigureServices(services);
+				})
+				.UseSerilog();
 		}
 	}
 }

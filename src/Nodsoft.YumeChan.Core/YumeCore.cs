@@ -1,5 +1,6 @@
 using DSharpPlus;
 using Lamar;
+using LamarCodeGeneration.Util;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Nodsoft.YumeChan.Core.Config;
@@ -8,6 +9,7 @@ using Nodsoft.YumeChan.PluginBase.Tools;
 using Nodsoft.YumeChan.PluginBase.Tools.Data;
 using System;
 using System.IO;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 
@@ -30,14 +32,13 @@ namespace Nodsoft.YumeChan.Core
 		public CommandHandler CommandHandler { get; set; }
 		public IContainer Services { get; set; }
 
-		internal ILoggerFactory LoggerFactory { get; set; }
 		internal ILogger Logger { get; set; }
 
 		internal ConfigurationProvider<ICoreProperties> ConfigProvider { get; private set; }
 		public ICoreProperties CoreProperties { get; private set; }
 
 
-		public YumeCore() {	}
+		public YumeCore() { }
 
 		~YumeCore()
 		{
@@ -47,19 +48,19 @@ namespace Nodsoft.YumeChan.Core
 
 		public IServiceCollection ConfigureServices() => ConfigureServices(new ServiceRegistry());
 		public IServiceCollection ConfigureServices(IServiceCollection services) => services
-			.AddSingleton(c => new DiscordClient(new()
+			.AddSingleton((services) => new DiscordClient(new()
 			{
 				Intents = DiscordIntents.All,
 				TokenType = TokenType.Bot,
-				Token = GetBotTokenAsync().GetAwaiter().GetResult(), //TODO : Cleanup
-				LoggerFactory = LoggerFactory,
+				Token = GetBotToken(),
+				LoggerFactory = services.GetRequiredService<ILoggerFactory>(),
 				MinimumLogLevel = LogLevel.Information
 			}))
 			.AddSingleton<CommandHandler>()
 			.AddHttpClient()
 			.AddSingleton(typeof(IDatabaseProvider<>), typeof(DatabaseProvider<>))
-			.AddSingleton(typeof(IConfigProvider<>), typeof(ConfigurationProvider<>))
-			.AddLogging();
+			.AddSingleton(typeof(IConfigProvider<>), typeof(ConfigurationProvider<>));
+
 
 		public async Task StartBotAsync()
 		{
@@ -114,7 +115,7 @@ namespace Nodsoft.YumeChan.Core
 		}
 
 
-		private async Task<string> GetBotTokenAsync()
+		private string GetBotToken()
 		{
 			string token = CoreProperties.BotToken;
 
@@ -122,7 +123,7 @@ namespace Nodsoft.YumeChan.Core
 			{
 				string envVarName = $"{CoreProperties.AppInternalName}.Token";
 
-				if (await TryBotTokenFromEnvironment(envVarName, out token, out EnvironmentVariableTarget target))
+				if (TryBotTokenFromEnvironment(envVarName, out token, out EnvironmentVariableTarget target))
 				{
 					Logger.LogInformation($"Bot Token was read from {target} Environment Variable \"{envVarName}\", instead of \"coreproperties.json\" Config File.");
 				}
@@ -138,7 +139,7 @@ namespace Nodsoft.YumeChan.Core
 			return token;
 		}
 
-		private static Task<bool> TryBotTokenFromEnvironment(string envVarName, out string token, out EnvironmentVariableTarget foundFromTarget)
+		private static bool TryBotTokenFromEnvironment(string envVarName, out string token, out EnvironmentVariableTarget foundFromTarget)
 		{
 			if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
 			{
@@ -149,27 +150,26 @@ namespace Nodsoft.YumeChan.Core
 					if (token is not null)
 					{
 						foundFromTarget = target;
-						return Task.FromResult(true);
+						return true;
 					}
 				}
 
 				token = null;
 				foundFromTarget = default;
-				return Task.FromResult(false);
+				return false;
 			}
 			else
 			{
 				token = Environment.GetEnvironmentVariable(envVarName);
 
 				foundFromTarget = EnvironmentVariableTarget.Process;
-				return Task.FromResult(token is not null);
+				return token is not null;
 			}
 		}
 
 		private void ResolveCoreComponents()
 		{
-			LoggerFactory = Services.GetInstance<ILoggerFactory>();
-			Logger ??= LoggerFactory.CreateLogger<YumeCore>();
+			Logger ??= Services.GetInstance<ILoggerFactory>().CreateLogger<YumeCore>();
 			ConfigProvider ??= new();
 			CoreProperties = ConfigProvider.InitConfig("coreconfig.json", true).PopulateCoreProperties();
 
