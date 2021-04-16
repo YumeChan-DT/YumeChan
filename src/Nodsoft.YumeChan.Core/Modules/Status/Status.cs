@@ -9,19 +9,19 @@ using static Nodsoft.YumeChan.Core.YumeCore;
 
 namespace Nodsoft.YumeChan.Core.Modules.Status
 {
-	[Group("status")]
+	[Group("status"), Description("Displays YumeCore Status")]
 	public class Status : BaseCommandModule, ICoreModule
 	{
 		internal const string MissingVersionSubstitute = "Unknown";
 
-		[Command]
+		[GroupCommand]
 		public async Task CoreStatusAsync(CommandContext context)
 		{
 			DiscordEmbedBuilder embed = new DiscordEmbedBuilder()
 				.WithTitle(Instance.CoreProperties.AppDisplayName)
 				.WithDescription($"Status : {Instance.CoreState}")
 				.AddField("Core", $"Version : {CoreVersion.ToString() ?? MissingVersionSubstitute}", true)
-				.AddField("Loaded Modules", $"Count : {(Instance.CommandHandler.Plugins is null ? "None" : Instance.CommandHandler.Plugins.Count.ToString())}", true);
+				.AddField("Loaded Plugins", $"Count : {(Instance.CommandHandler.Plugins is null ? "None" : Instance.CommandHandler.Plugins.Count.ToString())}", true);
 #if DEBUG
 			embed.AddField("Debug", "Debug Build Active.");
 #endif
@@ -29,7 +29,7 @@ namespace Nodsoft.YumeChan.Core.Modules.Status
 			await context.RespondAsync(embed: embed.Build());
 		}
 
-		[Command("plugins")]
+		[Command("plugins"), Description("Lists all loaded Plugins")]
 		public async Task PluginsStatusAsync(CommandContext context)
 		{
 			DiscordEmbedBuilder embed = new DiscordEmbedBuilder()
@@ -48,6 +48,6 @@ namespace Nodsoft.YumeChan.Core.Modules.Status
 		}
 
 		[Command("throw"), RequireOwner]
-		public Task ThrowAsync() => throw new ApplicationException();
+		public Task Throw(CommandContext _) => throw new ApplicationException();
 	}
 }

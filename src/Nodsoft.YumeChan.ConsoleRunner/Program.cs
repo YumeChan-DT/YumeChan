@@ -15,6 +15,7 @@ namespace Nodsoft.YumeChan.ConsoleRunner
 		public static async Task Main(string[] _)
 		{
 			Log.Logger = new LoggerConfiguration()
+				.MinimumLevel.Debug()
 				.MinimumLevel.Override("Microsoft", LogEventLevel.Information)
 				.Enrich.FromLogContext()
 				.WriteTo.Console()

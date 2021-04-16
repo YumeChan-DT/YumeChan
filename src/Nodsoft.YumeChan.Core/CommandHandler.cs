@@ -50,9 +50,11 @@ namespace Nodsoft.YumeChan.Core
 			};
 
 			Commands = client.UseCommandsNext(CommandsConfiguration);
+			Commands.CommandErrored += OnCommandErroredAsync;
+			Commands.CommandExecuted += OnCommandExecuted;
 
-			//			Commands.CommandExecuted += OnCommandExecutedAsync; // Hook execution event
-			//			client.MessageReceived += HandleCommandAsync; // Hook command handler
+//			Commands.CommandExecuted += OnCommandExecutedAsync; // Hook execution event
+//			client.MessageReceived += HandleCommandAsync; // Hook command handler
 
 			await RegisterCommandsAsync();
 		}
@@ -107,54 +109,60 @@ namespace Nodsoft.YumeChan.Core
 			}
 		}
 
-/*	private async Task HandleCommandAsync(SocketMessage arg)
+		internal async Task OnCommandErroredAsync(CommandsNextExtension sender, CommandErrorEventArgs e)
 		{
-			if (arg is SocketUserMessage message)
-			{
-				int argPosition = 0;
-
-				if (message.HasStringPrefix(Config.CommandPrefix, ref argPosition) || message.HasMentionPrefix(client.CurrentUser, ref argPosition))
-				{
-					SocketCommandContext context = new(client, message);
-
-					await Commands.ExecuteAsync(context, argPosition, services).ConfigureAwait(false);
-				}
-			}
-		}
-*/
-
-/*		public async Task OnCommandExecutedAsync(Optional<CommandInfo> command, ICommandContext context, IResult result)
-		{
-			// We have access to the information of the command executed,
-			// the context of the command, and the result returned from the
-			// execution in this event.
-
-			// We can tell the user what went wrong
-			if (!string.IsNullOrEmpty(result?.ErrorReason))
-			{
-				await context.Channel.SendMessageAsync(result.ErrorReason);
-			}
-
-			// Log the result
-			await logger.Log(new LogMessage(LogSeverity.Verbose, "Commands", $"Command '{context.Message.Content}' received from User '{context.User}'."));
-		}
-*/
-
-/*		public async Task LogAsync(LogMessage logMessage)
-		{
-			if (logMessage.Exception is CommandException cmdException)
-			{
-				// Inform the user that something unexpected has happened
 #if DEBUG
-				await cmdException.Context.Channel.SendMessageAsync(cmdException.ToString());
+			string response = $"An error occurred : \n```{e.Exception}```";
 #else
-				await cmdException.Context.Channel.SendMessageAsync("Something went wrong.");
+			string response = $"Something went wrong while executing your command : \n\n{e.Exception.Message}";
 #endif
 
-				// Log the incident
-				await logger.Log(new LogMessage(LogSeverity.Error, "Commands", $"{cmdException.Context.User} failed to execute '{cmdException.Command.Name}' in channel {cmdException.Context.Channel}.", cmdException));
-			}
+			await e.Context.RespondAsync(response);
+			logger.LogError("An error occured executing '{0}' from user '{1}' : \n{2}", e.Command.QualifiedName, e.Context.User.Id, e.Exception);
 		}
-*/
+
+
+
+
+		/*	private async Task HandleCommandAsync(SocketMessage arg)
+				{
+					if (arg is SocketUserMessage message)
+					{
+						int argPosition = 0;
+
+						if (message.HasStringPrefix(Config.CommandPrefix, ref argPosition) || message.HasMentionPrefix(client.CurrentUser, ref argPosition))
+						{
+							SocketCommandContext context = new(client, message);
+
+							await Commands.ExecuteAsync(context, argPosition, services).ConfigureAwait(false);
+						}
+					}
+				}
+		*/
+
+		public Task OnCommandExecuted(CommandsNextExtension sender, CommandExecutionEventArgs e)
+		{
+			logger.LogDebug("Command '{0}' received from User '{1}'.", e.Command.QualifiedName, e.Context.User.Id);
+			return Task.CompletedTask;
+		}
+
+
+
+		/*		public async Task LogAsync(LogMessage logMessage)
+				{
+					if (logMessage.Exception is CommandException cmdException)
+					{
+						// Inform the user that something unexpected has happened
+		#if DEBUG
+						await cmdException.Context.Channel.SendMessageAsync(cmdException.ToString());
+		#else
+						await cmdException.Context.Channel.SendMessageAsync("Something went wrong.");
+		#endif
+
+						// Log the incident
+						await logger.Log(new LogMessage(LogSeverity.Error, "Commands", $"{cmdException.Context.User} failed to execute '{cmdException.Command.Name}' in channel {cmdException.Context.Channel}.", cmdException));
+					}
+				}
+		*/
 	}
 }
