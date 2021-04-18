@@ -1,5 +1,7 @@
 using DSharpPlus;
 using DSharpPlus.CommandsNext;
+using DSharpPlus.CommandsNext.Attributes;
+using DSharpPlus.CommandsNext.Exceptions;
 using Lamar;
 using Microsoft.Extensions.Logging;
 using Nodsoft.YumeChan.Core.Config;
@@ -109,8 +111,34 @@ namespace Nodsoft.YumeChan.Core
 			}
 		}
 
-		internal async Task OnCommandErroredAsync(CommandsNextExtension sender, CommandErrorEventArgs e)
+		internal async Task OnCommandErroredAsync(CommandsNextExtension _, CommandErrorEventArgs e)
 		{
+			if (e.Exception is ChecksFailedException cf)
+			{
+				foreach (CheckBaseAttribute check in cf.FailedChecks)
+				{
+					string message = check switch
+					{
+						RequireOwnerAttribute => $"Sorry. You must be a Bot Owner to run this command.",
+						RequireDirectMessageAttribute => "Sorry, not here. Please send me a Direct Message with that command.",
+						RequireGuildAttribute => "Sorry, not here. Please send this command in a server.",
+						RequireNsfwAttribute => "Sorry. As much as I'd love to, I've gotta keep the hot stuff to the right channels.",
+						CooldownAttribute cd => $"Sorry. This command is on Cooldown. You can use it {cd.MaxUses} time(s) every {cd.Reset.TotalSeconds} seconds.",
+						RequireUserPermissionsAttribute p => $"Sorry. You need to have permission(s) ``{p.Permissions}`` to run this.",
+						_ => null
+					};
+
+					if (message is not null)
+					{
+						await e.Context.RespondAsync(message);
+						return;
+					}
+				}
+			}
+
+
+
+
 #if DEBUG
 			string response = $"An error occurred : \n```{e.Exception}```";
 #else

@@ -21,15 +21,12 @@ namespace Nodsoft.YumeChan.ConsoleRunner
 				.WriteTo.Console()
 				.CreateLogger();
 
+
 			ServiceRegistry services = new();
 
 			IHost host = CreateHostBuilder(services).Build();
 
 			Container container = host.Services as Container;
-
-			container.GetInstance<ILoggerFactory>().CreateLogger(nameof(Program)).LogInformation("Testing Logger");
-
-			
 			YumeCore.Instance.Services = container;
 
 			await YumeCore.Instance.StartBotAsync().ConfigureAwait(false);
