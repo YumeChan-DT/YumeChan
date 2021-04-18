@@ -2,17 +2,15 @@
 
 	<PropertyGroup>
 		<TargetFramework>net5.0</TargetFramework>
-		<Version>0.3.1</Version>
-		<Authors>Sakura Isayeki</Authors>
+		<Version>2.0.0-dev</Version>
+		<Authors>Sakura Akeno Isayeki</Authors>
 		<Company>Nodsoft Systems</Company>
-		<Product>YumeChan</Product>
+		<Product>Yume-Chan</Product>
 		<Copyright>GNU GPLv3</Copyright>
 		<NeutralLanguage>en</NeutralLanguage>
 		<RepositoryUrl>https://github.com/YumeChan-DT/YumeChan</RepositoryUrl>
 		<RepositoryType>Git</RepositoryType>
 		<SignAssembly>false</SignAssembly>
-		<AssemblyVersion>0.3.1.0</AssemblyVersion>
-		<FileVersion>0.3.1.0</FileVersion>
 		<PackageLicenseFile>LICENSE</PackageLicenseFile>
 		<LangVersion>preview</LangVersion>
 	</PropertyGroup>

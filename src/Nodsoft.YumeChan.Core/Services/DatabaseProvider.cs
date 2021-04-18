@@ -5,7 +5,7 @@ using Nodsoft.YumeChan.PluginBase.Tools.Data;
 
 
 
-namespace Nodsoft.YumeChan.Core.Tools
+namespace Nodsoft.YumeChan.Core.Services
 {
 	public class DatabaseProvider<TPlugin> : IDatabaseProvider<TPlugin> where TPlugin : Plugin
 	{

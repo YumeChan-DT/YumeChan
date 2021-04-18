@@ -1,15 +1,14 @@
 using DSharpPlus;
 using Lamar;
-using LamarCodeGeneration.Util;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Nodsoft.YumeChan.Core.Config;
-using Nodsoft.YumeChan.Core.Tools;
+using Nodsoft.YumeChan.Core.Services;
 using Nodsoft.YumeChan.PluginBase.Tools;
 using Nodsoft.YumeChan.PluginBase.Tools.Data;
 using System;
 using System.IO;
-using System.Runtime.CompilerServices;
+using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 
@@ -26,7 +25,7 @@ namespace Nodsoft.YumeChan.Core
 		private static YumeCore instance;
 
 		public YumeCoreState CoreState { get; private set; }
-		public static Version CoreVersion { get; } = typeof(YumeCore).Assembly.GetName().Version;
+		public static string CoreVersion { get; } = typeof(YumeCore).Assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>().InformationalVersion;
 
 		public DiscordClient Client { get; set; }
 		public CommandHandler CommandHandler { get; set; }

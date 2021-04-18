@@ -5,6 +5,7 @@ using DSharpPlus.CommandsNext.Exceptions;
 using Lamar;
 using Microsoft.Extensions.Logging;
 using Nodsoft.YumeChan.Core.Config;
+using Nodsoft.YumeChan.Core.Services.Formatters;
 using Nodsoft.YumeChan.PluginBase;
 using System;
 using System.Collections.Generic;
@@ -59,6 +60,8 @@ namespace Nodsoft.YumeChan.Core
 //			client.MessageReceived += HandleCommandAsync; // Hook command handler
 
 			await RegisterCommandsAsync();
+
+			Commands.SetHelpFormatter<HelpCommandFormatter>();
 		}
 
 		public async Task UninstallCommandsAsync()
