@@ -1,11 +1,11 @@
-<Project Sdk="Microsoft.NET.Sdk.Web">
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
 
 	<PropertyGroup>
 		<TargetFramework>net5.0</TargetFramework>
-		<Version>2.0.0-dev</Version>
-		<Authors>Sakura Isayeki</Authors>
-		<Company>Nodsoft ES</Company>
-		<Product>YumeChan</Product>
+		<Version>2.0.0</Version>
+		<Authors>Sakura Akeno Isayeki</Authors>
+		<Company>Nodsoft Systems</Company>
+		<Product>Yume-Chan</Product>
 		<Copyright>GNU GPLv3</Copyright>
 		<NeutralLanguage>Anglais</NeutralLanguage>
 		<RepositoryUrl>https://github.com/YumeChan-DT/YumeChan</RepositoryUrl>
