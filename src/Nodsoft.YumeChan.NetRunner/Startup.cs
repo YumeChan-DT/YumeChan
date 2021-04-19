@@ -46,7 +46,7 @@ namespace Nodsoft.YumeChan.NetRunner
 						.AddDebug();
 			}));
 			services.AddSingleton(YumeCore.Instance);
-			YumeCore.ConfigureServices(services);
+			YumeCore.Instance.ConfigureServices(services);
 		}
 
 		// This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
