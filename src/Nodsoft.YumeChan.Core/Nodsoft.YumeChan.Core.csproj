@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
 	<PropertyGroup>
 		<TargetFramework>net5.0</TargetFramework>
@@ -11,7 +11,6 @@
 		<RepositoryUrl>https://github.com/YumeChan-DT/YumeChan</RepositoryUrl>
 		<RepositoryType>Git</RepositoryType>
 		<SignAssembly>false</SignAssembly>
-		<PackageLicenseFile>LICENSE</PackageLicenseFile>
 		<LangVersion>preview</LangVersion>
 	</PropertyGroup>
 
@@ -26,8 +25,6 @@
 	<ItemGroup>
 		<PackageReference Include="Config.Net" Version="4.15.0" />
 		<PackageReference Include="Config.Net.Json" Version="4.15.0" />
-		<PackageReference Include="Discord.Net" Version="2.3.0" />
-		<PackageReference Include="Discord.Net.Commands" Version="2.3.0" />
 		<PackageReference Include="DSharpPlus" Version="4.0.0" />
 		<PackageReference Include="DSharpPlus.CommandsNext" Version="4.0.0" />
 		<PackageReference Include="Lamar" Version="5.0.3" />
@@ -46,14 +43,7 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<ProjectReference Include="..\Nodsoft.YumeChan.PluginBase\Nodsoft.YumeChan.PluginBase.csproj" />
-	</ItemGroup>
-
-	<ItemGroup>
-		<None Include="D:\Code\Source\YumeChan\LICENSE">
-			<Pack>True</Pack>
-			<PackagePath></PackagePath>
-		</None>
+	  <ProjectReference Include="..\Nodsoft.YumeChan.PluginBase\Nodsoft.YumeChan.PluginBase.csproj" />
 	</ItemGroup>
 
 	<ItemGroup>
