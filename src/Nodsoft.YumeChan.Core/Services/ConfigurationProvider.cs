@@ -3,7 +3,7 @@ using Config.Net;
 using Nodsoft.YumeChan.PluginBase.Tools;
 
 
-namespace Nodsoft.YumeChan.Core.Tools
+namespace Nodsoft.YumeChan.Core.Services
 {
 	public class ConfigurationProvider<T> : IConfigProvider<T> where T : class
 	{

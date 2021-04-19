@@ -1,12 +1,13 @@
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
 using System.Threading.Tasks;
 using Nodsoft.YumeChan.Core;
-
-using static Nodsoft.YumeChan.NetRunner.Properties.AppProperties;
 using Lamar.Microsoft.DependencyInjection;
 using Lamar;
+using Serilog;
+using Serilog.Events;
+
+
 
 namespace Nodsoft.YumeChan.NetRunner
 {
@@ -14,6 +15,14 @@ namespace Nodsoft.YumeChan.NetRunner
 	{
 		public static async Task Main(string[] args)
 		{
+			Log.Logger = new LoggerConfiguration()
+				.MinimumLevel.Debug()
+				.MinimumLevel.Override("Microsoft", LogEventLevel.Information)
+				.Enrich.FromLogContext()
+				.WriteTo.Console()
+				.CreateLogger();
+
+
 			IHost host = CreateHostBuilder(args).Build();
 
 			YumeCore.Instance.Services = host.Services as Container;
@@ -27,18 +36,10 @@ namespace Nodsoft.YumeChan.NetRunner
 				.UseLamar()
 				.ConfigureLogging(builder =>
 				{
-					builder.ClearProviders()
-						.AddConsole()
-						.AddFilter("Microsoft", LogLevel.Warning)
-						.AddFilter("System", LogLevel.Warning)
-						.AddDebug()
-						.AddEventLog(settings => 
-						{
-							settings.SourceName = AppName;
-							settings.LogName = AppName;
-						});
+
 				})
-				.ConfigureWebHostDefaults(webBuilder => webBuilder.UseStartup<Startup>());
+				.ConfigureWebHostDefaults(webBuilder => webBuilder.UseStartup<Startup>())
+				.UseSerilog();
 		}
 	}
 }

@@ -1,3 +1,4 @@
+using Lamar;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.AzureADB2C.UI;
 using Microsoft.AspNetCore.Builder;
@@ -23,30 +24,16 @@ namespace Nodsoft.YumeChan.NetRunner
 
 		// This method gets called by the runtime. Use this method to add services to the container.
 		// For more information on how to configure your application, visit https://go.microsoft.com/fwlink/?LinkID=398940
-		public void ConfigureServices(IServiceCollection services)
+		public void ConfigureContainer(ServiceRegistry services)
 		{
-			#pragma warning disable CS0618 // Le type ou le membre est obsolète
 			services.AddAuthentication(AzureADB2CDefaults.AuthenticationScheme)
 					.AddAzureADB2C(options => Configuration.Bind("AzureAdB2C", options));
-			#pragma warning restore CS0618 // Le type ou le membre est obsolète
 
 			services.AddRazorPages();
 			services.AddServerSideBlazor();
 
-			services.AddLogging();
-			services.AddSingleton(LoggerFactory.Create(builder => 
-			{
-				builder	.ClearProviders()
-#if DEBUG
-						.SetMinimumLevel(LogLevel.Trace)
-#endif
-						.AddConsole()
-						.AddFilter("Microsoft", LogLevel.Warning)
-						.AddFilter("System", LogLevel.Warning)
-						.AddDebug();
-			}));
 			services.AddSingleton(YumeCore.Instance);
-			YumeCore.ConfigureServices(services);
+			YumeCore.Instance.ConfigureServices(services);
 		}
 
 		// This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
