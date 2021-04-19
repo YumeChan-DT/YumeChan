@@ -7,6 +7,10 @@ using System.Threading.Tasks;
 using static Nodsoft.YumeChan.Core.YumeCore;
 
 
+#pragma warning disable CA1822 // Statics cannot be used for Commands
+
+
+
 namespace Nodsoft.YumeChan.Core.Modules.Status
 {
 	[Group("status"), Description("Displays YumeCore Status")]

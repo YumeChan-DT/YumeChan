@@ -2,6 +2,7 @@
 @attribute [Authorize]
 
 @using Nodsoft.YumeChan.Core;
+@using System.Reflection;
 
 @inject YumeCore YumeCore
 
@@ -16,8 +17,8 @@
 		<div class="card-body">
 			<div class="d-flex justify-content-between">
 				<div class="p-2 bd-highlight">
-					<p><b>@coreName.Name</b></p>
-					<p><b>Version :</b> @coreName.Version</p>
+					<p><b>@typeof(YumeCore).Assembly.GetName().Name</b></p>
+					<p><b>Version :</b> @YumeCore.CoreVersion</p>
 				</div>
 
 				@{ (string textClass, string message) statusAlert = DisplayStatusAlert(); }
@@ -37,8 +38,8 @@
 		<div class="card-body">
 			<div class="d-flex justify-content-between">
 				<div class="p-2 bd-highlight">
-					<p><b>@pluginBaseName.Name</b></p>
-					<p><b>Version :</b> @pluginBaseName.Version</p>
+					<p><b>@typeof(PluginBase.Plugin).Assembly.GetName().Name</b></p>
+					<p><b>Version :</b> @(typeof(PluginBase.Plugin).Assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>().InformationalVersion)</p>
 				</div>
 
 				<div class="p-2 bd-highlight">
@@ -101,10 +102,6 @@
 
 @code
 {
-	System.Reflection.AssemblyName
-		coreName = typeof(YumeCore).Assembly.GetName(),
-		pluginBaseName = typeof(Nodsoft.YumeChan.PluginBase.Plugin).Assembly.GetName();
-
 	private DSharpPlus.Entities.DiscordActivity currentActivity;
 
 

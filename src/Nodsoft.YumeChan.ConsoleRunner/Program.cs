@@ -21,13 +21,8 @@ namespace Nodsoft.YumeChan.ConsoleRunner
 				.WriteTo.Console()
 				.CreateLogger();
 
-
-			ServiceRegistry services = new();
-
-			IHost host = CreateHostBuilder(services).Build();
-
-			Container container = host.Services as Container;
-			YumeCore.Instance.Services = container;
+			IHost host = CreateHostBuilder(new ServiceRegistry()).Build();
+			YumeCore.Instance.Services = host.Services as Container;
 
 			await YumeCore.Instance.StartBotAsync().ConfigureAwait(false);
 			await host.RunAsync();
@@ -37,10 +32,7 @@ namespace Nodsoft.YumeChan.ConsoleRunner
 		{
 			return new HostBuilder()
 				.UseLamar(serviceRegistry ?? new())
-				.ConfigureAppConfiguration(builder =>
-				{
-
-				})
+				.ConfigureAppConfiguration(builder => {	})
 				.ConfigureContainer<ServiceRegistry>((context, services) =>
 				{
 					YumeCore.Instance.ConfigureServices(services);
