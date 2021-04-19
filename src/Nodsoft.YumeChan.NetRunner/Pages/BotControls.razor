@@ -2,6 +2,7 @@
 @attribute [Authorize]
 
 @using Nodsoft.YumeChan.Core;
+@using System.Reflection;
 
 @inject YumeCore YumeCore
 
@@ -16,8 +17,8 @@
 		<div class="card-body">
 			<div class="d-flex justify-content-between">
 				<div class="p-2 bd-highlight">
-					<p><b>@coreName.Name</b></p>
-					<p><b>Version :</b> @coreName.Version</p>
+					<p><b>@typeof(YumeCore).Assembly.GetName().Name</b></p>
+					<p><b>Version :</b> @YumeCore.CoreVersion</p>
 				</div>
 
 				@{ (string textClass, string message) statusAlert = DisplayStatusAlert(); }
@@ -37,8 +38,8 @@
 		<div class="card-body">
 			<div class="d-flex justify-content-between">
 				<div class="p-2 bd-highlight">
-					<p><b>@pluginBaseName.Name</b></p>
-					<p><b>Version :</b> @pluginBaseName.Version</p>
+					<p><b>@typeof(PluginBase.Plugin).Assembly.GetName().Name</b></p>
+					<p><b>Version :</b> @(typeof(PluginBase.Plugin).Assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>().InformationalVersion)</p>
 				</div>
 
 				<div class="p-2 bd-highlight">
@@ -66,14 +67,14 @@
 		<div class="card-body">
 			<p class="card-text">
 				<b>Current Status :</b>&ensp;
-				@if (YumeCore.Client.Activity is null)
+				@if (currentActivity is null)
 				{
 					<div class="text-muted">None</div>
 				}
 				else
 				{
-					<div class="text-secondary">@YumeCore.Client.Activity.Type.ToString()</div>
-					@YumeCore.Client.Activity.Name
+					<div class="text-secondary">@currentActivity.ActivityType.ToString()</div>
+					@currentActivity.Name
 				}
 			</p>
 		</div>
@@ -101,9 +102,7 @@
 
 @code
 {
-	System.Reflection.AssemblyName
-		coreName = typeof(YumeCore).Assembly.GetName(),
-		pluginBaseName = typeof(Nodsoft.YumeChan.PluginBase.Plugin).Assembly.GetName();
+	private DSharpPlus.Entities.DiscordActivity currentActivity;
 
 
 	private (string textClass, string message) DisplayStatusAlert() => YumeCore.CoreState switch
@@ -115,6 +114,17 @@
 		YumeCoreState.Reloading => ("text-warning", "Bot is Reloading..."),
 		_ => ("text-danger", "Bot Status is Unknown.")
 	};
+
+
+	protected override async Task OnParametersSetAsync()
+	{
+		currentActivity = YumeCore.Client?.Presences?.Values?.FirstOrDefault().Activities.FirstOrDefault();
+
+		YumeCore.Client.PresenceUpdated += async (_, args) =>
+		{
+			currentActivity = args.Activity;
+		};
+	}
 
 
 	public async Task StartBotButton()
@@ -152,7 +162,7 @@
 
 	private StatusModel statusModel = new();
 
-	protected void HandleValidSubmit() => YumeCore.Client.SetGameAsync(statusModel.StatusMessage);
+	protected void HandleValidSubmit() => YumeCore.Client.UpdateStatusAsync(new() { Name = statusModel.StatusMessage });
 
 
 	public record StatusModel

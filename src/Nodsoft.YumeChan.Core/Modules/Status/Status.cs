@@ -1,37 +1,42 @@
-﻿using Discord;
-using Discord.Commands;
-using System.Threading.Tasks;
-
-using static Nodsoft.YumeChan.Core.YumeCore;
+﻿using DSharpPlus.CommandsNext;
+using DSharpPlus.CommandsNext.Attributes;
+using DSharpPlus.Entities;
 using Nodsoft.YumeChan.PluginBase;
 using System;
+using System.Threading.Tasks;
+using static Nodsoft.YumeChan.Core.YumeCore;
+
+
+#pragma warning disable CA1822 // Statics cannot be used for Commands
+
+
 
 namespace Nodsoft.YumeChan.Core.Modules.Status
 {
-	[Group("status")]
-	public class Status : ModuleBase<SocketCommandContext>, ICoreModule
+	[Group("status"), Description("Displays YumeCore Status")]
+	public class Status : BaseCommandModule, ICoreModule
 	{
 		internal const string MissingVersionSubstitute = "Unknown";
 
-		[Command]
-		public async Task CoreStatusAsync()
+		[GroupCommand]
+		public async Task CoreStatusAsync(CommandContext context)
 		{
-			EmbedBuilder embed = new EmbedBuilder()
+			DiscordEmbedBuilder embed = new DiscordEmbedBuilder()
 				.WithTitle(Instance.CoreProperties.AppDisplayName)
 				.WithDescription($"Status : {Instance.CoreState}")
 				.AddField("Core", $"Version : {CoreVersion.ToString() ?? MissingVersionSubstitute}", true)
-				.AddField("Loaded Modules", $"Count : {(Instance.CommandHandler.Plugins is null ? "None" : Instance.CommandHandler.Plugins.Count.ToString())}", true);
+				.AddField("Loaded Plugins", $"Count : {(Instance.CommandHandler.Plugins is null ? "None" : Instance.CommandHandler.Plugins.Count.ToString())}", true);
 #if DEBUG
 			embed.AddField("Debug", "Debug Build Active.");
 #endif
 
-			await ReplyAsync(embed: embed.Build());
+			await context.RespondAsync(embed: embed.Build());
 		}
 
-		[Command("plugins")]
-		public async Task PluginsStatusAsync()
+		[Command("plugins"), Description("Lists all loaded Plugins")]
+		public async Task PluginsStatusAsync(CommandContext context)
 		{
-			EmbedBuilder embed = new EmbedBuilder()
+			DiscordEmbedBuilder embed = new DiscordEmbedBuilder()
 				.WithTitle("Plugins")
 				.WithDescription($"Currently Loaded : **{Instance.CommandHandler.Plugins.Count}** Plugins.");
 
@@ -43,10 +48,10 @@ namespace Nodsoft.YumeChan.Core.Modules.Status
 					$"Loaded : {(pluginManifest.PluginLoaded ? "Yes" : "No")}", true);
 			}
 
-			await ReplyAsync(embed: embed.Build());
+			await context.RespondAsync(embed: embed.Build());
 		}
 
 		[Command("throw"), RequireOwner]
-		public Task ThrowAsync() => throw new ApplicationException();
+		public Task Throw(CommandContext _) => throw new ApplicationException();
 	}
 }

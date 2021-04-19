@@ -7,7 +7,7 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Threading.Tasks;
 
-namespace Nodsoft.YumeChan.Core.Tools
+namespace Nodsoft.YumeChan.Core.Services
 {
 	public class EntityRepository<TDocument, TKey> : IEntityRepository<TDocument, TKey>
 		where TDocument : IDocument<TKey>
