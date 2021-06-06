@@ -1,4 +1,5 @@
 ﻿using System;
+using MongoDB.Driver;
 using Nodsoft.YumeChan.Core.Config;
 using Nodsoft.YumeChan.PluginBase;
 using Nodsoft.YumeChan.PluginBase.Tools.Data;
@@ -26,11 +27,9 @@ namespace Nodsoft.YumeChan.Core.Services
 		}
 
 
-		public IEntityRepository<TDocument, TKey> GetEntityRepository<TDocument, TKey>()
-			where TDocument : IDocument<TKey>
-			where TKey : IEquatable<TKey>
+		public IMongoDatabase GetMongoDatabase()
 		{ 
-			return new EntityRepository<TDocument, TKey>(connectionString, databaseName); 
+			return new MongoClient(connectionString).GetDatabase(databaseName);
 		}
 	}
 }
