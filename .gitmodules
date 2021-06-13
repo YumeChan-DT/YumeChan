@@ -3,5 +3,5 @@
 	url = https://github.com/YumeChan-DT/YumeChan-Essentials
 
 [submodule "YumeChan PluginBase"]
-	path = src/Nodsoft.YumeChan.PluginBase
+	path = src/YumeChan.PluginBase
 	url = https://github.com/YumeChan-DT/YumeChan-PluginBase
