@@ -1,0 +1,13 @@
+{
+  "AppInternalName": "YumeChan",
+  "AppDisplayName": "Yume-Chan",
+  "BotToken": "",
+  "CommandPrefix": "==",
+  "DatabaseProperties": {
+    "ConnectionString": "mongodb://localhost:27017",
+    "DatabaseName": "yc-default"
+  },
+  "Path_Core": "D:\\Code\\source\\YumeChan\\src\\YumeChan.NetRunner",
+  "Path_Plugins": "D:\\Code\\source\\YumeChan\\src\\YumeChan.NetRunner\\Plugins",
+  "Path_Config": "D:\\Code\\source\\YumeChan\\src\\YumeChan.NetRunner\\Config"
+}

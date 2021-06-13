@@ -1,0 +1,172 @@
+﻿@page "/BotControls"
+@attribute [Authorize]
+
+@using YumeChan.Core;
+@using System.Reflection;
+
+@inject YumeCore YumeCore
+
+<h1>Bot Controls</h1>
+
+<br />
+
+<div class="card-group">
+	<div class="card">
+		<h3 class="card-header">Core</h3>
+
+		<div class="card-body">
+			<div class="d-flex justify-content-between">
+				<div class="p-2 bd-highlight">
+					<p><b>@typeof(YumeCore).Assembly.GetName().Name</b></p>
+					<p><b>Version :</b> @YumeCore.CoreVersion</p>
+				</div>
+
+				@{ (string textClass, string message) statusAlert = DisplayStatusAlert(); }
+				<div class="p-2 bd-highlight"><p class=@(statusAlert.textClass)>@(statusAlert.message)</p></div>
+			</div>
+		</div>
+
+		<div class="card-footer">
+			<button class="btn btn-success" @onclick=StartBotButton>Start Bot Service</button>
+			<button class="btn btn-danger" @onclick=StopBotButton>Stop Bot Service</button>
+			<button class="btn btn-warning" @onclick=RestartBotButton>Restart Bot Service</button>
+		</div>
+	</div>
+
+	<div class="card">
+		<h3 class="card-header">Plugins</h3>
+		<div class="card-body">
+			<div class="d-flex justify-content-between">
+				<div class="p-2 bd-highlight">
+					<p><b>@typeof(PluginBase.Plugin).Assembly.GetName().Name</b></p>
+					<p><b>Version :</b> @(typeof(PluginBase.Plugin).Assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>().InformationalVersion)</p>
+				</div>
+
+				<div class="p-2 bd-highlight">
+					<p><b>Loaded Plugins :</b> @YumeCore.CommandHandler.Plugins.Count</p>
+				</div>
+			</div>
+		</div>
+		<div class="card-footer">
+			<button class="btn btn-info" @onclick=ReloadModulesButton>Reload Plugins</button>
+		</div>
+	</div>
+</div>
+
+<br />
+<br />
+
+<h2>Settings</h2>
+
+<br />
+
+<div class="d-inline-flex">
+	<div class="card">
+		<h5 class="card-header">Bot Status</h5>
+
+		<div class="card-body">
+			<p class="card-text">
+				<b>Current Status :</b>&ensp;
+				@if (currentActivity is null)
+				{
+					<div class="text-muted">None</div>
+				}
+				else
+				{
+					<div class="text-secondary">@currentActivity.ActivityType.ToString()</div>
+					@currentActivity.Name
+				}
+			</p>
+		</div>
+
+		<div class="card-footer">
+			<EditForm Model="statusModel" OnValidSubmit="HandleValidSubmit" class="form-inline">
+				<DataAnnotationsValidator />
+				<ValidationSummary />
+
+				<div class="form-group mb-2">
+					<b>Change Status :</b>
+				</div>
+
+				<div class="form-group mb-2 mx-sm-4">
+					<label class="sr-only" for="text">New Status</label>
+					<InputText Id="text" @bind-Value="statusModel.StatusMessage" class="form-control" placeholder="New Status" />
+				</div>
+
+				<div class="form-group mb-2"><button class="btn btn-outline-info" type="submit">Change</button></div>
+			</EditForm>
+		</div>
+	</div>
+</div>
+
+
+@code
+{
+	private DSharpPlus.Entities.DiscordActivity currentActivity;
+
+
+	private (string textClass, string message) DisplayStatusAlert() => YumeCore.CoreState switch
+	{
+		YumeCoreState.Offline => ("text-danger", "Bot is offline."),
+		YumeCoreState.Online => ("text-success", "Bot is online."),
+		YumeCoreState.Starting => ("text-info", "Bot is starting..."),
+		YumeCoreState.Stopping => ("text-warning", "Bot is Stopping..."),
+		YumeCoreState.Reloading => ("text-warning", "Bot is Reloading..."),
+		_ => ("text-danger", "Bot Status is Unknown.")
+	};
+
+
+	protected override async Task OnParametersSetAsync()
+	{
+		currentActivity = YumeCore.Client?.Presences?.Values?.FirstOrDefault().Activities.FirstOrDefault();
+
+		YumeCore.Client.PresenceUpdated += async (_, args) =>
+		{
+			currentActivity = args.Activity;
+		};
+	}
+
+
+	public async Task StartBotButton()
+	{
+		if (YumeCore.CoreState is YumeCoreState.Offline)
+		{
+			await YumeCore.StartBotAsync();
+		}
+	}
+
+	public async Task StopBotButton()
+	{
+		if (YumeCore.CoreState is not YumeCoreState.Offline)
+		{
+			await YumeCore.StopBotAsync();
+		}
+	}
+
+	public async Task RestartBotButton()
+	{
+		if (YumeCore.CoreState is YumeCoreState.Online)
+		{
+			await YumeCore.RestartBotAsync();
+		}
+	}
+
+	public async Task ReloadModulesButton()
+	{
+		if (YumeCore.CoreState is YumeCoreState.Online)
+		{
+			await YumeCore.ReloadCommandsAsync();
+		}
+	}
+
+
+	private StatusModel statusModel = new();
+
+	protected void HandleValidSubmit() => YumeCore.Client.UpdateStatusAsync(new() { Name = statusModel.StatusMessage });
+
+
+	public record StatusModel
+	{
+		public string StatusMessage { get; set; }
+	}
+}
