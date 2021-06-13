@@ -1,5 +1,5 @@
 [submodule "YumeChan Essentials"]
-	path = src/Nodsoft.YumeChan.Essentials
+	path = src/YumeChan.Essentials
 	url = https://github.com/YumeChan-DT/YumeChan-Essentials
 
 [submodule "YumeChan PluginBase"]
