@@ -16,9 +16,9 @@ namespace YumeChan.Core
 	{
 		internal List<Assembly> PluginAssemblies { get; set; }
 		internal List<FileInfo> PluginFiles { get; set; }
-		internal List<Plugin> PluginManifests { get; set; }
+		public List<Plugin> PluginManifests { get; set; }
 
-		internal DirectoryInfo PluginsLoadDirectory { get; set; }
+		public DirectoryInfo PluginsLoadDirectory { get; set; }
 		internal string PluginsLoadDiscriminator { get; set; } = string.Empty;
 
 		public PluginsLoader(string pluginsLoadDirectoryPath)
@@ -53,7 +53,7 @@ namespace YumeChan.Core
 		public void LoadPluginAssemblies()
 		{
 			PluginFiles = new List<FileInfo>(PluginsLoadDirectory.GetFiles($"*{PluginsLoadDiscriminator}*.dll"));
-			
+
 			PluginAssemblies ??= new List<Assembly>();
 			PluginAssemblies.AddRange
 			(
@@ -69,6 +69,13 @@ namespace YumeChan.Core
 			where t.IsSubclassOf(typeof(Plugin))
 			select InstantiateManifest(t);
 
-		internal static Plugin InstantiateManifest(Type typePlugin) => ActivatorUtilities.CreateInstance(YumeCore.Instance.Services, typePlugin) as Plugin;
+			public IEnumerable<InjectionRegistry> LoadInjectionRegistries() =>
+			from Assembly a in PluginAssemblies
+			from Type t in a.ExportedTypes
+			where t.IsSubclassOf(typeof(InjectionRegistry))
+			select InstantiateInjectionRegistry(t);
+
+		internal static Plugin InstantiateManifest(Type type) => ActivatorUtilities.CreateInstance(YumeCore.Instance.Services, type) as Plugin;
+		internal static InjectionRegistry InstantiateInjectionRegistry(Type type) => ActivatorUtilities.CreateInstance(YumeCore.Instance.Services, type) as InjectionRegistry;
 	}
 }
