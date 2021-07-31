@@ -11,6 +11,7 @@ using System.IO;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
+using Unity;
 
 namespace YumeChan.Core
 {
@@ -29,7 +30,7 @@ namespace YumeChan.Core
 
 		public DiscordClient Client { get; set; }
 		public CommandHandler CommandHandler { get; set; }
-		public IContainer Services { get; set; }
+		public IUnityContainer Services { get; set; }
 
 		internal ILogger Logger { get; set; }
 
@@ -44,21 +45,18 @@ namespace YumeChan.Core
 			StopBotAsync().Wait();
 		}
 
-
-		public IServiceCollection ConfigureServices() => ConfigureServices(new ServiceRegistry());
-		public IServiceCollection ConfigureServices(IServiceCollection services) => services
-			.AddSingleton((services) => new DiscordClient(new()
+		public IUnityContainer ConfigureContainer(IUnityContainer services) => services
+			.RegisterFactory<DiscordClient>((services) => new DiscordClient(new()
 			{
 				Intents = DiscordIntents.All,
 				TokenType = TokenType.Bot,
 				Token = GetBotToken(),
-				LoggerFactory = services.GetRequiredService<ILoggerFactory>(),
+				LoggerFactory = services.Resolve<ILoggerFactory>(),
 				MinimumLogLevel = LogLevel.Information
 			}))
-			.AddSingleton<CommandHandler>()
-			.AddHttpClient()
-			.AddSingleton(typeof(IDatabaseProvider<>), typeof(DatabaseProvider<>))
-			.AddSingleton(typeof(IConfigProvider<>), typeof(ConfigurationProvider<>));
+			.RegisterSingleton<CommandHandler>()
+			.RegisterSingleton(typeof(IDatabaseProvider<>), typeof(DatabaseProvider<>))
+			.RegisterSingleton(typeof(IConfigProvider<>), typeof(ConfigurationProvider<>));
 
 
 		public async Task StartBotAsync()
@@ -168,17 +166,16 @@ namespace YumeChan.Core
 
 		private void ResolveCoreComponents()
 		{
-			Logger ??= Services.GetInstance<ILoggerFactory>().CreateLogger<YumeCore>();
+			Logger ??= Services.Resolve<ILogger<YumeCore>>();
 			ConfigProvider ??= new();
-			CoreProperties = ConfigProvider.InitConfig("coreconfig.json", true).PopulateCoreProperties();
 
+			CoreProperties = ConfigProvider.InitConfig("coreconfig.json", true).PopulateCoreProperties();
 			CoreProperties.Path_Core ??= Directory.GetCurrentDirectory();
 			CoreProperties.Path_Plugins ??= Path.Combine(CoreProperties.Path_Core, "Plugins");
 			CoreProperties.Path_Config ??= Path.Combine(CoreProperties.Path_Core, "Config");
 
-			Client ??= Services.GetInstance<DiscordClient>();
-			CommandHandler ??= Services.GetInstance<CommandHandler>();
-
+			Client ??= Services.Resolve<DiscordClient>();
+			CommandHandler ??= Services.Resolve<CommandHandler>();
 			CommandHandler.Config ??= CoreProperties;
 		}
 	}

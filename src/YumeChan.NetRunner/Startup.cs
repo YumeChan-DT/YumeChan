@@ -24,7 +24,7 @@ namespace YumeChan.NetRunner
 
 		// This method gets called by the runtime. Use this method to add services to the container.
 		// For more information on how to configure your application, visit https://go.microsoft.com/fwlink/?LinkID=398940
-		public void ConfigureContainer(ServiceRegistry services)
+		public void ConfigureServices(IServiceCollection services)
 		{
 			services.AddAuthentication(AzureADB2CDefaults.AuthenticationScheme)
 					.AddAzureADB2C(options => Configuration.Bind("AzureAdB2C", options));
@@ -33,7 +33,6 @@ namespace YumeChan.NetRunner
 			services.AddServerSideBlazor();
 
 			services.AddSingleton(YumeCore.Instance);
-			YumeCore.Instance.ConfigureServices(services);
 		}
 
 		// This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

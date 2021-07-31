@@ -7,11 +7,16 @@ using Microsoft.Extensions.Logging;
 using YumeChan.Core;
 using Serilog;
 using Serilog.Events;
+using Unity.Microsoft.DependencyInjection;
+using Unity;
+using Serilog.Extensions.Logging;
 
 namespace YumeChan.ConsoleRunner
 {
 	public static class Program
 	{
+		private static IUnityContainer container = new UnityContainer();
+
 		public static async Task Main(string[] _)
 		{
 			Log.Logger = new LoggerConfiguration()
@@ -21,23 +26,26 @@ namespace YumeChan.ConsoleRunner
 				.WriteTo.Console()
 				.CreateLogger();
 
-			IHost host = CreateHostBuilder(new ServiceRegistry()).Build();
-			YumeCore.Instance.Services = host.Services as Container;
+			IHost host = CreateHostBuilder().Build();
+
+			YumeCore.Instance.Services = container;
 
 			await YumeCore.Instance.StartBotAsync().ConfigureAwait(false);
 			await host.RunAsync();
 		}
 
-		public static IHostBuilder CreateHostBuilder(ServiceRegistry serviceRegistry = null)
+		public static IHostBuilder CreateHostBuilder(UnityContainer serviceRegistry = null)
 		{
 			return new HostBuilder()
-				.UseLamar(serviceRegistry ?? new())
-				.ConfigureAppConfiguration(builder => {	})
-				.ConfigureContainer<ServiceRegistry>((context, services) =>
+				.UseUnityServiceProvider(serviceRegistry ?? new())
+				.UseSerilog()
+				.ConfigureAppConfiguration(builder => { })
+				.ConfigureContainer<IUnityContainer>((context, container) =>
 				{
-					YumeCore.Instance.ConfigureServices(services);
-				})
-				.UseSerilog();
+					Program.container = container;  // This assignment is necessary, as configuration only affects the child container.
+
+					YumeCore.Instance.ConfigureContainer(container);
+				});
 		}
 	}
 }

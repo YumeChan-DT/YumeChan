@@ -6,13 +6,16 @@ using Lamar.Microsoft.DependencyInjection;
 using Lamar;
 using Serilog;
 using Serilog.Events;
-
-
+using Unity;
+using Unity.Microsoft.DependencyInjection;
+using Serilog.Extensions.Logging;
 
 namespace YumeChan.NetRunner
 {
 	public static class Program
 	{
+		private static IUnityContainer container = new UnityContainer();
+
 		public static async Task Main(string[] args)
 		{
 			Log.Logger = new LoggerConfiguration()
@@ -25,7 +28,7 @@ namespace YumeChan.NetRunner
 
 			IHost host = CreateHostBuilder(args).Build();
 
-			YumeCore.Instance.Services = host.Services as Container;
+			YumeCore.Instance.Services = container;
 
 			await YumeCore.Instance.StartBotAsync();
 			await host.RunAsync();
@@ -33,12 +36,18 @@ namespace YumeChan.NetRunner
 		public static IHostBuilder CreateHostBuilder(string[] args)
 		{
 			return Host.CreateDefaultBuilder(args)
-				.UseLamar()
+				.UseUnityServiceProvider()
 				.ConfigureLogging(builder =>
 				{
 
 				})
 				.ConfigureWebHostDefaults(webBuilder => webBuilder.UseStartup<Startup>())
+				.ConfigureContainer<IUnityContainer>((context, container) =>
+				{
+					Program.container = container;  // This assignment is necessary, as configuration only affects 
+
+					YumeCore.Instance.ConfigureContainer(container);
+				})
 				.UseSerilog();
 		}
 	}

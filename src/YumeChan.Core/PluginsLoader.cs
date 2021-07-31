@@ -9,6 +9,8 @@ using Microsoft.Extensions.DependencyInjection;
 using YumeChan.PluginBase;
 using Microsoft.Extensions.Logging;
 using System.Security;
+using Unity.Microsoft.DependencyInjection;
+using Unity;
 
 namespace YumeChan.Core
 {
@@ -75,7 +77,7 @@ namespace YumeChan.Core
 			where t.IsSubclassOf(typeof(InjectionRegistry))
 			select InstantiateInjectionRegistry(t);
 
-		internal static Plugin InstantiateManifest(Type type) => ActivatorUtilities.CreateInstance(YumeCore.Instance.Services, type) as Plugin;
-		internal static InjectionRegistry InstantiateInjectionRegistry(Type type) => ActivatorUtilities.CreateInstance(YumeCore.Instance.Services, type) as InjectionRegistry;
+		internal static Plugin InstantiateManifest(Type type) => YumeCore.Instance.Services.Resolve(type) as Plugin;
+		internal static InjectionRegistry InstantiateInjectionRegistry(Type type) => YumeCore.Instance.Services.Resolve(type) as InjectionRegistry;
 	}
 }
