@@ -1,17 +1,15 @@
 using DSharpPlus;
-using Lamar;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using YumeChan.Core.Config;
-using YumeChan.Core.Services;
-using YumeChan.PluginBase.Tools;
-using YumeChan.PluginBase.Tools.Data;
 using System;
 using System.IO;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using Unity;
+using YumeChan.Core.Config;
+using YumeChan.Core.Services;
+using YumeChan.PluginBase.Tools;
+using YumeChan.PluginBase.Tools.Data;
 
 namespace YumeChan.Core
 {

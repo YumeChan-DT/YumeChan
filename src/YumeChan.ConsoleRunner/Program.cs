@@ -1,15 +1,10 @@
-﻿using System.Threading.Tasks;
-using Lamar;
-using Lamar.Microsoft.DependencyInjection;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
-using YumeChan.Core;
+﻿using Microsoft.Extensions.Hosting;
 using Serilog;
 using Serilog.Events;
-using Unity.Microsoft.DependencyInjection;
+using System.Threading.Tasks;
 using Unity;
-using Serilog.Extensions.Logging;
+using Unity.Microsoft.DependencyInjection;
+using YumeChan.Core;
 
 namespace YumeChan.ConsoleRunner
 {

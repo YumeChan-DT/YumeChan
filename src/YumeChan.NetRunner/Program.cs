@@ -1,14 +1,11 @@
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Hosting;
-using System.Threading.Tasks;
-using YumeChan.Core;
-using Lamar.Microsoft.DependencyInjection;
-using Lamar;
 using Serilog;
 using Serilog.Events;
+using System.Threading.Tasks;
 using Unity;
 using Unity.Microsoft.DependencyInjection;
-using Serilog.Extensions.Logging;
+using YumeChan.Core;
 
 namespace YumeChan.NetRunner
 {
@@ -44,7 +41,7 @@ namespace YumeChan.NetRunner
 				.ConfigureWebHostDefaults(webBuilder => webBuilder.UseStartup<Startup>())
 				.ConfigureContainer<IUnityContainer>((context, container) =>
 				{
-					Program.container = container;  // This assignment is necessary, as configuration only affects 
+					Program.container = container;  // This assignment is necessary, as configuration only affects the child container.
 
 					YumeCore.Instance.ConfigureContainer(container);
 				})

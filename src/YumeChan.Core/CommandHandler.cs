@@ -2,7 +2,6 @@ using DSharpPlus;
 using DSharpPlus.CommandsNext;
 using DSharpPlus.CommandsNext.Attributes;
 using DSharpPlus.CommandsNext.Exceptions;
-using Lamar;
 using Microsoft.Extensions.Logging;
 using YumeChan.Core.Config;
 using YumeChan.Core.Services.Formatters;
@@ -13,6 +12,9 @@ using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
 using YumeChan.PluginBase.Infrastructure;
+using Microsoft.Extensions.DependencyInjection;
+using Unity;
+using Unity.Microsoft.DependencyInjection;
 
 namespace YumeChan.Core
 {
@@ -27,16 +29,16 @@ namespace YumeChan.Core
 
 		private readonly DiscordClient client;
 		private readonly IServiceProvider services;
-		private readonly ServiceRegistry registry;
+		private readonly IUnityContainer container;
 		private readonly ILogger logger;
 		private readonly PluginsLoader externalModulesLoader;
 
 
-		public CommandHandler(DiscordClient client, ILogger<CommandHandler> logger, IServiceProvider services, ServiceRegistry registry)
+		public CommandHandler(DiscordClient client, ILogger<CommandHandler> logger, IServiceProvider services, IUnityContainer container)
 		{
 			this.client = client;
 			this.services = services;
-			this.registry = registry;
+			this.container = container;
 			this.logger = logger;
 
 			externalModulesLoader = new(string.Empty);
@@ -92,7 +94,7 @@ namespace YumeChan.Core
 
 			foreach (InjectionRegistry injectionRegistry in externalModulesLoader.LoadInjectionRegistries())
 			{
-				injectionRegistry.ConfigureServices(registry);
+				container.AddServices(injectionRegistry.ConfigureServices(new ServiceCollection()));
 			}
 
 			foreach (Plugin plugin in Plugins)

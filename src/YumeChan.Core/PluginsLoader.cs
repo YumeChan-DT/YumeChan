@@ -1,16 +1,13 @@
-﻿using System;
+﻿using Microsoft.Extensions.Logging;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.InteropServices;
-using System.Threading.Tasks;
-using Microsoft.Extensions.DependencyInjection;
-using YumeChan.PluginBase;
-using Microsoft.Extensions.Logging;
 using System.Security;
-using Unity.Microsoft.DependencyInjection;
 using Unity;
+using YumeChan.PluginBase;
 
 namespace YumeChan.Core
 {
