@@ -51,7 +51,7 @@ namespace YumeChan.Core
 				Token = GetBotToken(),
 				LoggerFactory = services.Resolve<ILoggerFactory>(),
 				MinimumLogLevel = LogLevel.Information
-			}))
+			}), FactoryLifetime.Singleton)
 			.RegisterSingleton<CommandHandler>()
 			.RegisterSingleton(typeof(IDatabaseProvider<>), typeof(DatabaseProvider<>))
 			.RegisterSingleton(typeof(IConfigProvider<>), typeof(ConfigurationProvider<>));
@@ -122,7 +122,7 @@ namespace YumeChan.Core
 
 				if (TryBotTokenFromEnvironment(envVarName, out token, out EnvironmentVariableTarget target))
 				{
-					Logger.LogInformation($"Bot Token was read from {target} Environment Variable \"{envVarName}\", instead of \"coreproperties.json\" Config File.");
+					Logger.LogInformation("Bot Token was read from {target} Environment Variable \"{envVarName}\", instead of \"coreproperties.json\" Config File.", target, envVarName);
 				}
 				else
 				{
