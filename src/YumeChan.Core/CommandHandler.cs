@@ -82,6 +82,7 @@ namespace YumeChan.Core
 
 		public async Task RegisterCommandsAsync()
 		{
+			logger.LogInformation("Using PluginBase v{version}.", typeof(Plugin).Assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>().InformationalVersion);
 			logger.LogInformation("Current Plugins directory: {pluginsDirectory}", externalModulesLoader.PluginsLoadDirectory);
 
 			Plugins = new() { new Modules.InternalPlugin() }; // Add YumeCore internal commands

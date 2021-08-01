@@ -66,6 +66,8 @@ namespace YumeChan.Core
 
 			ResolveCoreComponents();
 
+			Logger.LogInformation("YumeCore v{version}.", CoreVersion);
+
 			CoreState = YumeCoreState.Starting;
 
 

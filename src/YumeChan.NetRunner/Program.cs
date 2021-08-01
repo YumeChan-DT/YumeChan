@@ -34,10 +34,6 @@ namespace YumeChan.NetRunner
 		{
 			return Host.CreateDefaultBuilder(args)
 				.UseUnityServiceProvider()
-				.ConfigureLogging(builder =>
-				{
-
-				})
 				.ConfigureWebHostDefaults(webBuilder => webBuilder.UseStartup<Startup>())
 				.ConfigureContainer<IUnityContainer>((context, container) =>
 				{
