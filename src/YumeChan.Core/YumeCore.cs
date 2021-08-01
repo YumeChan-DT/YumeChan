@@ -1,4 +1,5 @@
 using DSharpPlus;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System;
 using System.IO;
@@ -6,6 +7,7 @@ using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using Unity;
+using Unity.Microsoft.DependencyInjection;
 using YumeChan.Core.Config;
 using YumeChan.Core.Services;
 using YumeChan.PluginBase.Tools;
@@ -54,7 +56,11 @@ namespace YumeChan.Core
 			}), FactoryLifetime.Singleton)
 			.RegisterSingleton<CommandHandler>()
 			.RegisterSingleton(typeof(IDatabaseProvider<>), typeof(DatabaseProvider<>))
-			.RegisterSingleton(typeof(IConfigProvider<>), typeof(ConfigurationProvider<>));
+			.RegisterSingleton(typeof(IConfigProvider<>), typeof(ConfigurationProvider<>))
+
+			.AddServices(new ServiceCollection()
+				.AddHttpClient()
+			);
 
 
 		public async Task StartBotAsync()
