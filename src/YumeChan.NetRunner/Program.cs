@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Hosting;
 using Serilog;
@@ -5,7 +6,9 @@ using Serilog.Events;
 using System.Threading.Tasks;
 using Unity;
 using Unity.Microsoft.DependencyInjection;
+using Unity.Microsoft.Logging;
 using YumeChan.Core;
+using YumeChan.NetRunner.Infrastructure.Blazor;
 
 namespace YumeChan.NetRunner
 {
@@ -39,9 +42,10 @@ namespace YumeChan.NetRunner
 				{
 					Program.container = container;  // This assignment is necessary, as configuration only affects the child container.
 
+					container.AddExtension(new LoggingExtension());
+
 					YumeCore.Instance.ConfigureContainer(container);
-				})
-				.UseSerilog();
+				});
 		}
 	}
 }
