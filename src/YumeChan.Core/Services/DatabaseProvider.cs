@@ -1,5 +1,4 @@
-﻿using System;
-using MongoDB.Driver;
+﻿using MongoDB.Driver;
 using YumeChan.Core.Config;
 using YumeChan.PluginBase;
 using YumeChan.PluginBase.Tools.Data;

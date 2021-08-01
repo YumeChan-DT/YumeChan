@@ -4,7 +4,7 @@
 		<OutputType>Exe</OutputType>
 		<TargetFramework>net5.0</TargetFramework>
 		<LangVersion>preview</LangVersion>
-		<Version>2.0.1</Version>
+		<Version>2.2</Version>
 		<Authors>Sakura Akeno Isayeki</Authors>
 		<Company>Nodsoft Systems</Company>
 		<Product>YumeChan</Product>
@@ -26,8 +26,6 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<PackageReference Include="Lamar" Version="5.0.4" />
-		<PackageReference Include="Lamar.Microsoft.DependencyInjection" Version="5.0.4" />
 		<PackageReference Include="Microsoft.Extensions.Logging" Version="5.0.0" />
 		<PackageReference Include="Microsoft.Extensions.Logging.Console" Version="5.0.0" />
 		<PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="5.0.0" />
@@ -39,6 +37,7 @@
 			<PrivateAssets>all</PrivateAssets>
 			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
 		</PackageReference>
+		<PackageReference Include="Unity.Microsoft.Logging" Version="5.11.1" />
 	</ItemGroup>
 
 	<ItemGroup>

@@ -1,15 +1,16 @@
-using Lamar;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.AzureADB2C.UI;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Serilog;
 using YumeChan.Core;
-
+using YumeChan.NetRunner.Infrastructure.Blazor;
 
 namespace YumeChan.NetRunner
 {
@@ -24,16 +25,23 @@ namespace YumeChan.NetRunner
 
 		// This method gets called by the runtime. Use this method to add services to the container.
 		// For more information on how to configure your application, visit https://go.microsoft.com/fwlink/?LinkID=398940
-		public void ConfigureContainer(ServiceRegistry services)
+		public void ConfigureServices(IServiceCollection services)
 		{
 			services.AddAuthentication(AzureADB2CDefaults.AuthenticationScheme)
 					.AddAzureADB2C(options => Configuration.Bind("AzureAdB2C", options));
 
 			services.AddRazorPages();
 			services.AddServerSideBlazor();
+			services.AddHttpContextAccessor();
 
+			services.AddLogging(x =>
+			{
+				x.ClearProviders();
+			});
+
+
+			services.AddSingleton<IComponentActivator, ComponentActivator>();
 			services.AddSingleton(YumeCore.Instance);
-			YumeCore.Instance.ConfigureServices(services);
 		}
 
 		// This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

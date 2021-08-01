@@ -2,7 +2,6 @@ using DSharpPlus;
 using DSharpPlus.CommandsNext;
 using DSharpPlus.CommandsNext.Attributes;
 using DSharpPlus.CommandsNext.Exceptions;
-using Lamar;
 using Microsoft.Extensions.Logging;
 using YumeChan.Core.Config;
 using YumeChan.Core.Services.Formatters;
@@ -12,8 +11,10 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
-
-
+using YumeChan.PluginBase.Infrastructure;
+using Microsoft.Extensions.DependencyInjection;
+using Unity;
+using Unity.Microsoft.DependencyInjection;
 
 namespace YumeChan.Core
 {
@@ -28,16 +29,16 @@ namespace YumeChan.Core
 
 		private readonly DiscordClient client;
 		private readonly IServiceProvider services;
-		private readonly ServiceRegistry registry;
+		private readonly IUnityContainer container;
 		private readonly ILogger logger;
 		private readonly PluginsLoader externalModulesLoader;
 
 
-		public CommandHandler(DiscordClient client, ILogger<CommandHandler> logger, IServiceProvider services, ServiceRegistry registry)
+		public CommandHandler(DiscordClient client, ILogger<CommandHandler> logger, IServiceProvider services, IUnityContainer container)
 		{
 			this.client = client;
 			this.services = services;
-			this.registry = registry;
+			this.container = container;
 			this.logger = logger;
 
 			externalModulesLoader = new(string.Empty);
@@ -75,12 +76,15 @@ namespace YumeChan.Core
 
 /*		public void RegisterTypeReaders()
 		{
-			
+
 		}
 */
 
 		public async Task RegisterCommandsAsync()
 		{
+			logger.LogInformation("Using PluginBase v{version}.", typeof(Plugin).Assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>().InformationalVersion);
+			logger.LogInformation("Current Plugins directory: {pluginsDirectory}", externalModulesLoader.PluginsLoadDirectory);
+
 			Plugins = new() { new Modules.InternalPlugin() }; // Add YumeCore internal commands
 			externalModulesLoader.LoadPluginAssemblies();
 
@@ -89,9 +93,13 @@ namespace YumeChan.Core
 							 where !Plugins.Exists(p => p?.PluginAssemblyName == plugin.PluginAssemblyName)
 							 select plugin);
 
+			foreach (InjectionRegistry injectionRegistry in externalModulesLoader.LoadInjectionRegistries())
+			{
+				container.AddServices(injectionRegistry.ConfigureServices(new ServiceCollection()));
+			}
+
 			foreach (Plugin plugin in Plugins)
 			{
-				plugin.ConfigureServices(registry);
 				await plugin.LoadPlugin();
 				Commands.RegisterCommands(plugin.GetType().Assembly);
 				logger.LogInformation("Loaded Plugin '{Plugin}'.", plugin.PluginAssemblyName);
@@ -118,24 +126,32 @@ namespace YumeChan.Core
 		{
 			if (e.Exception is ChecksFailedException cf)
 			{
+				List<string> errorMessages = new();
+
 				foreach (CheckBaseAttribute check in cf.FailedChecks)
 				{
-					string message = check switch
+					if (check is PluginCheckBaseAttribute pluginCkeck)
 					{
-						RequireOwnerAttribute => $"Sorry. You must be a Bot Owner to run this command.",
-						RequireDirectMessageAttribute => "Sorry, not here. Please send me a Direct Message with that command.",
-						RequireGuildAttribute => "Sorry, not here. Please send this command in a server.",
-						RequireNsfwAttribute => "Sorry. As much as I'd love to, I've gotta keep the hot stuff to the right channels.",
-						CooldownAttribute cd => $"Sorry. This command is on Cooldown. You can use it {cd.MaxUses} time(s) every {cd.Reset.TotalSeconds} seconds.",
-						RequireUserPermissionsAttribute p => $"Sorry. You need to have permission(s) ``{p.Permissions}`` to run this.",
-						_ => null
-					};
-
-					if (message is not null)
-					{
-						await e.Context.RespondAsync(message);
-						return;
+						errorMessages.Add(pluginCkeck.ErrorMessage);
 					}
+					else
+					{
+						errorMessages.Add(check switch
+						{
+							RequireOwnerAttribute => $"Sorry. You must be a Bot Owner to run this command.",
+							RequireDirectMessageAttribute => "Sorry, not here. Please send me a Direct Message with that command.",
+							RequireGuildAttribute => "Sorry, not here. Please send this command in a server.",
+							RequireNsfwAttribute => "Sorry. As much as I'd love to, I've gotta keep the hot stuff to the right channels.",
+							CooldownAttribute cd => $"Sorry. This command is on Cooldown. You can use it {cd.MaxUses} time(s) every {cd.Reset.TotalSeconds} seconds.",
+							RequireUserPermissionsAttribute p => $"Sorry. You need to have permission(s) ``{p.Permissions}`` to run this.",
+							_ => null
+						});
+					}
+				}
+
+				if (errorMessages.Any())
+				{
+					await e.Context.RespondAsync(string.Join('\n', errorMessages));
 				}
 			}
 
