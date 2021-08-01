@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Serilog;
 using Serilog.Events;
@@ -20,7 +21,8 @@ namespace YumeChan.NetRunner
 		{
 			Log.Logger = new LoggerConfiguration()
 				.MinimumLevel.Debug()
-				.MinimumLevel.Override("Microsoft", LogEventLevel.Information)
+				.MinimumLevel.Override("Microsoft", LogEventLevel.Warning)
+				.MinimumLevel.Override("Microsoft.Hosting.Lifetime", LogEventLevel.Information)
 				.Enrich.FromLogContext()
 				.WriteTo.Console()
 				.CreateLogger();
@@ -37,12 +39,14 @@ namespace YumeChan.NetRunner
 		{
 			return Host.CreateDefaultBuilder(args)
 				.UseUnityServiceProvider()
+				.UseSerilog()
 				.ConfigureWebHostDefaults(webBuilder => webBuilder.UseStartup<Startup>())
 				.ConfigureContainer<IUnityContainer>((context, container) =>
 				{
 					Program.container = container;  // This assignment is necessary, as configuration only affects the child container.
 
 					container.AddExtension(new LoggingExtension());
+					container.AddServices(new ServiceCollection().AddLogging(x => x.AddSerilog()));
 
 					YumeCore.Instance.ConfigureContainer(container);
 				});

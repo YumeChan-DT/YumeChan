@@ -37,7 +37,6 @@ namespace YumeChan.NetRunner
 			services.AddLogging(x =>
 			{
 				x.ClearProviders();
-				x.AddSerilog();
 			});
 
 
