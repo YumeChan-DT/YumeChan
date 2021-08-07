@@ -63,8 +63,7 @@ namespace YumeChan.Core
 
 			InteractivityConfiguration = new()
 			{
-				PaginationBehaviour = PaginationBehaviour.Ignore,
-				ResponseBehavior = InteractionResponseBehavior.Respond
+				PaginationBehaviour = PaginationBehaviour.Ignore
 			};
 
 			Commands = client.UseCommandsNext(CommandsConfiguration);
