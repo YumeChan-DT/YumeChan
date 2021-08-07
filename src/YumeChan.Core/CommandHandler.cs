@@ -2,6 +2,9 @@ using DSharpPlus;
 using DSharpPlus.CommandsNext;
 using DSharpPlus.CommandsNext.Attributes;
 using DSharpPlus.CommandsNext.Exceptions;
+using DSharpPlus.Interactivity;
+using DSharpPlus.Interactivity.Enums;
+using DSharpPlus.Interactivity.Extensions;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System;
@@ -23,7 +26,10 @@ namespace YumeChan.Core
 	public class CommandHandler
 	{
 		public CommandsNextExtension Commands { get; internal set; }
+		public InteractivityExtension Interactivity { get; internal set; }
+
 		public CommandsNextConfiguration CommandsConfiguration { get; internal set; }
+		public InteractivityConfiguration InteractivityConfiguration { get; internal set; }
 
 		public List<Plugin> Plugins { get; internal set; }
 
@@ -55,7 +61,15 @@ namespace YumeChan.Core
 				StringPrefixes = new[] { Config.CommandPrefix }
 			};
 
+			InteractivityConfiguration = new()
+			{
+				PaginationBehaviour = PaginationBehaviour.Ignore,
+				ResponseBehavior = InteractionResponseBehavior.Respond
+			};
+
 			Commands = client.UseCommandsNext(CommandsConfiguration);
+			Interactivity = client.UseInteractivity(InteractivityConfiguration);
+
 			Commands.CommandErrored += OnCommandErroredAsync;
 			Commands.CommandExecuted += OnCommandExecuted;
 
@@ -74,13 +88,6 @@ namespace YumeChan.Core
 
 			await ReleaseCommandsAsync();
 		}
-
-
-/*		public void RegisterTypeReaders()
-		{
-
-		}
-*/
 
 		public async Task RegisterCommandsAsync()
 		{
