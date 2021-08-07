@@ -30,7 +30,7 @@ namespace YumeChan.Core.Config
 	public interface ICoreLavalinkProperties
 	{
 		string Hostname { get; set; }
-		ushort Port { get; set; }
+		ushort? Port { get; set; }
 		string Password { get; set; }
 	}
 }

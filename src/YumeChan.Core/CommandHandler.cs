@@ -2,19 +2,21 @@ using DSharpPlus;
 using DSharpPlus.CommandsNext;
 using DSharpPlus.CommandsNext.Attributes;
 using DSharpPlus.CommandsNext.Exceptions;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using YumeChan.Core.Config;
-using YumeChan.Core.Services.Formatters;
-using YumeChan.PluginBase;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
-using YumeChan.PluginBase.Infrastructure;
-using Microsoft.Extensions.DependencyInjection;
 using Unity;
 using Unity.Microsoft.DependencyInjection;
+using YumeChan.Core.Config;
+using YumeChan.Core.Services.Formatters;
+using YumeChan.PluginBase;
+using YumeChan.PluginBase.Infrastructure;
+
+
 
 namespace YumeChan.Core
 {
@@ -154,9 +156,6 @@ namespace YumeChan.Core
 					await e.Context.RespondAsync(string.Join('\n', errorMessages));
 				}
 			}
-
-
-
 
 #if DEBUG
 			string response = $"An error occurred : \n```{e.Exception}```";
