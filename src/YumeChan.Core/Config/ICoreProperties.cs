@@ -18,11 +18,19 @@ namespace YumeChan.Core.Config
 		public string CommandPrefix { get; internal set; }
 
 		internal ICoreDatabaseProperties DatabaseProperties { get; set; }
+		internal ICoreLavalinkProperties LavalinkProperties { get; set; }
 	}
 
 	public interface ICoreDatabaseProperties
 	{
 		string DatabaseName { get; set; }
 		string ConnectionString { get; set; }
+	}
+
+	public interface ICoreLavalinkProperties
+	{
+		string Hostname { get; set; }
+		ushort Port { get; set; }
+		string Password { get; set; }
 	}
 }
