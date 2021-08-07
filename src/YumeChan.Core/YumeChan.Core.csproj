@@ -28,6 +28,7 @@
 		<PackageReference Include="DSharpPlus" Version="4.1.0" />
 		<PackageReference Include="DSharpPlus.CommandsNext" Version="4.1.0" />
 		<PackageReference Include="DSharpPlus.Interactivity" Version="4.1.0" />
+		<PackageReference Include="DSharpPlus.Lavalink" Version="4.1.0" />
 		<PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="5.0.0" />
 		<PackageReference Include="Microsoft.Extensions.Http" Version="5.0.0" />
 		<PackageReference Include="Microsoft.Extensions.Logging" Version="5.0.0" />
