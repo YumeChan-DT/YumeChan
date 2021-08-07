@@ -2,26 +2,34 @@ using DSharpPlus;
 using DSharpPlus.CommandsNext;
 using DSharpPlus.CommandsNext.Attributes;
 using DSharpPlus.CommandsNext.Exceptions;
+using DSharpPlus.Interactivity;
+using DSharpPlus.Interactivity.Enums;
+using DSharpPlus.Interactivity.Extensions;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using YumeChan.Core.Config;
-using YumeChan.Core.Services.Formatters;
-using YumeChan.PluginBase;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
-using YumeChan.PluginBase.Infrastructure;
-using Microsoft.Extensions.DependencyInjection;
 using Unity;
 using Unity.Microsoft.DependencyInjection;
+using YumeChan.Core.Config;
+using YumeChan.Core.Services.Formatters;
+using YumeChan.PluginBase;
+using YumeChan.PluginBase.Infrastructure;
+
+
 
 namespace YumeChan.Core
 {
 	public class CommandHandler
 	{
 		public CommandsNextExtension Commands { get; internal set; }
+		public InteractivityExtension Interactivity { get; internal set; }
+
 		public CommandsNextConfiguration CommandsConfiguration { get; internal set; }
+		public InteractivityConfiguration InteractivityConfiguration { get; internal set; }
 
 		public List<Plugin> Plugins { get; internal set; }
 
@@ -53,7 +61,14 @@ namespace YumeChan.Core
 				StringPrefixes = new[] { Config.CommandPrefix }
 			};
 
+			InteractivityConfiguration = new()
+			{
+				PaginationBehaviour = PaginationBehaviour.Ignore
+			};
+
 			Commands = client.UseCommandsNext(CommandsConfiguration);
+			Interactivity = client.UseInteractivity(InteractivityConfiguration);
+
 			Commands.CommandErrored += OnCommandErroredAsync;
 			Commands.CommandExecuted += OnCommandExecuted;
 
@@ -72,13 +87,6 @@ namespace YumeChan.Core
 
 			await ReleaseCommandsAsync();
 		}
-
-
-/*		public void RegisterTypeReaders()
-		{
-
-		}
-*/
 
 		public async Task RegisterCommandsAsync()
 		{
@@ -154,9 +162,6 @@ namespace YumeChan.Core
 					await e.Context.RespondAsync(string.Join('\n', errorMessages));
 				}
 			}
-
-
-
 
 #if DEBUG
 			string response = $"An error occurred : \n```{e.Exception}```";

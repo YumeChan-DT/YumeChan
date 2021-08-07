@@ -25,6 +25,9 @@ namespace YumeChan.Core
 			properties.CommandPrefix ??= "==";
 			properties.DatabaseProperties.ConnectionString ??= "mongodb://localhost:27017";
 			properties.DatabaseProperties.DatabaseName ??= "yc-default";
+			properties.LavalinkProperties.Hostname ??= "localhost";
+			properties.LavalinkProperties.Port ??= 2333;
+			properties.LavalinkProperties.Password ??= string.Empty;
 
 			return properties;
 		}

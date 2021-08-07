@@ -30,9 +30,10 @@ namespace YumeChan.Core
 
 		public DiscordClient Client { get; set; }
 		public CommandHandler CommandHandler { get; set; }
+		public LavalinkHandler LavalinkHandler { get; set; }
 		public IUnityContainer Services { get; set; }
 
-		internal ILogger Logger { get; set; }
+		internal ILogger<YumeCore> Logger { get; set; }
 
 		internal ConfigurationProvider<ICoreProperties> ConfigProvider { get; private set; }
 		public ICoreProperties CoreProperties { get; private set; }
@@ -55,6 +56,7 @@ namespace YumeChan.Core
 				MinimumLogLevel = LogLevel.Information
 			}), FactoryLifetime.Singleton)
 			.RegisterSingleton<CommandHandler>()
+			.RegisterSingleton<LavalinkHandler>()
 			.RegisterSingleton(typeof(IDatabaseProvider<>), typeof(DatabaseProvider<>))
 			.RegisterSingleton(typeof(IConfigProvider<>), typeof(ConfigurationProvider<>))
 
@@ -83,6 +85,7 @@ namespace YumeChan.Core
 //			await CommandHandler.RegisterTypeReaders();
 
 			await CommandHandler.InstallCommandsAsync();
+			await LavalinkHandler.Initialize();
 
 			CoreState = YumeCoreState.Online;
 		}
@@ -183,6 +186,9 @@ namespace YumeChan.Core
 			Client ??= Services.Resolve<DiscordClient>();
 			CommandHandler ??= Services.Resolve<CommandHandler>();
 			CommandHandler.Config ??= CoreProperties;
+
+			LavalinkHandler ??= Services.Resolve<LavalinkHandler>();
+			LavalinkHandler.Config ??= CoreProperties.LavalinkProperties;
 		}
 	}
 }
