@@ -9,6 +9,9 @@ namespace YumeChan.Core
 {
 	public class LavalinkHandler
 	{
+		public LavalinkExtension Lavalink { get; internal set; }
+		public LavalinkConfiguration LavalinkConfiguration { get; internal set; }
+
 		internal ICoreLavalinkProperties Config { get; set; }
 
 		private readonly DiscordClient client;
@@ -22,7 +25,7 @@ namespace YumeChan.Core
 
 		public async Task Initialize()
 		{
-			LavalinkExtension lavalink = client.UseLavalink();
+			Lavalink ??= client.UseLavalink();
 			logger.LogInformation("Initialized Lavalink Extension.");
 
 			ConnectionEndpoint lavalinkEndpoint = new()
@@ -31,14 +34,14 @@ namespace YumeChan.Core
 				Port = Config.Port ?? 2333
 			};
 
-			LavalinkConfiguration lavalinkConfiguration = new()
+			LavalinkConfiguration = new()
 			{
 				Password = Config.Password,
 				RestEndpoint = lavalinkEndpoint,
 				SocketEndpoint = lavalinkEndpoint
 			};
 
-			LavalinkNodeConnection connection = await lavalink.ConnectAsync(lavalinkConfiguration);
+			LavalinkNodeConnection connection = await Lavalink.ConnectAsync(LavalinkConfiguration);
 			logger.LogInformation("Established Lavalink Connection (Host: {hostname}:{port})", connection.NodeEndpoint.Hostname, connection.NodeEndpoint.Port);
 		}
 	}
