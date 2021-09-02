@@ -23,8 +23,8 @@ namespace YumeChan.Core
 			properties.AppDisplayName ??= "Yume-Chan";
 			properties.BotToken ??= string.Empty;
 			properties.CommandPrefix ??= "==";
-			properties.DatabaseProperties.ConnectionString ??= "mongodb://localhost:27017";
-			properties.DatabaseProperties.DatabaseName ??= "yc-default";
+			properties.MongoProperties.ConnectionString ??= "mongodb://localhost:27017";
+			properties.MongoProperties.DatabaseName ??= "yc-default";
 			properties.LavalinkProperties.Hostname ??= "localhost";
 			properties.LavalinkProperties.Port ??= 2333;
 			properties.LavalinkProperties.Password ??= string.Empty;
