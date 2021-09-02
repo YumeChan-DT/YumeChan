@@ -1,4 +1,4 @@
-﻿using DSharpPlus.CommandsNext;
+using DSharpPlus.CommandsNext;
 using DSharpPlus.CommandsNext.Attributes;
 using DSharpPlus.Entities;
 using YumeChan.PluginBase;
@@ -30,8 +30,8 @@ namespace YumeChan.Core.Modules.Status
 			DiscordEmbedBuilder embed = new DiscordEmbedBuilder()
 				.WithTitle(Instance.CoreProperties.AppDisplayName)
 				.WithDescription($"Status : {Instance.CoreState}")
-				.AddField("Core", $"Version : {CoreVersion.ToString() ?? MissingVersionSubstitute}", true)
-				.AddField("Loaded Plugins", $"Count : {(Instance.CommandHandler.Plugins is null ? "None" : Instance.CommandHandler.Plugins.Count.ToString())}", true);
+				.AddField("Core", $"Version : {CoreVersion ?? MissingVersionSubstitute}", true)
+				.AddField("Loaded Plugins", $"Count : {(Instance.CommandHandler.Plugins is null ? "None" : Instance.CommandHandler.Plugins.Count)}", true);
 #if DEBUG
 			embed.AddField("Debug", "Debug Build Active.");
 #endif
@@ -48,10 +48,10 @@ namespace YumeChan.Core.Modules.Status
 
 			foreach (Plugin pluginManifest in Instance.CommandHandler.Plugins)
 			{
-				embed.AddField(pluginManifest.PluginDisplayName,
-					$"({pluginManifest.PluginAssemblyName})\n" +
-					$"Version : {pluginManifest.PluginVersion.ToString() ?? MissingVersionSubstitute}\n" +
-					$"Loaded : {(pluginManifest.PluginLoaded ? "Yes" : "No")}", true);
+				embed.AddField(pluginManifest.DisplayName,
+					$"({pluginManifest.AssemblyName})\n" +
+					$"Version : {pluginManifest.Version.ToString() ?? MissingVersionSubstitute}\n" +
+					$"Loaded : {(pluginManifest.Loaded ? "Yes" : "No")}", true);
 			}
 
 			await ctx.RespondAsync(embed: embed.Build());

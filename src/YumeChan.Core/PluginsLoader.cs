@@ -68,13 +68,13 @@ namespace YumeChan.Core
 			where t.IsSubclassOf(typeof(Plugin))
 			select InstantiateManifest(t);
 
-			public IEnumerable<InjectionRegistry> LoadInjectionRegistries() =>
+		public IEnumerable<DependencyInjectionHandler> LoadDependencyInjectionHandlers() =>
 			from Assembly a in PluginAssemblies
 			from Type t in a.ExportedTypes
-			where t.IsSubclassOf(typeof(InjectionRegistry))
+			where t.IsSubclassOf(typeof(DependencyInjectionHandler))
 			select InstantiateInjectionRegistry(t);
 
 		internal static Plugin InstantiateManifest(Type type) => YumeCore.Instance.Services.Resolve(type) as Plugin;
-		internal static InjectionRegistry InstantiateInjectionRegistry(Type type) => YumeCore.Instance.Services.Resolve(type) as InjectionRegistry;
+		internal static DependencyInjectionHandler InstantiateInjectionRegistry(Type type) => YumeCore.Instance.Services.Resolve(type) as DependencyInjectionHandler;
 	}
 }

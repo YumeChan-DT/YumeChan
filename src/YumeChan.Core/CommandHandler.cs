@@ -55,13 +55,13 @@ namespace YumeChan.Core
 
 		public async Task InstallCommandsAsync()
 		{
-			CommandsConfiguration = new()
+			CommandsConfiguration ??= new()
 			{
 				Services = services,
 				StringPrefixes = new[] { Config.CommandPrefix }
 			};
 
-			InteractivityConfiguration = new()
+			InteractivityConfiguration ??= new()
 			{
 				PaginationBehaviour = PaginationBehaviour.Ignore
 			};
@@ -98,19 +98,21 @@ namespace YumeChan.Core
 
 			Plugins.AddRange(from Plugin plugin
 							 in externalModulesLoader.LoadPluginManifests()
-							 where !Plugins.Exists(p => p?.PluginAssemblyName == plugin.PluginAssemblyName)
+							 where !Plugins.Exists(p => p?.AssemblyName == plugin.AssemblyName)
 							 select plugin);
 
 			foreach (InjectionRegistry injectionRegistry in externalModulesLoader.LoadInjectionRegistries())
+			foreach (DependencyInjectionHandler handler in externalModulesLoader.LoadDependencyInjectionHandlers())
 			{
-				container.AddServices(injectionRegistry.ConfigureServices(new ServiceCollection()));
+				container.AddServices(handler.ConfigureServices(new ServiceCollection()));
 			}
 
 			foreach (Plugin plugin in Plugins)
 			{
-				await plugin.LoadPlugin();
+				await plugin.LoadAsync();
 				Commands.RegisterCommands(plugin.GetType().Assembly);
-				logger.LogInformation("Loaded Plugin '{Plugin}'.", plugin.PluginAssemblyName);
+
+				logger.LogInformation("Loaded Plugin '{Plugin}'.", plugin.AssemblyName);
 			}
 
 			Commands.RegisterCommands(Assembly.GetEntryAssembly()); // Add possible Commands from Entry Assembly (contextual)
@@ -123,10 +125,10 @@ namespace YumeChan.Core
 
 			foreach (Plugin plugin in new List<Plugin>(Plugins.Where(p => p is not Modules.InternalPlugin)))
 			{
-				await plugin.UnloadPlugin();
+				await plugin.UnloadAsync();
 				Plugins.Remove(plugin);
 
-				logger.LogInformation("Removed Plugin '{Plugin}'.", plugin.PluginAssemblyName);
+				logger.LogInformation("Removed Plugin '{Plugin}'.", plugin.AssemblyName);
 			}
 		}
 
