@@ -20,6 +20,7 @@ namespace YumeChan.ConsoleRunner
 		private static readonly LoggerConfiguration serilogConfiguration = new LoggerConfiguration()
 				.MinimumLevel.Debug()
 				.MinimumLevel.Override("Microsoft", LogEventLevel.Information)
+				.MinimumLevel.Override("DSharpPlus", LogEventLevel.Information)
 				.Enrich.FromLogContext()
 				.WriteTo.Console();
 
@@ -31,7 +32,7 @@ namespace YumeChan.ConsoleRunner
 
 			YumeCore.Instance.Services = container;
 
-			ILogger<YumeCore> logger = container.Resolve<ILogger<YumeCore>>();
+			Microsoft.Extensions.Logging.ILogger logger = container.Resolve<Microsoft.Extensions.Logging.ILogger>();
 			logger.LogInformation("Yume-Chan ConsoleRunner v{version}.", typeof(Program).Assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>().InformationalVersion);
 
 			await YumeCore.Instance.StartBotAsync().ConfigureAwait(false);
@@ -42,13 +43,15 @@ namespace YumeChan.ConsoleRunner
 		{
 			return new HostBuilder()
 				.UseUnityServiceProvider(serviceRegistry ?? new())
+				.ConfigureLogging(x => x.ClearProviders())
 				.UseSerilog()
 				.ConfigureContainer<IUnityContainer>((context, container) =>
 				{
 					Program.container = container;  // This assignment is necessary, as configuration only affects the child container.
 
-					container.AddExtension(new LoggingExtension());
+					container.AddExtension(new LoggingExtension(new SerilogLoggerFactory()));
 					container.AddServices(new ServiceCollection().AddLogging(x => x.AddSerilog()));
+					//container.RegisterType<ILoggerFactory, SerilogLoggerFactory>();
 
 					YumeCore.Instance.ConfigureContainer(container);
 				});
