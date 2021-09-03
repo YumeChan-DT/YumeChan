@@ -1,4 +1,4 @@
-using DSharpPlus.CommandsNext;
+﻿using DSharpPlus.CommandsNext;
 using DSharpPlus.CommandsNext.Attributes;
 using DSharpPlus.Entities;
 using YumeChan.PluginBase;
@@ -8,24 +8,21 @@ using static YumeChan.Core.YumeCore;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading;
-
-
-
-
+using DSharpPlus.SlashCommands;
+using DSharpPlus;
+using DSharpPlus.SlashCommands.Attributes;
 
 #pragma warning disable CA1822 // Statics cannot be used for Commands
 
-
-
 namespace YumeChan.Core.Modules.Status
 {
-	[Group("status"), Description("Displays YumeCore Status")]
-	public class Status : BaseCommandModule, ICoreModule
+	[SlashCommandGroup("status", "Displays YumeCore Status")]
+	public class Status : ApplicationCommandModule, ICoreModule
 	{
 		internal const string MissingVersionSubstitute = "Unknown";
 
-		[GroupCommand]
-		public async Task CoreStatusAsync(CommandContext context)
+		[SlashCommand("core", "Gets the status of current YumeCore.")]
+		public async Task CoreStatusAsync(InteractionContext ctx)
 		{
 			DiscordEmbedBuilder embed = new DiscordEmbedBuilder()
 				.WithTitle(Instance.CoreProperties.AppDisplayName)
@@ -36,11 +33,12 @@ namespace YumeChan.Core.Modules.Status
 			embed.AddField("Debug", "Debug Build Active.");
 #endif
 
-			await context.RespondAsync(embed: embed.Build());
+			await ctx.CreateResponseAsync(InteractionResponseType.ChannelMessageWithSource, new DiscordInteractionResponseBuilder()
+				.AddEmbed(embed));
 		}
 
-		[Command("plugins"), Description("Lists all loaded Plugins")]
-		public async Task PluginsStatusAsync(CommandContext ctx)
+		[SlashCommand("plugins", "Lists all loaded Plugins")]
+		public async Task PluginsStatusAsync(InteractionContext ctx)
 		{
 			DiscordEmbedBuilder embed = new DiscordEmbedBuilder()
 				.WithTitle("Plugins")
@@ -54,13 +52,14 @@ namespace YumeChan.Core.Modules.Status
 					$"Loaded : {(pluginManifest.Loaded ? "Yes" : "No")}", true);
 			}
 
-			await ctx.RespondAsync(embed: embed.Build());
+			await ctx.CreateResponseAsync(InteractionResponseType.ChannelMessageWithSource, new DiscordInteractionResponseBuilder()
+				.AddEmbed(embed));
 		}
 
-		[Command("botstats"), Aliases("botinfo"), Description("Gets the current stats for Yume-Chan.")]
-		public async Task BotStat(CommandContext ctx)
+		[SlashCommand("botstats", "Gets the current stats for Yume-Chan.")]
+		public async Task BotStat(InteractionContext ctx)
 		{
-			using var process = Process.GetCurrentProcess();
+			using Process process = Process.GetCurrentProcess();
 			int guildCount = ctx.Client.Guilds.Count;
 			int memberCount = ctx.Client.Guilds.Values.SelectMany(g => g.Members.Keys).Count();
 
@@ -74,20 +73,24 @@ namespace YumeChan.Core.Modules.Status
 				.AddField("Memory", $"{GC.GetTotalMemory(true) / 1024 / 1024:n2} MB", true)
 				.AddField("Threads", $"{ThreadPool.ThreadCount}", true);
 
-			await ctx.RespondAsync(embed);
+			await ctx.CreateResponseAsync(InteractionResponseType.ChannelMessageWithSource, new DiscordInteractionResponseBuilder()
+				.AddEmbed(embed));
 		}
 
-		[Command("throw"), RequireOwner]
-		public Task Throw(CommandContext _) => throw new ApplicationException();
+		[SlashCommand("throw", "(DEBUG) Tests error handling"), SlashRequireOwner]
+		public Task Throw(InteractionContext _) => throw new ApplicationException();
 
-		[Command("gc"), RequireOwner]
-		public async Task ForceGCCollect(CommandContext ctx)
+		[SlashCommand("gc", "(DEBUG) Forces Memory GC cycle"), SlashRequireOwner]
+		public async Task ForceGCCollect(InteractionContext ctx)
 		{
 			GC.Collect(2, GCCollectionMode.Forced, true, true);
 			GC.WaitForPendingFinalizers();
 			GC.Collect(2, GCCollectionMode.Forced, true, true);
 
-			await ctx.RespondAsync($"Forced GC Cleanup cycle! \nCurrent memory usage: **{GC.GetTotalMemory(true) / 1024 / 1024:n2} MB**");
+			await ctx.CreateResponseAsync(InteractionResponseType.ChannelMessageWithSource, new DiscordInteractionResponseBuilder()
+			{
+				Content = $"Forced GC Cleanup cycle! \nCurrent memory usage: **{GC.GetTotalMemory(true) / 1024 / 1024:n2} MB**"
+			});
 		}
 	}
 }

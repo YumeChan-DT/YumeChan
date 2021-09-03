@@ -2,8 +2,10 @@ using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 using Serilog;
 using Serilog.Events;
+using Serilog.Extensions.Logging;
 using System.Threading.Tasks;
 using Unity;
 using Unity.Microsoft.DependencyInjection;
@@ -39,13 +41,14 @@ namespace YumeChan.NetRunner
 		{
 			return Host.CreateDefaultBuilder(args)
 				.UseUnityServiceProvider()
+				.ConfigureLogging(x => x.ClearProviders())
 				.UseSerilog()
 				.ConfigureWebHostDefaults(webBuilder => webBuilder.UseStartup<Startup>())
 				.ConfigureContainer<IUnityContainer>((context, container) =>
 				{
 					Program.container = container;  // This assignment is necessary, as configuration only affects the child container.
 
-					container.AddExtension(new LoggingExtension());
+					container.AddExtension(new LoggingExtension(new SerilogLoggerFactory()));
 					container.AddServices(new ServiceCollection().AddLogging(x => x.AddSerilog()));
 
 					YumeCore.Instance.ConfigureContainer(container);

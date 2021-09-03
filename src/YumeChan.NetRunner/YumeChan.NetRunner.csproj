@@ -35,7 +35,7 @@
 
 	<ItemGroup>
 		<PackageReference Include="Microsoft.AspNetCore.Authentication" Version="2.2.0" />
-		<PackageReference Include="Microsoft.AspNetCore.Authentication.AzureADB2C.UI" Version="5.0.8" />
+		<PackageReference Include="Microsoft.AspNetCore.Authentication.AzureADB2C.UI" Version="5.0.9" />
 		<PackageReference Include="Microsoft.Extensions.Logging" Version="5.0.0" />
 		<PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="5.0.0" />
 		<PackageReference Include="Microsoft.Identity.Web" Version="1.15.2" />
