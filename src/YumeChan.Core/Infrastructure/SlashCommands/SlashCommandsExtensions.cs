@@ -69,7 +69,7 @@ namespace YumeChan.Core.Infrastructure.SlashCommands
 
 			// check if appropriate return and arguments
 			parameters = method.GetParameters();
-			if (!parameters.Any() || parameters.First().ParameterType != typeof(InteractionContext) || method.ReturnType != typeof(Task))
+			if (!parameters.Any() || (parameters.First().ParameterType != typeof(InteractionContext) && parameters.First().ParameterType != typeof(ContextMenuContext)) || method.ReturnType != typeof(Task))
 			{
 				return false;
 			}
