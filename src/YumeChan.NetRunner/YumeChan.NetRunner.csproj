@@ -10,6 +10,7 @@
 		<NeutralLanguage>Anglais</NeutralLanguage>
 		<RepositoryUrl>https://github.com/YumeChan-DT/YumeChan</RepositoryUrl>
 		<RepositoryType>Git</RepositoryType>
+		<UserSecretsId>b88ac92e-bd47-4a1a-af10-b5272f68479d</UserSecretsId>
 	</PropertyGroup>
 
 	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
@@ -36,20 +37,19 @@
 	<ItemGroup>
 		<PackageReference Include="AspNet.Security.OAuth.Discord" Version="5.0.14" />
 		<PackageReference Include="Microsoft.AspNetCore.Authentication" Version="2.2.0" />
-		<PackageReference Include="Microsoft.Extensions.Logging" Version="5.0.0" />
-		<PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="5.0.0" />
-		<PackageReference Include="Microsoft.Identity.Web" Version="1.15.2" />
+		<PackageReference Include="Microsoft.Extensions.Logging" Version="6.0.0-rc.1.21451.13" />
+		<PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="6.0.0-rc.1.21451.13" />
 		<PackageReference Include="Microsoft.VisualStudio.Web.BrowserLink" Version="2.2.0" />
-		<PackageReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Design" Version="5.0.2" />
+		<PackageReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Design" Version="6.0.0-rc.1.21464.1" />
 		<PackageReference Include="Serilog.AspNetCore" Version="4.1.0" />
 		<PackageReference Include="Serilog.Extensions.Hosting" Version="4.1.2" />
-		<PackageReference Include="Serilog.Extensions.Logging" Version="3.0.2-dev-10284" />
+		<PackageReference Include="Serilog.Extensions.Logging" Version="3.0.2-dev-10289" />
 		<PackageReference Include="Serilog.Sinks.Console" Version="4.0.0" />
 		<PackageReference Include="SourceLink.Create.CommandLine" Version="2.8.3">
 			<PrivateAssets>all</PrivateAssets>
 			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
 		</PackageReference>
-		<PackageReference Include="System.Configuration.ConfigurationManager" Version="5.0.0" />
+		<PackageReference Include="System.Configuration.ConfigurationManager" Version="6.0.0-rc.1.21451.13" />
 	</ItemGroup>
 
 	<ItemGroup>
