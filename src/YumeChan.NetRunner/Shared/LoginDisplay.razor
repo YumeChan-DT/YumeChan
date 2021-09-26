@@ -1,23 +1,27 @@
-﻿@using Microsoft.AspNetCore.Authentication.AzureADB2C.UI
-@using Microsoft.Extensions.Options
-@inject IOptionsMonitor<AzureADB2COptions> AzureADB2COptions
+﻿@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject NavigationManager NavigationManager
+
+@using System.Security.Claims;
 
 <AuthorizeView>
-    <Authorized>
-        Logged-in as&thinsp;:&nbsp;<b>@context.User.Identity.Name</b>&ensp;
-        (<a href="AzureADB2C/Account/SignOut">Log out</a>)
-    </Authorized>
-    <NotAuthorized>
-        <a href="AzureADB2C/Account/SignIn">Log in</a>
-    </NotAuthorized>
+	<Authorized>
+		Welcome, @GetUsername().GetAwaiter().GetResult().&emsp;
+		<NavLink class="nav-link text-white mx-2" href="logout">Logout</NavLink>
+	</Authorized>
+
+	<NotAuthorized>
+		<NavLink class="nav-link text-white mx-1" href=@($"login?redirectUri={CurrentUri}")>Login</NavLink>
+	</NotAuthorized>
 </AuthorizeView>
 
-@code {
-    bool canEditProfile;
 
-    protected override void OnInitialized()
-    {
-        var options = AzureADB2COptions.Get(AzureADB2CDefaults.AuthenticationScheme);
-        canEditProfile = !string.IsNullOrEmpty(options.EditProfilePolicyId);
-    }
+@code {
+	[Parameter] public string CurrentUri { get; set; }
+
+
+	public async Task<string> GetUsername()
+	{
+		AuthenticationState auth = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+		return auth.User.FindFirstValue(ClaimTypes.Name);
+	}
 }
