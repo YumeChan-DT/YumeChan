@@ -32,7 +32,7 @@ namespace YumeChan.Core
 		private DirectoryInfo SetDefaultPluginsDirectoryEnvironmentVariable()
 		{
 			FileInfo file = new(Assembly.GetExecutingAssembly().Location);
-			PluginsLoadDirectory = Directory.CreateDirectory(file.DirectoryName + Path.DirectorySeparatorChar + "Plugins" + Path.DirectorySeparatorChar);
+			PluginsLoadDirectory = Directory.CreateDirectory(Path.Join(file.DirectoryName, "Plugins"));
 
 			try
 			{
