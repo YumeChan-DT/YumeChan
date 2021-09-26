@@ -28,7 +28,7 @@
 		<None Remove="build\**" />
 		<None Remove="Data\**" />
 	</ItemGroup>
-	
+
 	<ItemGroup>
 		<ProjectReference Include="..\YumeChan.Core\YumeChan.Core.csproj" />
 	</ItemGroup>

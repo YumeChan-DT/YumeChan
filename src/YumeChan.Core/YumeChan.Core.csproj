@@ -25,10 +25,11 @@
 	<ItemGroup>
 		<PackageReference Include="Config.Net" Version="4.15.*" />
 		<PackageReference Include="Config.Net.Json" Version="4.15.*" />
-		<PackageReference Include="DSharpPlus" Version="4.2.0-nightly-00957" />
-		<PackageReference Include="DSharpPlus.CommandsNext" Version="4.2.0-nightly-00957" />
-		<PackageReference Include="DSharpPlus.Interactivity" Version="4.2.0-nightly-00957" />
-		<PackageReference Include="DSharpPlus.Lavalink" Version="4.2.0-nightly-00957" />
+		<PackageReference Include="DSharpPlus" Version="4.2.0-nightly-00995" />
+		<PackageReference Include="DSharpPlus.CommandsNext" Version="4.2.0-nightly-00995" />
+		<PackageReference Include="DSharpPlus.Interactivity" Version="4.2.0-nightly-00995" />
+		<PackageReference Include="DSharpPlus.Lavalink" Version="4.2.0-nightly-00995" />
+		<PackageReference Include="IDoEverything.DSharpPlus.SlashCommands" Version="2.0.4" />
 		<PackageReference Include="Microsoft.EntityFrameworkCore" Version="5.0.*" />
 		<PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="5.0.*" />
 		<PackageReference Include="Microsoft.Extensions.Http" Version="5.0.*" />
@@ -48,7 +49,6 @@
 	</ItemGroup>
 
 	<ItemGroup>
-	  <ProjectReference Include="..\..\..\DSharpPlus.SlashCommands\DSharpPlus.SlashCommands.csproj" />
 	  <ProjectReference Include="..\YumeChan.PluginBase\YumeChan.PluginBase.csproj" />
 	</ItemGroup>
 
