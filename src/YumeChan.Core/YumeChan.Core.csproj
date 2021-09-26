@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
 	<PropertyGroup>
 		<TargetFramework>net5.0</TargetFramework>
@@ -23,32 +23,32 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-		<PackageReference Include="Config.Net" Version="4.15.0" />
-		<PackageReference Include="Config.Net.Json" Version="4.15.0" />
+		<PackageReference Include="Config.Net" Version="4.15.*" />
+		<PackageReference Include="Config.Net.Json" Version="4.15.*" />
 		<PackageReference Include="DSharpPlus" Version="4.2.0-nightly-00957" />
 		<PackageReference Include="DSharpPlus.CommandsNext" Version="4.2.0-nightly-00957" />
 		<PackageReference Include="DSharpPlus.Interactivity" Version="4.2.0-nightly-00957" />
 		<PackageReference Include="DSharpPlus.Lavalink" Version="4.2.0-nightly-00957" />
-		<PackageReference Include="IDoEverything.DSharpPlus.SlashCommands" Version="2.0.1" />
-		<PackageReference Include="Microsoft.EntityFrameworkCore" Version="5.0.9" />
-		<PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="5.0.0" />
-		<PackageReference Include="Microsoft.Extensions.Http" Version="5.0.0" />
-		<PackageReference Include="Microsoft.Extensions.Logging" Version="5.0.0" />
-		<PackageReference Include="MongoDB.Bson.signed" Version="2.12.2" />
-		<PackageReference Include="MongoDB.Driver" Version="2.13.1" />
-		<PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="5.0.7" />
-		<PackageReference Include="SourceLink.Create.CommandLine" Version="2.8.3">
+		<PackageReference Include="Microsoft.EntityFrameworkCore" Version="5.0.*" />
+		<PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="5.0.*" />
+		<PackageReference Include="Microsoft.Extensions.Http" Version="5.0.*" />
+		<PackageReference Include="Microsoft.Extensions.Logging" Version="5.0.*" />
+		<PackageReference Include="MongoDB.Bson.signed" Version="2.12.*" />
+		<PackageReference Include="MongoDB.Driver" Version="2.13.*" />
+		<PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="5.0.*" />
+		<PackageReference Include="SourceLink.Create.CommandLine" Version="2.8.*">
 			<PrivateAssets>all</PrivateAssets>
 			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
 		</PackageReference>
-		<PackageReference Include="System.Net.Http" Version="4.3.4" />
-		<PackageReference Include="Unicode.net" Version="0.1.3" />
-		<PackageReference Include="Unity" Version="5.11.10" />
-		<PackageReference Include="Nodsoft.Unity.Microsoft.DependencyInjection" Version="5.11.5" />
-		<PackageReference Include="Unity.Microsoft.Logging" Version="5.11.1" />
+		<PackageReference Include="System.Net.Http" Version="4.3.*" />
+		<PackageReference Include="Unicode.net" Version="0.1.*" />
+		<PackageReference Include="Unity" Version="5.11.*" />
+		<PackageReference Include="Nodsoft.Unity.Microsoft.DependencyInjection" Version="5.11.*" />
+		<PackageReference Include="Unity.Microsoft.Logging" Version="5.11.*" />
 	</ItemGroup>
 
 	<ItemGroup>
+	  <ProjectReference Include="..\..\..\DSharpPlus.SlashCommands\DSharpPlus.SlashCommands.csproj" />
 	  <ProjectReference Include="..\YumeChan.PluginBase\YumeChan.PluginBase.csproj" />
 	</ItemGroup>
 
