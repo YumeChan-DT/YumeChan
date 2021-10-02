@@ -1,5 +1,5 @@
 ﻿@page "/BotControls"
-@attribute [Authorize]
+@attribute [Authorize(Roles = UserRoles.Admin)]
 
 @using YumeChan.Core;
 @using System.Reflection;
@@ -47,6 +47,7 @@
 				</div>
 			</div>
 		</div>
+
 		<div class="card-footer">
 			<button class="btn btn-info" @onclick=ReloadModulesButton>Reload Plugins</button>
 		</div>
@@ -67,6 +68,7 @@
 		<div class="card-body">
 			<p class="card-text">
 				<b>Current Status :</b>&ensp;
+
 				@if (currentActivity is null)
 				{
 					<div class="text-muted">None</div>
@@ -120,9 +122,10 @@
 	{
 		currentActivity = YumeCore.Client?.Presences?.Values?.FirstOrDefault().Activities.FirstOrDefault();
 
-		YumeCore.Client.PresenceUpdated += async (_, args) =>
+		YumeCore.Client.PresenceUpdated += (_, args) =>
 		{
 			currentActivity = args.Activity;
+			return Task.CompletedTask;
 		};
 	}
 
