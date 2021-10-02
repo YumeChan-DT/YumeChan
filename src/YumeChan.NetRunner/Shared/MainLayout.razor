@@ -1,18 +1,15 @@
-﻿@inherits LayoutComponentBase
+﻿@inherits CommonSiteLayout
 
-<div class="sidebar">
-	<NavMenu />
-</div>
 
-<div class="main">
-	<div class="navbar navbar-dark py-3 px-4">
-		<a href="https://github.com/YumeChan-DT/YumeChan" target="_blank" class="mx-2">GitHub Repo</a>
-		<LoginDisplay />
-	</div>
 
-	<hr />
+<header>
+	<Navbar CurrentUri=@CurrentUri />
+</header>
 
-	<div class="content px-4">
+<div class="container" style="margin-top: 100px !important">
+	<main role="main">
 		@Body
-	</div>
+	</main>
 </div>
+
+<Footer />

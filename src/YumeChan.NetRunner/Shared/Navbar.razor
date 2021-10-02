@@ -1,0 +1,30 @@
+﻿<nav class="navbar fixed-top navbar-expand-md navbar-toggleable-md navbar-dark bg-dark-acrylic box-shadow mb-5 px-3">
+	<div class="container-fluid ps-0">
+		<div class="align-content-center ms-2">
+			<NavLink class="navbar-brand" href="" Match="NavLinkMatch.All">
+				Yume-Chan
+			</NavLink>
+
+			<span class="badge rounded-pill bg-primary">WIP</span> &emsp;
+		</div>
+
+		<button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNavContent">
+			<span class="navbar-toggler-icon"></span>
+		</button>
+
+		<div id="navbarNavContent" class="navbar-collapse collapse">
+			<ul class="navbar-nav flex-grow-1">
+				<li class="nav-item"><NavLink class="nav-link text-light" href="/">Home</NavLink></li>
+			</ul>
+
+			<ul class="navbar-nav flex-grow-0">
+				<LoginDisplay />
+			</ul>
+		</div>
+	</div>
+</nav>
+
+
+@code {
+	[Parameter] public string CurrentUri { get; set; }
+}

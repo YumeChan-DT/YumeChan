@@ -1,0 +1,128 @@
+/* Please see documentation at https://docs.microsoft.com/aspnet/core/client-side/bundling-and-minification
+for details on configuring this project to bundle and minify static web assets. */
+
+html {
+	font-size: 14px;
+	position: relative;
+	min-height: 100%;
+
+	@media (min-width: 768px) {
+		font-size: 16px;
+	}
+}
+
+.border-top {
+	border-top: 1px solid #e5e5e5;
+}
+
+.border-bottom {
+	border-bottom: 1px solid #e5e5e5;
+}
+
+.box-shadow {
+	box-shadow: 0 .25rem .75rem rgba(0, 0, 0, .05);
+}
+
+button.accept-policy {
+	font-size: 1rem;
+	line-height: inherit;
+}
+
+.dotted-underline {
+	-moz-text-decoration-line: underline;
+	text-decoration-line: underline;
+	-moz-text-decoration-style: dotted;
+	text-decoration-style: dotted;
+}
+
+/* Sticky footer styles
+-------------------------------------------------- */
+
+body {
+	margin-bottom: 150px
+}
+
+.footer {
+	position: absolute;
+	bottom: 0;
+	width: 100%;
+	white-space: nowrap;
+	min-height: 60px; /* Vertically center the text there */
+}
+
+
+/* Blazor-specific adjustments
+-------------------------------------------------- */
+
+.valid.modified:not([type=checkbox]) {
+	outline: 1px solid #26b050;
+}
+
+.invalid {
+	outline: 1px solid red;
+}
+
+.validation-message {
+	color: red;
+}
+
+#blazor-error-ui {
+	background: lightyellow;
+	bottom: 0;
+	box-shadow: 0 -1px 2px rgba(0, 0, 0, 0.2);
+	display: none;
+	left: 0;
+	padding: 0.6rem 1.25rem 0.7rem 1.25rem;
+	position: fixed;
+	width: 100%;
+	z-index: 1000;
+	color: firebrick;
+
+	.dismiss {
+		cursor: pointer;
+		position: absolute;
+		right: 0.75rem;
+		top: 0.5rem;
+	}
+}
+
+
+/* Carousel
+-------------------------------------------------- */
+.carousel {
+	margin-bottom: 4rem;
+}
+/* Since positioning the image, we need to help out the caption */
+.carousel-caption {
+	bottom: 3rem;
+	z-index: 10;
+}
+
+.carousel-floating-text {
+	text-shadow: 2px 2px 10px #000000;
+}
+
+/* Declare heights because of positioning of img element */
+.carousel-item > img {
+	object-fit: cover;
+	position: center;
+	min-height: 100%;
+}
+
+/* Images
+-------------------------------------------------- */
+.img-team-avatar {
+	max-height: 15rem;
+	max-width: 15rem;
+}
+
+
+/* Backgrounds
+-------------------------------------------------- */
+
+.bg-dark-acrylic {
+	background-color: rgba(17, 17, 17, .6);
+
+	-webkit-backdrop-filter: blur(50px);
+	backdrop-filter: blur(50px);
+}
