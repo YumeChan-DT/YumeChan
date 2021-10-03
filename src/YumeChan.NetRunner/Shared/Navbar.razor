@@ -15,6 +15,12 @@
 		<div id="navbarNavContent" class="navbar-collapse collapse">
 			<ul class="navbar-nav flex-grow-1">
 				<li class="nav-item"><NavLink class="nav-link text-light" href="/">Home</NavLink></li>
+
+				<AuthorizeView Roles=@UserRoles.Admin>
+					<li class="nav-item"><NavLink class="nav-link text-light" href="bot/controls">Controls</NavLink></li>
+					<li class="nav-item"><NavLink class="nav-link text-light" href="bot/plugins">Plugins</NavLink></li>
+					<li class="nav-item"><NavLink class="nav-link text-light" href="servers">Servers</NavLink></li>
+				</AuthorizeView>
 			</ul>
 
 			<ul class="navbar-nav flex-grow-0">
