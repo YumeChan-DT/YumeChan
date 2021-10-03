@@ -1,4 +1,4 @@
-﻿@page "/BotControls"
+﻿@page "/bot/controls"
 @attribute [Authorize(Roles = UserRoles.Admin)]
 
 @using YumeChan.Core;
@@ -35,6 +35,7 @@
 
 	<div class="card">
 		<h3 class="card-header">Plugins</h3>
+
 		<div class="card-body">
 			<div class="d-flex justify-content-between">
 				<div class="p-2 bd-highlight">
@@ -81,21 +82,19 @@
 			</p>
 		</div>
 
-		<div class="card-footer">
+		<div class="card-footer py-3">
 			<EditForm Model="statusModel" OnValidSubmit="HandleValidSubmit" class="form-inline">
 				<DataAnnotationsValidator />
 				<ValidationSummary />
 
-				<div class="form-group mb-2">
+				<div class="input-group mb-2">
 					<b>Change Status :</b>
 				</div>
 
-				<div class="form-group mb-2 mx-sm-4">
-					<label class="sr-only" for="text">New Status</label>
+				<div class="input-group">
 					<InputText Id="text" @bind-Value="statusModel.StatusMessage" class="form-control" placeholder="New Status" />
+					<button class="btn btn-outline-info" type="submit">Change</button>
 				</div>
-
-				<div class="form-group mb-2"><button class="btn btn-outline-info" type="submit">Change</button></div>
 			</EditForm>
 		</div>
 	</div>

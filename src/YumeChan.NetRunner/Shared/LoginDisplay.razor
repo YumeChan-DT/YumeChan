@@ -1,16 +1,16 @@
-﻿@inject AuthenticationStateProvider AuthenticationStateProvider
-@inject NavigationManager NavigationManager
+﻿@inherits ComponentBase
+@inject AuthenticationStateProvider AuthenticationStateProvider
 
 @using System.Security.Claims;
 
 <AuthorizeView>
 	<Authorized>
-		Welcome, @GetUsername().GetAwaiter().GetResult().&emsp;
-		<NavLink class="nav-link text-white mx-2" href="logout">Logout</NavLink>
+		<li class="navbar-text text-light me-3">Welcome, @GetUsername().GetAwaiter().GetResult() !</li>
+		<li class="nav-item"><NavLink class="nav-link text-white" href="logout">Logout</NavLink></li>
 	</Authorized>
 
 	<NotAuthorized>
-		<NavLink class="nav-link text-white mx-1" href=@($"login?redirectUri={CurrentUri}")>Login</NavLink>
+		<li class="nav-item"><NavLink class="nav-link text-white" href=@($"login?redirectUri={CurrentUri}")>Login</NavLink></li>
 	</NotAuthorized>
 </AuthorizeView>
 

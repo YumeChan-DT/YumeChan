@@ -1,0 +1,34 @@
+﻿{
+  "version": "1.0",
+  "defaultProvider": "jsdelivr",
+  "libraries": [
+    {
+      "library": "bootstrap@5.0.1",
+      "destination": "wwwroot/lib/bootstrap/"
+    },
+    {
+      "library": "@popperjs/core@2.9.2",
+      "destination": "wwwroot/lib/popperjs/core/"
+    },
+    {
+      "library": "bootstrap-icons@1.5.0",
+      "destination": "wwwroot/lib/bootstrap-icons/"
+    },
+    {
+      "library": "jquery@3.6.0",
+      "destination": "wwwroot/lib/jquery/"
+    },
+    {
+      "library": "@types/bootstrap@5.0.16",
+      "destination": "wwwroot/lib/types/bootstrap/"
+    },
+    {
+      "library": "@types/jquery@3.5.5",
+      "destination": "wwwroot/lib/types/jquery/"
+    },
+    {
+      "library": "@types/sizzle@2.3.3",
+      "destination": "wwwroot/lib/types/sizzle/"
+    }
+  ]
+}

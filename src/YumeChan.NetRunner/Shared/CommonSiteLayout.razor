@@ -1,0 +1,13 @@
+﻿@inherits LayoutComponentBase
+@inject NavigationManager NavigationManager
+
+
+@code {
+	protected string CurrentUri { get; private set; }
+
+	protected override async Task OnParametersSetAsync()
+	{
+		CurrentUri = NavigationManager.ToBaseRelativePath(NavigationManager.Uri);
+		await base.OnInitializedAsync();
+	}
+}
