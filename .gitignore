@@ -336,3 +336,5 @@ src/YumeChan.NetRunner/Config/
 src/YumeChan.NetRunner/wwwroot/lib/
 src/YumeChan.NetRunner/wwwroot/css/site.css
 src/YumeChan.NetRunner/wwwroot/css/site.min.css
+
+src/YumeChan.NetRunner/appsettings.Production.json
