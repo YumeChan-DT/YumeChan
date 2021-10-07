@@ -1,4 +1,6 @@
-﻿using MongoDB.Driver;
+﻿using Microsoft.EntityFrameworkCore;
+using MongoDB.Driver;
+using System;
 using YumeChan.Core.Config;
 using YumeChan.PluginBase;
 using YumeChan.PluginBase.Tools.Data;
@@ -9,26 +11,33 @@ namespace YumeChan.Core.Services
 {
 	public class DatabaseProvider<TPlugin> : IDatabaseProvider<TPlugin> where TPlugin : Plugin
 	{
-		private static ICoreDatabaseProperties BaseSettings => YumeCore.Instance.CoreProperties.DatabaseProperties;
+		private static ICoreProperties CoreProperties => YumeCore.Instance.CoreProperties;
 		private const string pluginDbPrefix = "yc-plugin-";
-		private string connectionString;
+		private string mongoConnectionString;
+		private string postgresConnectionString;
 		private string databaseName;
 
 		public DatabaseProvider()
 		{
-			connectionString = BaseSettings.ConnectionString;
+			mongoConnectionString = CoreProperties.MongoProperties.ConnectionString;
+			postgresConnectionString = CoreProperties.PostgresProperties.ConnectionString;
+
 			databaseName = pluginDbPrefix + typeof(TPlugin).Assembly.GetName().Name.ToLowerInvariant().Replace('.', '-');
 		}
-		public void SetDb(string connectionString, string databaseName)
+
+		public void SetMongoDb(string connectionString, string databaseName)
 		{
-			this.connectionString = connectionString;
+			this.mongoConnectionString = connectionString;
 			this.databaseName = databaseName;
 		}
 
-
 		public IMongoDatabase GetMongoDatabase()
-		{ 
-			return new MongoClient(connectionString).GetDatabase(databaseName);
+		{
+			return new MongoClient(mongoConnectionString).GetDatabase(databaseName);
 		}
+
+		public Action<DbContextOptionsBuilder> GetPostgresContextOptionsBuilder() => context =>
+			context.UseNpgsql(postgresConnectionString, providerOptions =>
+				providerOptions.EnableRetryOnFailure());
 	}
 }

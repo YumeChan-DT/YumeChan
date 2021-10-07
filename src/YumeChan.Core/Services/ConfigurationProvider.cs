@@ -18,7 +18,7 @@ namespace YumeChan.Core.Services
 		{
 			const string fileExtension = ".json";
 
-			if (YumeCore.Instance.CoreProperties?.Path_Config is string rootDirectory and not null)
+			if (YumeCore.Instance.CoreProperties?.Path_Config is string rootDirectory)
 			{
 				rootDirectory += Path.DirectorySeparatorChar;
 			}

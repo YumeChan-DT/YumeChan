@@ -6,8 +6,8 @@ namespace YumeChan.Core.Modules
 {
 	internal class InternalPlugin : Plugin
 	{
-		public override string PluginDisplayName { get; } = "YumeCore Internals";
+		public override string DisplayName { get; } = "YumeCore Internals";
 
-		public override bool PluginStealth { get; } = false;
+		public override bool StealthMode { get; } = false;
 	}
 }

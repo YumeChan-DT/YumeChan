@@ -5,36 +5,40 @@ using YumeChan.PluginBase;
 using System;
 using System.Threading.Tasks;
 using static YumeChan.Core.YumeCore;
-
+using System.Diagnostics;
+using System.Linq;
+using System.Threading;
+using DSharpPlus.SlashCommands;
+using DSharpPlus;
+using DSharpPlus.SlashCommands.Attributes;
 
 #pragma warning disable CA1822 // Statics cannot be used for Commands
 
-
-
 namespace YumeChan.Core.Modules.Status
 {
-	[Group("status"), Description("Displays YumeCore Status")]
-	public class Status : BaseCommandModule, ICoreModule
+	[SlashCommandGroup("status", "Displays YumeCore Status")]
+	public class Status : ApplicationCommandModule, ICoreModule
 	{
 		internal const string MissingVersionSubstitute = "Unknown";
 
-		[GroupCommand]
-		public async Task CoreStatusAsync(CommandContext context)
+		[SlashCommand("core", "Gets the status of current YumeCore.")]
+		public async Task CoreStatusAsync(InteractionContext ctx)
 		{
 			DiscordEmbedBuilder embed = new DiscordEmbedBuilder()
 				.WithTitle(Instance.CoreProperties.AppDisplayName)
 				.WithDescription($"Status : {Instance.CoreState}")
-				.AddField("Core", $"Version : {CoreVersion.ToString() ?? MissingVersionSubstitute}", true)
-				.AddField("Loaded Plugins", $"Count : {(Instance.CommandHandler.Plugins is null ? "None" : Instance.CommandHandler.Plugins.Count.ToString())}", true);
+				.AddField("Core", $"Version : {CoreVersion ?? MissingVersionSubstitute}", true)
+				.AddField("Loaded Plugins", $"Count : {(Instance.CommandHandler.Plugins is null ? "None" : Instance.CommandHandler.Plugins.Count)}", true);
 #if DEBUG
 			embed.AddField("Debug", "Debug Build Active.");
 #endif
 
-			await context.RespondAsync(embed: embed.Build());
+			await ctx.CreateResponseAsync(InteractionResponseType.ChannelMessageWithSource, new DiscordInteractionResponseBuilder()
+				.AddEmbed(embed));
 		}
 
-		[Command("plugins"), Description("Lists all loaded Plugins")]
-		public async Task PluginsStatusAsync(CommandContext context)
+		[SlashCommand("plugins", "Lists all loaded Plugins")]
+		public async Task PluginsStatusAsync(InteractionContext ctx)
 		{
 			DiscordEmbedBuilder embed = new DiscordEmbedBuilder()
 				.WithTitle("Plugins")
@@ -42,16 +46,51 @@ namespace YumeChan.Core.Modules.Status
 
 			foreach (Plugin pluginManifest in Instance.CommandHandler.Plugins)
 			{
-				embed.AddField(pluginManifest.PluginDisplayName,
-					$"({pluginManifest.PluginAssemblyName})\n" +
-					$"Version : {pluginManifest.PluginVersion.ToString() ?? MissingVersionSubstitute}\n" +
-					$"Loaded : {(pluginManifest.PluginLoaded ? "Yes" : "No")}", true);
+				embed.AddField(pluginManifest.DisplayName,
+					$"({pluginManifest.AssemblyName})\n" +
+					$"Version : {pluginManifest.Version.ToString() ?? MissingVersionSubstitute}\n" +
+					$"Loaded : {(pluginManifest.Loaded ? "Yes" : "No")}", true);
 			}
 
-			await context.RespondAsync(embed: embed.Build());
+			await ctx.CreateResponseAsync(InteractionResponseType.ChannelMessageWithSource, new DiscordInteractionResponseBuilder()
+				.AddEmbed(embed));
 		}
 
-		[Command("throw"), RequireOwner]
-		public Task Throw(CommandContext _) => throw new ApplicationException();
+		[SlashCommand("botstats", "Gets the current stats for Yume-Chan.")]
+		public async Task BotStat(InteractionContext ctx)
+		{
+			using Process process = Process.GetCurrentProcess();
+			int guildCount = ctx.Client.Guilds.Count;
+			int memberCount = ctx.Client.Guilds.Values.SelectMany(g => g.Members.Keys).Count();
+
+			DiscordEmbedBuilder embed = new DiscordEmbedBuilder()
+				.WithTitle($"{Instance.CoreProperties.AppDisplayName} - Bot Stats")
+				.WithColor(DiscordColor.Gold)
+				.AddField("Latency", $"{ctx.Client.Ping} ms", true)
+				.AddField("Total Guilds", $"{guildCount}", true)
+				.AddField("Total Members", $"{memberCount}", true)
+				.AddField("Shards", $"{ctx.Client.ShardCount}", true)
+				.AddField("Memory", $"{GC.GetTotalMemory(true) / 1024 / 1024:n2} MB", true)
+				.AddField("Threads", $"{ThreadPool.ThreadCount}", true);
+
+			await ctx.CreateResponseAsync(InteractionResponseType.ChannelMessageWithSource, new DiscordInteractionResponseBuilder()
+				.AddEmbed(embed));
+		}
+
+		[SlashCommand("throw", "(DEBUG) Tests error handling"), SlashRequireOwner]
+		public Task Throw(InteractionContext _) => throw new ApplicationException();
+
+		[SlashCommand("gc", "(DEBUG) Forces Memory GC cycle"), SlashRequireOwner]
+		public async Task ForceGCCollect(InteractionContext ctx)
+		{
+			GC.Collect(2, GCCollectionMode.Forced, true, true);
+			GC.WaitForPendingFinalizers();
+			GC.Collect(2, GCCollectionMode.Forced, true, true);
+
+			await ctx.CreateResponseAsync(InteractionResponseType.ChannelMessageWithSource, new DiscordInteractionResponseBuilder()
+			{
+				Content = $"Forced GC Cleanup cycle! \nCurrent memory usage: **{GC.GetTotalMemory(true) / 1024 / 1024:n2} MB**"
+			});
+		}
 	}
 }

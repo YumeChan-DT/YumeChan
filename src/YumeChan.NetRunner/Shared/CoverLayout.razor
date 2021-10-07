@@ -1,0 +1,69 @@
+﻿@inherits CommonSiteLayout
+
+
+<header>
+	<Navbar CurrentUri=@CurrentUri />
+</header>
+
+<div class="container-fluid" style="margin: 100px 0px 0px inherit; padding: 0px;">
+	<main role="main">
+		<div class="carousel slide mb-5" data-ride="carousel">
+			<div class="carousel-inner">
+				<div class="carousel-item active">
+					<img src="" class="d-block w-100" style="@(CoverFullHeight ? "min-" : null)height:30rem">
+
+					<div class="container">
+						<div class="carousel-caption @(CoverTextCenter ? null : "text-start") align-content-center">
+							<div class="carousel-floating-text">
+								<h1>@CoverTitle</h1>
+
+								@if (SubtitleHeader)
+								{
+									<h2>@CoverSubtitle</h2>
+								}
+								else
+								{
+									<p class="lead">@CoverSubtitle</p>
+								}
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+
+		<div class="container">
+			<CascadingValue Value=this>
+				@Body
+			</CascadingValue>
+		</div>
+	</main>
+</div>
+
+<Footer />
+
+
+@code {
+	public string CoverTitle { get; private set; }
+	public string CoverSubtitle { get; private set; }
+
+	public bool SubtitleHeader { get; private set; }
+	public bool CoverTextCenter { get; private set; }
+	public bool CoverFullHeight { get; private set; }
+
+	public void Refresh() => StateHasChanged();
+
+	public void SetCover(string title, string subtitle, bool center = false, bool subtitleHeader = false, bool coverFullHeight = false)
+	{
+		if (CoverTitle != title || CoverSubtitle != subtitle)
+		{
+			CoverTitle = title;
+			CoverSubtitle = subtitle;
+			SubtitleHeader = subtitleHeader;
+			CoverTextCenter = center;
+			CoverFullHeight = coverFullHeight;
+
+			StateHasChanged();
+		}
+	}
+}

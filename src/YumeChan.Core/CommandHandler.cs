@@ -5,6 +5,7 @@ using DSharpPlus.CommandsNext.Exceptions;
 using DSharpPlus.Interactivity;
 using DSharpPlus.Interactivity.Enums;
 using DSharpPlus.Interactivity.Extensions;
+using DSharpPlus.SlashCommands;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System;
@@ -16,10 +17,11 @@ using Unity;
 using Unity.Microsoft.DependencyInjection;
 using YumeChan.Core.Config;
 using YumeChan.Core.Services.Formatters;
+using YumeChan.Core.Infrastructure.SlashCommands;
 using YumeChan.PluginBase;
 using YumeChan.PluginBase.Infrastructure;
-
-
+using DSharpPlus.SlashCommands.EventArgs;
+using DSharpPlus.Entities;
 
 namespace YumeChan.Core
 {
@@ -27,9 +29,11 @@ namespace YumeChan.Core
 	{
 		public CommandsNextExtension Commands { get; internal set; }
 		public InteractivityExtension Interactivity { get; internal set; }
+		public SlashCommandsExtension SlashCommands { get; internal set; }
 
 		public CommandsNextConfiguration CommandsConfiguration { get; internal set; }
 		public InteractivityConfiguration InteractivityConfiguration { get; internal set; }
+		public SlashCommandsConfiguration SlashCommandsConfiguration { get; internal set; }
 
 		public List<Plugin> Plugins { get; internal set; }
 
@@ -55,22 +59,30 @@ namespace YumeChan.Core
 
 		public async Task InstallCommandsAsync()
 		{
-			CommandsConfiguration = new()
+			CommandsConfiguration ??= new()
 			{
 				Services = services,
 				StringPrefixes = new[] { Config.CommandPrefix }
 			};
 
-			InteractivityConfiguration = new()
+			InteractivityConfiguration ??= new()
 			{
 				PaginationBehaviour = PaginationBehaviour.Ignore
 			};
 
+			SlashCommandsConfiguration ??= new()
+			{
+				Services = services
+			};
+
 			Commands = client.UseCommandsNext(CommandsConfiguration);
 			Interactivity = client.UseInteractivity(InteractivityConfiguration);
+			SlashCommands = client.UseSlashCommands(SlashCommandsConfiguration);
 
 			Commands.CommandErrored += OnCommandErroredAsync;
 			Commands.CommandExecuted += OnCommandExecuted;
+
+			SlashCommands.SlashCommandErrored += OnSlashCommandErroredAsync;
 
 //			Commands.CommandExecuted += OnCommandExecutedAsync; // Hook execution event
 //			client.MessageReceived += HandleCommandAsync; // Hook command handler
@@ -78,6 +90,17 @@ namespace YumeChan.Core
 			await RegisterCommandsAsync();
 
 			Commands.SetHelpFormatter<HelpCommandFormatter>();
+		}
+
+		private Task OnSlashCommandErroredAsync(SlashCommandsExtension _, SlashCommandErrorEventArgs e)
+		{
+			logger.LogError(e.Exception, "An error occured executing SlashCommand {cmd} :", e.Context.CommandName);
+
+#if DEBUG
+			throw e.Exception;
+#else
+			return Task.CompletedTask;
+#endif
 		}
 
 		public async Task UninstallCommandsAsync()
@@ -98,22 +121,39 @@ namespace YumeChan.Core
 
 			Plugins.AddRange(from Plugin plugin
 							 in externalModulesLoader.LoadPluginManifests()
-							 where !Plugins.Exists(p => p?.PluginAssemblyName == plugin.PluginAssemblyName)
+							 where !Plugins.Exists(p => p?.AssemblyName == plugin.AssemblyName)
 							 select plugin);
 
-			foreach (InjectionRegistry injectionRegistry in externalModulesLoader.LoadInjectionRegistries())
+			ulong? slashCommandsGuild = null; // Used for Development only
+#if DEBUG
+			slashCommandsGuild = 584445871413002242;
+#endif
+
+/*
+			if (SlashCommands.Client.GatewayInfo is not null)
 			{
-				container.AddServices(injectionRegistry.ConfigureServices(new ServiceCollection()));
+				await SlashCommands.Client.BulkOverwriteGlobalApplicationCommandsAsync(Array.Empty<DiscordApplicationCommand>());
+			}
+*/
+
+			foreach (DependencyInjectionHandler handler in externalModulesLoader.LoadDependencyInjectionHandlers())
+			{
+				container.AddServices(handler.ConfigureServices(new ServiceCollection()));
 			}
 
 			foreach (Plugin plugin in Plugins)
 			{
-				await plugin.LoadPlugin();
+				await plugin.LoadAsync();
 				Commands.RegisterCommands(plugin.GetType().Assembly);
-				logger.LogInformation("Loaded Plugin '{Plugin}'.", plugin.PluginAssemblyName);
+
+				SlashCommands.RegisterCommands(plugin.GetType().Assembly, slashCommandsGuild);
+				logger.LogInformation("Loaded Plugin '{Plugin}'.", plugin.AssemblyName);
 			}
 
 			Commands.RegisterCommands(Assembly.GetEntryAssembly()); // Add possible Commands from Entry Assembly (contextual)
+
+			//SlashCommands.RegisterCommands<Status>(slashCommandsGuild);
+			//await SlashCommands.RefreshCommands();
 		}
 
 
@@ -123,10 +163,10 @@ namespace YumeChan.Core
 
 			foreach (Plugin plugin in new List<Plugin>(Plugins.Where(p => p is not Modules.InternalPlugin)))
 			{
-				await plugin.UnloadPlugin();
+				await plugin.UnloadAsync();
 				Plugins.Remove(plugin);
 
-				logger.LogInformation("Removed Plugin '{Plugin}'.", plugin.PluginAssemblyName);
+				logger.LogInformation("Removed Plugin '{Plugin}'.", plugin.AssemblyName);
 			}
 		}
 

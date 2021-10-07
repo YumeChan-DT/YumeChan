@@ -46,15 +46,16 @@ namespace YumeChan.Core
 			StopBotAsync().Wait();
 		}
 
-		public IUnityContainer ConfigureContainer(IUnityContainer services) => services
-			.RegisterFactory<DiscordClient>((services) => new DiscordClient(new()
+		public IUnityContainer ConfigureContainer(IUnityContainer container) => container
+			.RegisterFactory<DiscordClient>((container) => new DiscordClient(new()
 			{
 				Intents = DiscordIntents.All,
 				TokenType = TokenType.Bot,
 				Token = GetBotToken(),
-				LoggerFactory = services.Resolve<ILoggerFactory>(),
+				LoggerFactory = container.Resolve<ILoggerFactory>(),
 				MinimumLogLevel = LogLevel.Information
 			}), FactoryLifetime.Singleton)
+
 			.RegisterSingleton<CommandHandler>()
 			.RegisterSingleton<LavalinkHandler>()
 			.RegisterSingleton(typeof(IDatabaseProvider<>), typeof(DatabaseProvider<>))
@@ -78,13 +79,9 @@ namespace YumeChan.Core
 
 			CoreState = YumeCoreState.Starting;
 
-
+			await CommandHandler.InstallCommandsAsync();
 			await Client.ConnectAsync();
 			await Client.InitializeAsync();
-
-//			await CommandHandler.RegisterTypeReaders();
-
-			await CommandHandler.InstallCommandsAsync();
 			await LavalinkHandler.Initialize();
 
 			CoreState = YumeCoreState.Online;

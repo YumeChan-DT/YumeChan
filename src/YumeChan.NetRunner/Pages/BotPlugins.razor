@@ -1,6 +1,6 @@
-﻿@page "/BotPlugins"
-@attribute [Authorize]
+﻿@page "/bot/plugins"
 @inject YumeChan.Core.YumeCore BotService
+@attribute [Authorize(Roles = UserRoles.Admin)]
 
 @using YumeChan.PluginBase;
 
@@ -18,14 +18,15 @@
             <th>Active</th>
         </tr>
     </thead>
+
     <tbody>
         @foreach (Plugin pluginManifest in BotService.CommandHandler.Plugins)
         {
             <tr>
-                <td>@pluginManifest.PluginAssemblyName</td>
-                <td>@pluginManifest.PluginDisplayName</td>
-                <td>@pluginManifest.PluginVersion</td>
-                <td>@(pluginManifest.PluginLoaded ? "Yes" : "No")</td>
+                <td>@pluginManifest.AssemblyName</td>
+                <td>@pluginManifest.DisplayName</td>
+                <td>@pluginManifest.Version</td>
+                <td>@(pluginManifest.Loaded ? "Yes" : "No")</td>
             </tr>
         }
     </tbody>

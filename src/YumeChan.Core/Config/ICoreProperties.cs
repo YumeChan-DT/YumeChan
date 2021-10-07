@@ -17,7 +17,8 @@ namespace YumeChan.Core.Config
 
 		public string CommandPrefix { get; internal set; }
 
-		internal ICoreDatabaseProperties DatabaseProperties { get; set; }
+		internal ICoreDatabaseProperties MongoProperties { get; set; }
+		internal ICoreDatabaseProperties PostgresProperties { get; set; }
 		internal ICoreLavalinkProperties LavalinkProperties { get; set; }
 	}
 
