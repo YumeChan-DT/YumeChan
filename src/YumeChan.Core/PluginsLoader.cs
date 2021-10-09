@@ -5,6 +5,7 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.InteropServices;
+using System.Runtime.Loader;
 using System.Security;
 using Unity;
 using YumeChan.PluginBase;
@@ -13,8 +14,8 @@ namespace YumeChan.Core
 {
 	internal class PluginsLoader
 	{
-		internal List<Assembly> PluginAssemblies { get; set; }
-		internal List<FileInfo> PluginFiles { get; set; }
+		internal protected List<Assembly> PluginAssemblies { get; set; }
+		internal protected List<FileInfo> PluginFiles { get; set; }
 		public List<Plugin> PluginManifests { get; set; }
 
 		public DirectoryInfo PluginsLoadDirectory { get; set; }
@@ -29,7 +30,7 @@ namespace YumeChan.Core
 					: Directory.CreateDirectory(pluginsLoadDirectoryPath);
 		}
 
-		private DirectoryInfo SetDefaultPluginsDirectoryEnvironmentVariable()
+		protected virtual DirectoryInfo SetDefaultPluginsDirectoryEnvironmentVariable()
 		{
 			FileInfo file = new(Assembly.GetExecutingAssembly().Location);
 			PluginsLoadDirectory = Directory.CreateDirectory(Path.Join(file.DirectoryName, "Plugins"));
@@ -49,26 +50,41 @@ namespace YumeChan.Core
 			return PluginsLoadDirectory;
 		}
 
-		public void LoadPluginAssemblies()
+		public virtual List<FileInfo> ScanDirectoryForPluginFiles()
 		{
-			PluginFiles = new List<FileInfo>(PluginsLoadDirectory.GetFiles($"*{PluginsLoadDiscriminator}*.dll"));
+			List<FileInfo> files = new List<FileInfo>(PluginsLoadDirectory.GetFiles($"*{PluginsLoadDiscriminator}*.dll"));
 
+			foreach (DirectoryInfo dir in PluginsLoadDirectory.GetDirectories())
+			{
+				if (dir.GetFiles().FirstOrDefault(x => x.Name == $"{dir.Name}.dll") is FileInfo file)
+				{
+					files.Add(file);
+				}
+			}
+
+			return PluginFiles = files;
+		}
+
+		public virtual void LoadPluginAssemblies()
+		{
 			PluginAssemblies ??= new List<Assembly>();
+
 			PluginAssemblies.AddRange
 			(
 				from FileInfo file in PluginFiles
-				where file is not null || file.Name != Path.GetFileName(typeof(Plugin).Assembly.Location)
-				select Assembly.LoadFile(file.ToString())
+				where file is not null
+				where file.Name != Path.GetFileName(typeof(Plugin).Assembly.Location)
+				select AssemblyLoadContext.Default.LoadFromAssemblyPath(file.ToString())
 			);
 		}
 
-		public IEnumerable<Plugin> LoadPluginManifests() =>
+		public virtual IEnumerable<Plugin> LoadPluginManifests() =>
 			from Assembly a in PluginAssemblies
 			from Type t in a.ExportedTypes
 			where t.IsSubclassOf(typeof(Plugin))
 			select InstantiateManifest(t);
 
-		public IEnumerable<DependencyInjectionHandler> LoadDependencyInjectionHandlers() =>
+		public virtual IEnumerable<DependencyInjectionHandler> LoadDependencyInjectionHandlers() =>
 			from Assembly a in PluginAssemblies
 			from Type t in a.ExportedTypes
 			where t.IsSubclassOf(typeof(DependencyInjectionHandler))
