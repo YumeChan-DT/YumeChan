@@ -52,14 +52,11 @@ namespace YumeChan.Core
 
 		public virtual List<FileInfo> ScanDirectoryForPluginFiles()
 		{
-			List<FileInfo> files = new List<FileInfo>(PluginsLoadDirectory.GetFiles($"*{PluginsLoadDiscriminator}*.dll"));
+			List<FileInfo> files = new(PluginsLoadDirectory.GetFiles($"*{PluginsLoadDiscriminator}*.dll"));
 
 			foreach (DirectoryInfo dir in PluginsLoadDirectory.GetDirectories())
 			{
-				if (dir.GetFiles().FirstOrDefault(x => x.Name == $"{dir.Name}.dll") is FileInfo file)
-				{
-					files.Add(file);
-				}
+				files.AddRange(dir.GetFiles().Where(x => x.Extension is ".dll"));
 			}
 
 			return PluginFiles = files;
