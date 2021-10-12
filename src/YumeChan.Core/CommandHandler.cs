@@ -187,7 +187,7 @@ namespace YumeChan.Core
 					{
 						errorMessages.Add(check switch
 						{
-							RequireOwnerAttribute => $"Sorry. You must be a Bot Owner to run this command.",
+							RequireOwnerAttribute => "Sorry. You must be a Bot Owner to run this command.",
 							RequireDirectMessageAttribute => "Sorry, not here. Please send me a Direct Message with that command.",
 							RequireGuildAttribute => "Sorry, not here. Please send this command in a server.",
 							RequireNsfwAttribute => "Sorry. As much as I'd love to, I've gotta keep the hot stuff to the right channels.",
@@ -211,7 +211,7 @@ namespace YumeChan.Core
 #endif
 
 			await e.Context.RespondAsync(response);
-			logger.LogError("An error occured executing '{0}' from user '{1}' : \n{2}", e.Command.QualifiedName, e.Context.User.Id, e.Exception);
+			logger.LogError("An error occured executing '{command}' from user '{user}' : \n{exception}", e.Command.QualifiedName, e.Context.User.Id, e.Exception);
 		}
 
 
@@ -235,7 +235,7 @@ namespace YumeChan.Core
 
 		public Task OnCommandExecuted(CommandsNextExtension sender, CommandExecutionEventArgs e)
 		{
-			logger.LogDebug("Command '{0}' received from User '{1}'.", e.Command.QualifiedName, e.Context.User.Id);
+			logger.LogDebug("Command '{command}' received from User '{user}'.", e.Command.QualifiedName, e.Context.User.Id);
 			return Task.CompletedTask;
 		}
 
