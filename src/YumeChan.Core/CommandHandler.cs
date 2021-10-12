@@ -117,12 +117,18 @@ namespace YumeChan.Core
 			logger.LogInformation("Current Plugins directory: {pluginsDirectory}", externalModulesLoader.PluginsLoadDirectory);
 
 			Plugins = new() { new Modules.InternalPlugin() }; // Add YumeCore internal commands
+			externalModulesLoader.ScanDirectoryForPluginFiles();
 			externalModulesLoader.LoadPluginAssemblies();
 
-			Plugins.AddRange(from Plugin plugin
-							 in externalModulesLoader.LoadPluginManifests()
-							 where !Plugins.Exists(p => p?.AssemblyName == plugin.AssemblyName)
-							 select plugin);
+			foreach (DependencyInjectionHandler handler in externalModulesLoader.LoadDependencyInjectionHandlers())
+			{
+				container.AddServices(handler.ConfigureServices(new ServiceCollection()));
+			}
+
+			Plugins.AddRange(
+				from Plugin plugin in externalModulesLoader.LoadPluginManifests()
+				where !Plugins.Exists(p => p?.AssemblyName == plugin.AssemblyName)
+				select plugin);
 
 			ulong? slashCommandsGuild = null; // Used for Development only
 #if DEBUG
@@ -135,11 +141,6 @@ namespace YumeChan.Core
 				await SlashCommands.Client.BulkOverwriteGlobalApplicationCommandsAsync(Array.Empty<DiscordApplicationCommand>());
 			}
 */
-
-			foreach (DependencyInjectionHandler handler in externalModulesLoader.LoadDependencyInjectionHandlers())
-			{
-				container.AddServices(handler.ConfigureServices(new ServiceCollection()));
-			}
 
 			foreach (Plugin plugin in Plugins)
 			{
