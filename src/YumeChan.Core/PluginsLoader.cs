@@ -54,7 +54,13 @@ namespace YumeChan.Core
 		{
 			List<FileInfo> files = new(PluginsLoadDirectory.GetFiles($"*{PluginsLoadDiscriminator}*.dll"));
 
-			foreach (DirectoryInfo dir in PluginsLoadDirectory.GetDirectories())
+			IEnumerable<DirectoryInfo> directories = PluginsLoadDirectory.GetDirectories();
+
+#if DEBUG
+			directories = directories.Where(d => d.Name is not "ref");
+#endif
+
+			foreach (DirectoryInfo dir in directories)
 			{
 				files.AddRange(dir.GetFiles().Where(x => x.Extension is ".dll"));
 			}
@@ -68,9 +74,8 @@ namespace YumeChan.Core
 
 			PluginAssemblies.AddRange
 			(
-				from FileInfo file in PluginFiles
-				where file is not null
-				where file.Name != Path.GetFileName(typeof(Plugin).Assembly.Location)
+				from FileInfo file in PluginFiles.DistinctBy(f => f.Name)
+				where file is not null && file.Name != Path.GetFileName(typeof(Plugin).Assembly.Location)
 				select AssemblyLoadContext.Default.LoadFromAssemblyPath(file.ToString())
 			);
 		}

@@ -18,19 +18,15 @@ namespace YumeChan.Core.Services
 		{
 			const string fileExtension = ".json";
 
-			if (YumeCore.Instance.CoreProperties?.Path_Config is string rootDirectory)
+			if (YumeCore.Instance.CoreProperties?.Path_Config is not string rootDirectory)
 			{
-				rootDirectory += Path.DirectorySeparatorChar;
-			}
-			else
-			{
-				rootDirectory = "Config" + Path.DirectorySeparatorChar;
+				rootDirectory = "Config";
 			}
 
-			string pluginDirectory = placeFileAtConfigRoot ? string.Empty : (typeof(T).Assembly.GetName().Name + Path.DirectorySeparatorChar);
+			string pluginDirectory = placeFileAtConfigRoot ? string.Empty : typeof(T).Assembly.GetName().Name;
 			string fileName = filename.EndsWith(fileExtension) ? filename : (filename + fileExtension);
 
-			ConfigFile = new FileInfo(rootDirectory + pluginDirectory + fileName);
+			ConfigFile = new FileInfo(Path.Join(rootDirectory, pluginDirectory, fileName));
 
 			return Configuration = new ConfigurationBuilder<T>().UseJsonFile(ConfigFile.ToString()).Build();
 		}
