@@ -1,10 +1,12 @@
 ﻿@inherits ComponentBase
 @inject AuthenticationStateProvider AuthenticationStateProvider
+@inject DSharpPlus.DiscordClient DiscordClient
 
 @using System.Security.Claims;
 
 <AuthorizeView>
 	<Authorized>
+		<li class="nav-item me-3"><img class="img-fluid rounded-circle" style="height:2.5rem" src=@GetAvatarLink().GetAwaiter().GetResult() /></li>
 		<li class="navbar-text text-light me-3">Welcome, @GetUsername().GetAwaiter().GetResult() !</li>
 		<li class="nav-item"><NavLink class="nav-link text-white" href="logout">Logout</NavLink></li>
 	</Authorized>
@@ -23,5 +25,11 @@
 	{
 		AuthenticationState auth = await AuthenticationStateProvider.GetAuthenticationStateAsync();
 		return auth.User.FindFirstValue(ClaimTypes.Name);
+	}
+
+	public async Task<Uri> GetAvatarLink()
+	{
+		AuthenticationState auth = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+		return new((await DiscordClient.GetUserAsync(Convert.ToUInt64(auth.User.FindFirstValue(ClaimTypes.NameIdentifier)))).GetAvatarUrl(DSharpPlus.ImageFormat.WebP, 64));
 	}
 }
