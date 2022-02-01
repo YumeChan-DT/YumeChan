@@ -144,11 +144,28 @@ namespace YumeChan.Core
 
 			foreach (Plugin plugin in Plugins)
 			{
-				await plugin.LoadAsync();
-				Commands.RegisterCommands(plugin.GetType().Assembly);
+				try
+				{
+					await plugin.LoadAsync();
+					Commands.RegisterCommands(plugin.GetType().Assembly);
 
-				SlashCommands.RegisterCommands(plugin.GetType().Assembly, slashCommandsGuild);
-				logger.LogInformation("Loaded Plugin '{Plugin}'.", plugin.AssemblyName);
+					SlashCommands.RegisterCommands(plugin.GetType().Assembly, slashCommandsGuild);
+					logger.LogInformation("Loaded Plugin '{Plugin}'.", plugin.AssemblyName);
+				}
+				catch (Exception e)
+				{
+					logger.LogError(e, "An error occured while loading plugin {pluginName}", plugin.AssemblyName);
+
+					try
+					{
+						await plugin.UnloadAsync();
+					}
+					catch {	}
+
+#if DEBUG
+					throw;
+#endif
+				}
 			}
 
 			Commands.RegisterCommands(Assembly.GetEntryAssembly()); // Add possible Commands from Entry Assembly (contextual)
@@ -203,15 +220,17 @@ namespace YumeChan.Core
 					await e.Context.RespondAsync(string.Join('\n', errorMessages));
 				}
 			}
-
+			else
+			{
 #if DEBUG
-			string response = $"An error occurred : \n```{e.Exception}```";
+				string response = $"An error occurred : \n```{e.Exception}```";
 #else
-			string response = $"Something went wrong while executing your command : \n\n{e.Exception.Message}";
+				string response = $"Something went wrong while executing your command : \n{e.Exception.Message}";
 #endif
 
-			await e.Context.RespondAsync(response);
-			logger.LogError("An error occured executing '{command}' from user '{user}' : \n{exception}", e.Command.QualifiedName, e.Context.User.Id, e.Exception);
+				await e.Context.RespondAsync(response);
+				logger.LogError("An error occured executing '{command}' from user '{user}' : \n{exception}", e.Command.QualifiedName, e.Context.User.Id, e.Exception);
+			}		
 		}
 
 
