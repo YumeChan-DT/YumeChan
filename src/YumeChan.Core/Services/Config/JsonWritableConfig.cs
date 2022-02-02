@@ -1,4 +1,6 @@
-﻿using System;
+﻿using Microsoft.Extensions.FileProviders;
+using Microsoft.Extensions.Primitives;
+using System;
 using System.IO;
 using System.Text.Json;
 using System.Text.Json.Nodes;
@@ -11,19 +13,31 @@ internal class JsonWritableConfig : IWritableConfiguration
 {
 	private readonly FileInfo _file;
 	private readonly JsonSerializerOptions _serializerOptions;
+	private readonly IChangeToken _changeToken;
 	private JsonNode _json;
 	private readonly bool _autosave;
-	private readonly bool _autoreload;
 
-	public JsonWritableConfig(FileInfo file, JsonSerializerOptions serializerOptions, string prefix = null, bool autosave = true, bool autoreload = true)
+	public JsonWritableConfig(FileInfo file, JsonSerializerOptions serializerOptions, 
+		IChangeToken changeToken = null,
+		string prefix = null, 
+		bool autosave = true, 
+		bool autoreload = true)
 	{
-		_autosave = autosave;
-		_autoreload = autoreload;
-		CurrentPrefix = prefix;
 		_file = file ?? throw new ArgumentNullException(nameof(file));
 		_serializerOptions = serializerOptions ?? new(JsonSerializerDefaults.General);
+		CurrentPrefix = prefix;
 
+		if (autoreload)
+		{
+			_changeToken = changeToken;
+			_changeToken.RegisterChangeCallback(async (_) => await LoadFromFileAsync(), null);
+		}
+		if (autosave)
+		{
+			_autosave = true;
+		}
 
+		LoadFromFileAsync().GetAwaiter().GetResult();
 	}
 
 	public string this[string parameter]
@@ -66,26 +80,36 @@ internal class JsonWritableConfig : IWritableConfiguration
 
 	public Task SaveToFileAsync()
 	{
-		using FileStream fs = File.OpenWrite(_file.FullName);
-		using Utf8JsonWriter writer = new(fs);
-
-		try
+		lock (_file)
 		{
-			_json.WriteTo(writer, _serializerOptions);
-		}
-		finally
-		{
-			writer.Flush();
-			writer.Dispose();
-		}
+			using FileStream fs = File.OpenWrite(_file.FullName);
+			using Utf8JsonWriter writer = new(fs);
 
-		return Task.CompletedTask;
+			try
+			{
+				_json.WriteTo(writer, _serializerOptions);
+			}
+			finally
+			{
+				writer.Flush();
+				writer.Dispose();
+			}
+
+			return Task.CompletedTask;
+		}
 	}
 
-	public void SetValue(string parameter, object value) => _json[parameter] = JsonValue.Create(value);
+	public void SetValue(string parameter, object value) => SetValue(parameter, value);
 
-	public void SetValue<T>(string parameter, T value) => _json[parameter] = JsonValue.Create(value);
+	public void SetValue<T>(string parameter, T value)
+	{
+		_json[parameter] = JsonValue.Create(value);
 
+		if (_autosave)
+		{
+			SaveToFileAsync().GetAwaiter().GetResult();
+		}
+	}
 
 	private string FromCurrentPrefix(string value) => CurrentPrefix is null ? value : $"{CurrentPrefix}:{value}";
 }
