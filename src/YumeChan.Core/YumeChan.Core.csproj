@@ -23,25 +23,25 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-		<PackageReference Include="Config.Net" Version="4.17.0" />
-		<PackageReference Include="Config.Net.Json" Version="4.17.0" />
-		<PackageReference Include="DSharpPlus" Version="4.2.0-nightly-00995" />
-		<PackageReference Include="DSharpPlus.CommandsNext" Version="4.2.0-nightly-00995" />
-		<PackageReference Include="DSharpPlus.Interactivity" Version="4.2.0-nightly-00995" />
-		<PackageReference Include="DSharpPlus.Lavalink" Version="4.2.0-nightly-00995" />
-		<PackageReference Include="IDoEverything.DSharpPlus.SlashCommands" Version="2.0.4" />
-		<PackageReference Include="Microsoft.EntityFrameworkCore" Version="6.0.0" />
+		<PackageReference Include="Config.Net" Version="4.19.0" />
+		<PackageReference Include="Config.Net.Json" Version="4.19.0" />
+		<PackageReference Include="DSharpPlus" Version="4.2.0-nightly-01102" />
+		<PackageReference Include="DSharpPlus.CommandsNext" Version="4.2.0-nightly-01102" />
+		<PackageReference Include="DSharpPlus.Interactivity" Version="4.2.0-nightly-01102" />
+		<PackageReference Include="DSharpPlus.Lavalink" Version="4.2.0-nightly-01102" />
+		<PackageReference Include="DSharpPlus.SlashCommands" Version="4.2.0-nightly-01102" />
+		<PackageReference Include="Microsoft.EntityFrameworkCore" Version="6.0.3" />
 		<PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="6.0.0" />
 		<PackageReference Include="Microsoft.Extensions.Http" Version="6.0.0" />
 		<PackageReference Include="Microsoft.Extensions.Logging" Version="6.0.0" />
-		<PackageReference Include="MongoDB.Bson.signed" Version="2.13.2" />
-		<PackageReference Include="MongoDB.Driver" Version="2.13.*" />
-		<PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="6.0.0" />
+		<PackageReference Include="MongoDB.Driver" Version="2.15.0" />
+		<PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="6.0.3" />
 		<PackageReference Include="SourceLink.Create.CommandLine" Version="2.8.*">
 			<PrivateAssets>all</PrivateAssets>
 			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
 		</PackageReference>
-		<PackageReference Include="System.Net.Http" Version="4.3.*" />
+		<PackageReference Include="System.Net.Http" Version="4.3.4" />
+		<PackageReference Include="System.Text.Json" Version="6.0.2" />
 		<PackageReference Include="Unicode.net" Version="2.0.0" />
 		<PackageReference Include="Unity" Version="5.11.*" />
 		<PackageReference Include="Nodsoft.Unity.Microsoft.DependencyInjection" Version="5.11.*" />
