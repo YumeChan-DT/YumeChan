@@ -2,10 +2,9 @@
 using Config.Net;
 using YumeChan.PluginBase.Tools;
 
-
-namespace YumeChan.Core.Services
+namespace YumeChan.Core.Services.Config
 {
-	public class ConfigurationProvider<T> : IConfigProvider<T> where T : class
+	public class InterfaceConfigurationProvider<T> : IInterfaceConfigProvider<T> where T : class
 	{
 		internal ConfigurationBuilder<T> ConfigBuilder { get; private set; }
 
@@ -24,7 +23,7 @@ namespace YumeChan.Core.Services
 			}
 
 			string pluginDirectory = placeFileAtConfigRoot ? string.Empty : typeof(T).Assembly.GetName().Name;
-			string fileName = filename.EndsWith(fileExtension) ? filename : (filename + fileExtension);
+			string fileName = filename.EndsWith(fileExtension) ? filename : filename + fileExtension;
 
 			ConfigFile = new FileInfo(Path.Join(rootDirectory, pluginDirectory, fileName));
 
