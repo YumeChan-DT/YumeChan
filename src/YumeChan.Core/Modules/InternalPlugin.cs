@@ -4,10 +4,16 @@ using System.Threading.Tasks;
 
 namespace YumeChan.Core.Modules
 {
-	internal class InternalPlugin : Plugin
+	public class InternalPlugin : IPlugin
 	{
-		public override string DisplayName { get; } = "YumeCore Internals";
+		public string AssemblyName { get; } = typeof(YumeCore).Assembly.GetName().Name;
+		public string DisplayName => "YumeCore Internals";
+		public bool Loaded => YumeCore.Instance.CoreState is YumeCoreState.Online;
 
-		public override bool StealthMode { get; } = false;
+		public bool StealthMode => false;
+		public string Version => YumeCore.CoreVersion;
+		
+		public Task LoadAsync() => Task.CompletedTask;
+		public Task UnloadAsync() => Task.CompletedTask;
 	}
 }
