@@ -10,6 +10,7 @@ using Unity;
 using Unity.Microsoft.DependencyInjection;
 using YumeChan.Core.Config;
 using YumeChan.Core.Services;
+using YumeChan.Core.Services.Config;
 using YumeChan.PluginBase.Tools;
 using YumeChan.PluginBase.Tools.Data;
 
@@ -35,7 +36,7 @@ namespace YumeChan.Core
 
 		internal ILogger<YumeCore> Logger { get; set; }
 
-		internal ConfigurationProvider<ICoreProperties> ConfigProvider { get; private set; }
+		internal InterfaceConfigurationProvider<ICoreProperties> ConfigProvider { get; private set; }
 		public ICoreProperties CoreProperties { get; private set; }
 
 
@@ -59,7 +60,8 @@ namespace YumeChan.Core
 			.RegisterSingleton<CommandHandler>()
 			.RegisterSingleton<LavalinkHandler>()
 			.RegisterSingleton(typeof(IDatabaseProvider<>), typeof(DatabaseProvider<>))
-			.RegisterSingleton(typeof(IConfigProvider<>), typeof(ConfigurationProvider<>))
+			.RegisterSingleton(typeof(IInterfaceConfigProvider<>), typeof(InterfaceConfigurationProvider<>))
+			.RegisterSingleton(typeof(IJsonConfigProvider<>), typeof(JsonConfigProvider<>))
 
 			.AddServices(new ServiceCollection()
 				.AddHttpClient()

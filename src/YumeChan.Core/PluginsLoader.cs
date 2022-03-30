@@ -16,7 +16,7 @@ namespace YumeChan.Core
 	{
 		internal protected List<Assembly> PluginAssemblies { get; set; }
 		internal protected List<FileInfo> PluginFiles { get; set; }
-		public List<Plugin> PluginManifests { get; set; }
+		public List<IPlugin> PluginManifests { get; set; }
 
 		public DirectoryInfo PluginsLoadDirectory { get; set; }
 		internal string PluginsLoadDiscriminator { get; set; } = string.Empty;
@@ -75,15 +75,15 @@ namespace YumeChan.Core
 			PluginAssemblies.AddRange
 			(
 				from FileInfo file in PluginFiles.DistinctBy(f => f.Name)
-				where file is not null && file.Name != Path.GetFileName(typeof(Plugin).Assembly.Location)
+				where file is not null && file.Name != Path.GetFileName(typeof(IPlugin).Assembly.Location)
 				select AssemblyLoadContext.Default.LoadFromAssemblyPath(file.ToString())
 			);
 		}
 
-		public virtual IEnumerable<Plugin> LoadPluginManifests() =>
+		public virtual IEnumerable<IPlugin> LoadPluginManifests() =>
 			from Assembly a in PluginAssemblies
 			from Type t in a.ExportedTypes
-			where t.IsSubclassOf(typeof(Plugin))
+			where t.ImplementsInterface(typeof(IPlugin))
 			select InstantiateManifest(t);
 
 		public virtual IEnumerable<DependencyInjectionHandler> LoadDependencyInjectionHandlers() =>
@@ -92,7 +92,7 @@ namespace YumeChan.Core
 			where t.IsSubclassOf(typeof(DependencyInjectionHandler))
 			select InstantiateInjectionRegistry(t);
 
-		internal static Plugin InstantiateManifest(Type type) => YumeCore.Instance.Services.Resolve(type) as Plugin;
+		internal static IPlugin InstantiateManifest(Type type) => YumeCore.Instance.Services.Resolve(type) as IPlugin;
 		internal static DependencyInjectionHandler InstantiateInjectionRegistry(Type type) => YumeCore.Instance.Services.Resolve(type) as DependencyInjectionHandler;
 	}
 }

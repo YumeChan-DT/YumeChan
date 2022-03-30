@@ -69,13 +69,9 @@ namespace YumeChan.Core.Infrastructure.SlashCommands
 
 			// check if appropriate return and arguments
 			parameters = method.GetParameters();
-			if (!parameters.Any() || parameters.First().ParameterType.IsAssignableFrom(typeof(BaseContext)) || method.ReturnType != typeof(Task))
-			{
-				return false;
-			}
+			return parameters.Any() && !parameters.First().ParameterType.IsAssignableFrom(typeof(BaseContext)) && method.ReturnType == typeof(Task);
 
 			// qualifies
-			return true;
 		}
 	}
 }
