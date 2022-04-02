@@ -27,7 +27,7 @@ namespace YumeChan.Core
 		private static YumeCore instance;
 
 		public YumeCoreState CoreState { get; private set; }
-		public static string CoreVersion { get; } = typeof(YumeCore).Assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>().InformationalVersion;
+		public static string CoreVersion { get; } = typeof(YumeCore).Assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion;
 
 		public DiscordClient Client { get; set; }
 		public CommandHandler CommandHandler { get; set; }
@@ -36,7 +36,7 @@ namespace YumeChan.Core
 
 		internal ILogger<YumeCore> Logger { get; set; }
 
-		internal InterfaceConfigurationProvider<ICoreProperties> ConfigProvider { get; private set; }
+		internal InterfaceConfigProvider<ICoreProperties> ConfigProvider { get; private set; }
 		public ICoreProperties CoreProperties { get; private set; }
 
 
@@ -48,7 +48,7 @@ namespace YumeChan.Core
 		}
 
 		public IUnityContainer ConfigureContainer(IUnityContainer container) => container
-			.RegisterFactory<DiscordClient>((container) => new DiscordClient(new()
+			.RegisterFactory<DiscordClient>(container => new DiscordClient(new()
 			{
 				Intents = DiscordIntents.All,
 				TokenType = TokenType.Bot,
@@ -60,7 +60,7 @@ namespace YumeChan.Core
 			.RegisterSingleton<CommandHandler>()
 			.RegisterSingleton<LavalinkHandler>()
 			.RegisterSingleton(typeof(IDatabaseProvider<>), typeof(DatabaseProvider<>))
-			.RegisterSingleton(typeof(IInterfaceConfigProvider<>), typeof(InterfaceConfigurationProvider<>))
+			.RegisterSingleton(typeof(IInterfaceConfigProvider<>), typeof(InterfaceConfigProvider<>))
 			.RegisterSingleton(typeof(IJsonConfigProvider<>), typeof(JsonConfigProvider<>))
 
 			.AddServices(new ServiceCollection()
@@ -130,13 +130,13 @@ namespace YumeChan.Core
 
 				if (TryBotTokenFromEnvironment(envVarName, out token, out EnvironmentVariableTarget target))
 				{
-					Logger.LogInformation("Bot Token was read from {target} Environment Variable \"{envVarName}\", instead of \"coreproperties.json\" Config File.", target, envVarName);
+					Logger.LogInformation("Bot Token was read from {Target} Environment Variable \"{EnvVar}\", instead of \"coreproperties.json\" Config File.", target, envVarName);
 				}
 				else
 				{
 					ApplicationException e = new("No Bot Token supplied.");
-					Logger.LogCritical(e, $"No Bot Token was found in \"coreconfig.json\" Config File, and Environment Variables \"{envVarName}\" from relevant targets are empty. " +
-											$"\nPlease set a Bot Token before launching the Bot.");
+					Logger.LogCritical(e, "No Bot Token was found in \"coreconfig.json\" Config File, and Environment Variables \"{EnvVar}\" from relevant targets are empty. " +
+											$"\nPlease set a Bot Token before launching the Bot.", envVarName);
 					throw e;
 				}
 			}
@@ -175,7 +175,7 @@ namespace YumeChan.Core
 		private void ResolveCoreComponents()
 		{
 			Logger ??= Services.Resolve<ILogger<YumeCore>>();
-			ConfigProvider ??= new();
+			ConfigProvider ??= Services.Resolve<InterfaceConfigProvider<ICoreProperties>>();
 
 			CoreProperties = ConfigProvider.InitConfig("coreconfig.json", true).PopulateCoreProperties();
 			CoreProperties.Path_Core ??= Directory.GetCurrentDirectory();

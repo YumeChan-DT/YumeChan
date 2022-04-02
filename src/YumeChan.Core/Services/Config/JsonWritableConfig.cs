@@ -18,11 +18,12 @@ namespace YumeChan.Core.Services.Config;
 internal class JsonWritableConfig : IWritableConfiguration
 {
 	public string CurrentPrefix { get; }
-	
+
 	public bool IsFirstLoad { get; }
 
 	private readonly FileInfo _file;
 	private readonly ILogger<JsonWritableConfig> _logger;
+	private readonly bool _autoreload;
 	private readonly JsonSerializerOptions _serializerOptions;
 	private readonly IChangeToken _changeToken;
 	private readonly bool _autosave;
@@ -30,23 +31,25 @@ internal class JsonWritableConfig : IWritableConfiguration
 
 	public JsonWritableConfig(FileInfo file, JsonSerializerOptions serializerOptions, ILogger<JsonWritableConfig> logger,
 		IChangeToken changeToken = null,
-		string prefix = null, 
+		string prefix = null,
 		bool firstLoad = false,
-		bool autosave = true, 
+		bool autosave = true,
 		bool autoreload = true)
 	{
 		_file = file ?? throw new ArgumentNullException(nameof(file));
 		_logger = logger;
+		_autoreload = autoreload;
 		_serializerOptions = serializerOptions ?? new(JsonSerializerDefaults.General);
 		CurrentPrefix = prefix;
 		IsFirstLoad = firstLoad;
-		
+
+
 		if (autoreload)
 		{
 			_changeToken = changeToken;
 			_changeToken?.RegisterChangeCallback(_ => LoadFromFileAsync().GetAwaiter().GetResult(), null);
 		}
-		
+
 		if (autosave)
 		{
 			_autosave = true;
@@ -63,7 +66,7 @@ internal class JsonWritableConfig : IWritableConfiguration
 				logger.LogError(e, "Failed to load config file {FileName}.", file.FullName);
 			}
 		}
-		
+
 		// Fallback to creating a new dictionnary if _jsonData is null
 		_jsonData ??= new JsonObject();
 	}
@@ -74,7 +77,7 @@ internal class JsonWritableConfig : IWritableConfiguration
 		get => GetValue<string>(key);
 		set => SetValue(key, value);
 	}
-	
+
 	/// <summary>
 	/// Loads a JSON-keyed <see cref="Dictionary{TKey,TValue}"/> from the file.
 	/// </summary>
@@ -107,12 +110,12 @@ internal class JsonWritableConfig : IWritableConfiguration
 		{
 			path = path[..^1];
 		}
-		
+
 		path = CurrentPrefix is not null ? $"{CurrentPrefix}:{path}" : path;
-		
+
 		// Introspect down the JSON tree
 		JsonNode node = _jsonData;
-		
+
 		foreach (string key in path.Split(':'))
 		{
 			if (node is JsonObject obj)
@@ -155,7 +158,19 @@ internal class JsonWritableConfig : IWritableConfiguration
 	/// <summary>
 	/// Gets a value from the JSON-Keyed dictionary, or returns the default value if the value cannot be casted or is not found.
 	/// </summary>
-	public T GetValue<T>(string path) => GetValue(path) is JsonValue value ? value.Deserialize<T>(_serializerOptions) : default;
+	public T GetValue<T>(string path) => GetValue(path, typeof(T)) is T value ? value : default;
+
+	internal object GetValue(string path, Type returnType)
+	{
+		path = ParseRelativePath(path, CurrentPrefix);
+
+		return GetValue(path) switch
+		{
+			JsonValue value          => value.Deserialize(returnType, _serializerOptions),
+			JsonWritableConfig value => value,
+			_                        => throw new JsonException($"Cannot cast value on key {path} to type {returnType.FullName}.")
+		};
+	}
 
 	/// <inheritdoc />
 	public void SetValue(string path, object value) => SetValue<object>(path, value);
@@ -164,40 +179,36 @@ internal class JsonWritableConfig : IWritableConfiguration
 	/// <summary>
 	/// Set property in _json at specified path (creating any missing nodes)
 	/// </summary>
-	public void SetValue<T>(string path, T value)
-	{
-		// Sanitize string, then get absolute JSON path relative to the current prefix
-		if (path.EndsWith(':'))
-		{
-			path = path[..^1];
-		}
-		
-		path = CurrentPrefix is not null ? $"{CurrentPrefix}:{path}" : path;
+	public void SetValue<T>(string path, T value) => SetValue(path, value, typeof(T));
 
-		
+	internal void SetValue(string path, object value, Type valueType)
+	{
+		path = ParseRelativePath(path, CurrentPrefix);
+
+
 		// Introspect down the JSON tree, until last node is reached
 		JsonNode node = _jsonData;
-		
+
 		foreach (string key in path.Split(':'))
 		{
 			node = node switch
 			{
 				JsonObject obj when ((IDictionary<string, JsonNode>)obj).TryGetValue(key, out JsonNode jsonValue) => jsonValue,
-				JsonObject obj => obj[key] = new JsonObject(),
-				JsonArray arr => int.TryParse(key, out int index) && index >= 0 && index < arr.Count ? arr[index] : arr[index] = new JsonArray(),
-				_ => _jsonData[key] = new JsonObject()
+				JsonObject obj                                                                                    => obj[key] = new JsonObject(),
+				JsonArray arr                                                                                     => int.TryParse(key, out int index) && index >= 0 && index < arr.Count ? arr[index] : arr[index] = new JsonArray(),
+				_                                                                                                 => _jsonData[key] = new JsonObject()
 			};
 		}
-		
+
 		// Set the value on the last node
 		if (node is JsonObject)
 		{
 			node = node.Parent ?? node;
-			node[path.Split(':').Last()] = JsonSerializer.Serialize(value, _serializerOptions);
+			node[path.Split(':').Last()] = JsonSerializer.Serialize(value, valueType, _serializerOptions);
 		}
 		else if (node is JsonArray arr)
 		{
-			arr[int.Parse(path.Split(':').Last())] = JsonSerializer.Serialize(value, _serializerOptions);
+			arr[int.Parse(path.Split(':').Last())] = JsonSerializer.Serialize(value, valueType, _serializerOptions);
 		}
 		else
 		{
@@ -211,8 +222,21 @@ internal class JsonWritableConfig : IWritableConfiguration
 		}
 	}
 
+	/// <summary>
+	/// Sanitizes string, then get absolute JSON path relative to the current prefix
+	/// </summary>
+	private static string ParseRelativePath(string path, string currentPrefix)
+	{
+		if (path.EndsWith(':'))
+		{
+			path = path[..^1];
+		}
+
+		return currentPrefix is not null ? $"{currentPrefix}:{path}" : path;
+	}
+
 	/// <inheritdoc />
-	IWritableConfiguration IWritableConfiguration.GetSection(string prefix) => throw new NotImplementedException();
+	IWritableConfiguration IWritableConfiguration.GetSection(string key) => GetSectionInternal(key);
 
 	/// <inheritdoc />
 	IConfigurationSection IConfiguration.GetSection(string key) => throw new NotImplementedException();
@@ -222,4 +246,22 @@ internal class JsonWritableConfig : IWritableConfiguration
 
 	/// <inheritdoc />
 	public IChangeToken GetReloadToken() => _changeToken;
+
+	/// <summary>
+	/// Gets a new <see cref="JsonWritableConfig"/> instance with the specified prefix.
+	/// </summary>
+	/// <param name="prefix">Prefix of section</param>
+	/// <returns>Section of type <see cref="JsonWritableConfig"/></returns>
+	internal JsonWritableConfig GetSectionInternal(string prefix)
+	{
+		// Sanitize string, then get absolute JSON path relative to the current prefix
+		if (prefix.EndsWith(':'))
+		{
+			prefix = prefix[..^1];
+		}
+
+		prefix = CurrentPrefix is not null ? $"{CurrentPrefix}:{prefix}" : prefix;
+
+		return new(_file, _serializerOptions, _logger, _changeToken, prefix, IsFirstLoad, _autosave, _autoreload);
+	}
 }

@@ -36,7 +36,12 @@ public class JsonConfigProvider<TPlugin> : IJsonConfigProvider<TPlugin> where TP
 		filename += filename.EndsWith(FileExtension) ? string.Empty : FileExtension;
 		string configFileSubpath = Path.Combine(typeof(TPlugin).Assembly.GetName().Name ?? throw new InvalidOperationException(), filename);
 		IFileInfo file = _configFileProvider.GetFileInfo(configFileSubpath);
-
+		
+		return GetConfiguration(file, autosave, autoreload, _loggerFactory);
+	}
+	
+	internal static JsonWritableConfig GetConfiguration(IFileInfo file, bool autosave, bool autoreload, ILoggerFactory loggerFactory)
+	{
 		bool firstLoad = !file.Exists;
 
 		if (firstLoad)
@@ -55,10 +60,9 @@ public class JsonConfigProvider<TPlugin> : IJsonConfigProvider<TPlugin> where TP
 
 		if (autoreload)
 		{
-			reloadToken = _configReloadTokens.GetOrAdd(configFileSubpath, _configFileProvider.Watch);
+			reloadToken = _configReloadTokens.GetOrAdd(file.PhysicalPath, _configFileProvider.Watch);
 		}
 
-		return new JsonWritableConfig(new(file.PhysicalPath), JsonSerializerOptions, _loggerFactory.CreateLogger<JsonWritableConfig>(), 
-			reloadToken, null, firstLoad, autosave, autoreload);
+		return new(new(file.PhysicalPath), JsonSerializerOptions, loggerFactory.CreateLogger<JsonWritableConfig>(), reloadToken, null, firstLoad, autosave, autoreload);
 	}
 }
