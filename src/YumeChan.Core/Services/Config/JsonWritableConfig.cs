@@ -106,12 +106,7 @@ internal class JsonWritableConfig : IWritableConfiguration
 	public object GetValue(string path)
 	{
 		// Sanitize string, then get absolute JSON path relative to the current prefix
-		if (path.EndsWith(':'))
-		{
-			path = path[..^1];
-		}
-
-		path = CurrentPrefix is not null ? $"{CurrentPrefix}:{path}" : path;
+		path = ParseRelativePath(path, CurrentPrefix);
 
 		// Introspect down the JSON tree
 		JsonNode node = _jsonData;
@@ -160,17 +155,12 @@ internal class JsonWritableConfig : IWritableConfiguration
 	/// </summary>
 	public T GetValue<T>(string path) => GetValue(path, typeof(T)) is T value ? value : default;
 
-	internal object GetValue(string path, Type returnType)
+	internal object GetValue(string path, Type returnType) => GetValue(path) switch
 	{
-		path = ParseRelativePath(path, CurrentPrefix);
-
-		return GetValue(path) switch
-		{
-			JsonValue value          => value.Deserialize(returnType, _serializerOptions),
-			JsonWritableConfig value => value,
-			_                        => throw new JsonException($"Cannot cast value on key {path} to type {returnType.FullName}.")
-		};
-	}
+		JsonValue value          => value.Deserialize(returnType, _serializerOptions),
+		JsonWritableConfig value => value,
+		_                        => throw new JsonException($"Cannot cast value on key {path} to type {returnType.FullName}.")
+	};
 
 	/// <inheritdoc />
 	public void SetValue(string path, object value) => SetValue<object>(path, value);

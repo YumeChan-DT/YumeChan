@@ -5,6 +5,7 @@ using System;
 using System.Collections.Concurrent;
 using System.IO;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using YumeChan.PluginBase;
 using YumeChan.PluginBase.Tools;
 
@@ -22,7 +23,8 @@ public class JsonConfigProvider<TPlugin> : IJsonConfigProvider<TPlugin> where TP
 	private static JsonSerializerOptions JsonSerializerOptions { get; } = new()
 	{
 		AllowTrailingCommas = true,
-		WriteIndented = true 
+		WriteIndented = true,
+		NumberHandling = JsonNumberHandling.AllowReadingFromString
 	};
 
 	public JsonConfigProvider(ILoggerFactory loggerFactory)

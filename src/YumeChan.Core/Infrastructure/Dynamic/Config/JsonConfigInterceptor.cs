@@ -42,7 +42,17 @@ internal sealed class JsonConfigInterceptor : IInterceptor
 		else
 		{
 			// Getter
-			invocation.ReturnValue = _config.GetValue(propertyName, type);
+			// invocation.ReturnValue = _config.GetValue(propertyName, type);
+			
+			// Instantiate new proxies for nested interface properties
+			if (type.IsInterface)
+			{
+				invocation.ReturnValue = InterfaceWritableConfigWrapper.CreateInstance(_config.GetValue(propertyName) as JsonWritableConfig, type);
+			}
+			else
+			{
+				invocation.ReturnValue = _config.GetValue(propertyName, type);
+			}
 		}
 	}
 }
