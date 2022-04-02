@@ -25,7 +25,7 @@ internal sealed class JsonConfigInterceptor : IInterceptor
 		string property = invocation.Method.Name;
 		Type type = invocation.Method.ReturnType;
 
-		//split property name into tuple of "get_"/"set_" prefix and property name
+		// Split property name into tuple of "get_"/"set_" prefix and property name
 		(bool isSetter, string propertyName) = property[..4] switch
 		{
 			"get_" => (false, property[4..]),
@@ -44,15 +44,10 @@ internal sealed class JsonConfigInterceptor : IInterceptor
 			// Getter
 			// invocation.ReturnValue = _config.GetValue(propertyName, type);
 			
-			// Instantiate new proxies for nested interface properties
-			if (type.IsInterface)
-			{
-				invocation.ReturnValue = InterfaceWritableConfigWrapper.CreateInstance(_config.GetValue(propertyName) as JsonWritableConfig, type);
-			}
-			else
-			{
-				invocation.ReturnValue = _config.GetValue(propertyName, type);
-			}
+			// Assign values and Instantiate new proxies for nested interface properties
+			invocation.ReturnValue = type.IsInterface 
+				? InterfaceWritableConfigWrapper.CreateInstance(_config.GetValue(propertyName) as JsonWritableConfig, type) 
+				: _config.GetValue(propertyName, type);
 		}
 	}
 }
