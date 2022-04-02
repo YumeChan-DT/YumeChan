@@ -23,8 +23,7 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-		<PackageReference Include="Config.Net" Version="4.19.0" />
-		<PackageReference Include="Config.Net.Json" Version="4.19.0" />
+		<PackageReference Include="Castle.Core" Version="4.4.1" />
 		<PackageReference Include="DSharpPlus" Version="4.2.0-nightly-01102" />
 		<PackageReference Include="DSharpPlus.CommandsNext" Version="4.2.0-nightly-01102" />
 		<PackageReference Include="DSharpPlus.Interactivity" Version="4.2.0-nightly-01102" />
@@ -55,7 +54,7 @@
 
 	<ItemGroup>
 		<None Update="Config\botconfig.json">
-			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+			<CopyToOutputDirectory>Never</CopyToOutputDirectory>
 		</None>
 	</ItemGroup>
 </Project>
