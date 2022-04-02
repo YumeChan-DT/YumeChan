@@ -39,8 +39,8 @@
 		<div class="card-body">
 			<div class="d-flex justify-content-between">
 				<div class="p-2 bd-highlight">
-					<p><b>@typeof(PluginBase.Plugin).Assembly.GetName().Name</b></p>
-					<p><b>Version :</b> @(typeof(PluginBase.Plugin).Assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>().InformationalVersion)</p>
+					<p><b>@typeof(PluginBase.IPlugin).Assembly.GetName().Name</b></p>
+					<p><b>Version :</b> @(typeof(PluginBase.IPlugin).Assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion)</p>
 				</div>
 
 				<div class="p-2 bd-highlight">

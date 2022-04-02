@@ -35,7 +35,7 @@ namespace YumeChan.Core
 		public InteractivityConfiguration InteractivityConfiguration { get; internal set; }
 		public SlashCommandsConfiguration SlashCommandsConfiguration { get; internal set; }
 
-		public List<Plugin> Plugins { get; internal set; }
+		public List<IPlugin> Plugins { get; internal set; }
 
 		internal ICoreProperties Config { get; set; }
 
@@ -113,8 +113,8 @@ namespace YumeChan.Core
 
 		public async Task RegisterCommandsAsync()
 		{
-			logger.LogInformation("Using PluginBase v{version}.", typeof(Plugin).Assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>().InformationalVersion);
-			logger.LogInformation("Current Plugins directory: {pluginsDirectory}", externalModulesLoader.PluginsLoadDirectory);
+			logger.LogInformation("Using PluginBase v{Version}.", typeof(IPlugin).Assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion);
+			logger.LogInformation("Current Plugins directory: {PluginsDirectory}", externalModulesLoader.PluginsLoadDirectory);
 
 			Plugins = new() { new Modules.InternalPlugin() }; // Add YumeCore internal commands
 			externalModulesLoader.ScanDirectoryForPluginFiles();
@@ -126,7 +126,7 @@ namespace YumeChan.Core
 			}
 
 			Plugins.AddRange(
-				from Plugin plugin in externalModulesLoader.LoadPluginManifests()
+				from IPlugin plugin in externalModulesLoader.LoadPluginManifests()
 				where !Plugins.Exists(p => p?.AssemblyName == plugin.AssemblyName)
 				select plugin);
 
@@ -142,7 +142,7 @@ namespace YumeChan.Core
 			}
 */
 
-			foreach (Plugin plugin in Plugins)
+			foreach (IPlugin plugin in Plugins)
 			{
 				try
 				{
@@ -154,7 +154,7 @@ namespace YumeChan.Core
 				}
 				catch (Exception e)
 				{
-					logger.LogError(e, "An error occured while loading plugin {pluginName}", plugin.AssemblyName);
+					logger.LogError(e, "An error occured while loading plugin {PluginName}", plugin.AssemblyName);
 
 					try
 					{
@@ -179,7 +179,7 @@ namespace YumeChan.Core
 		{
 			Commands.UnregisterCommands(Commands.RegisteredCommands.Values.ToArray());
 
-			foreach (Plugin plugin in new List<Plugin>(Plugins.Where(p => p is not Modules.InternalPlugin)))
+			foreach (IPlugin plugin in new List<IPlugin>(Plugins.Where(p => p is not Modules.InternalPlugin)))
 			{
 				await plugin.UnloadAsync();
 				Plugins.Remove(plugin);
