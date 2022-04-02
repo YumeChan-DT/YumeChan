@@ -159,6 +159,7 @@ internal class JsonWritableConfig : IWritableConfiguration
 	{
 		JsonValue value          => value.Deserialize(returnType, _serializerOptions),
 		JsonWritableConfig value => value,
+		null					 => null,
 		_                        => throw new JsonException($"Cannot cast value on key {path} to type {returnType.FullName}.")
 	};
 
@@ -194,7 +195,18 @@ internal class JsonWritableConfig : IWritableConfiguration
 		if (node is JsonObject)
 		{
 			node = node.Parent ?? node;
-			node[path.Split(':').Last()] = JsonSerializer.Serialize(value, valueType, _serializerOptions);
+
+			// Assign directly if the value is a string
+			if (value is string str)
+			{
+				node[path.Split(':').Last()] = str;
+			}
+			else
+			{
+				// Serialize the value to JSON
+				node[path.Split(':').Last()] = JsonSerializer.Serialize(value, valueType, _serializerOptions);
+			}
+			
 		}
 		else if (node is JsonArray arr)
 		{

@@ -4,8 +4,10 @@ using Microsoft.Extensions.Primitives;
 using System;
 using System.Collections.Concurrent;
 using System.IO;
+using System.Text.Encodings.Web;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using System.Text.Unicode;
 using YumeChan.PluginBase;
 using YumeChan.PluginBase.Tools;
 
@@ -24,7 +26,8 @@ public class JsonConfigProvider<TPlugin> : IJsonConfigProvider<TPlugin> where TP
 	{
 		AllowTrailingCommas = true,
 		WriteIndented = true,
-		NumberHandling = JsonNumberHandling.AllowReadingFromString
+		NumberHandling = JsonNumberHandling.AllowReadingFromString,
+		Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping
 	};
 
 	public JsonConfigProvider(ILoggerFactory loggerFactory)

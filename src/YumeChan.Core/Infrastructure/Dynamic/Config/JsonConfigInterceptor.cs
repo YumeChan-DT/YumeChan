@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Reflection;
 using Castle.DynamicProxy;
 using YumeChan.Core.Services.Config;
 
@@ -23,8 +22,7 @@ internal sealed class JsonConfigInterceptor : IInterceptor
 	public void Intercept(IInvocation invocation)
 	{
 		string property = invocation.Method.Name;
-		Type type = invocation.Method.ReturnType;
-
+		
 		// Split property name into tuple of "get_"/"set_" prefix and property name
 		(bool isSetter, string propertyName) = property[..4] switch
 		{
@@ -37,16 +35,16 @@ internal sealed class JsonConfigInterceptor : IInterceptor
 		{
 			// Setter
 			object value = invocation.Arguments[0];
-			_config.SetValue(propertyName, value, type);
+			_config.SetValue(propertyName, value, invocation.Method.GetParameters()[0].ParameterType);
 		}
 		else
 		{
 			// Getter
-			// invocation.ReturnValue = _config.GetValue(propertyName, type);
+			Type type = invocation.Method.ReturnType;
 			
 			// Assign values and Instantiate new proxies for nested interface properties
 			invocation.ReturnValue = type.IsInterface 
-				? InterfaceWritableConfigWrapper.CreateInstance(_config.GetValue(propertyName) as JsonWritableConfig, type) 
+				? InterfaceWritableConfigWrapper.CreateInstance(_config.GetSectionInternal(propertyName), type) 
 				: _config.GetValue(propertyName, type);
 		}
 	}
