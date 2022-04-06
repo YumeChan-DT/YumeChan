@@ -36,10 +36,12 @@ public class JsonConfigProvider<TPlugin> : IJsonConfigProvider<TPlugin> where TP
 		_logger = loggerFactory.CreateLogger<JsonConfigProvider<TPlugin>>();
 	}
 
-	public IWritableConfiguration GetConfiguration(string filename, bool autosave, bool autoreload)
+	public IWritableConfiguration GetConfiguration(string filename, bool autosave, bool autoreload) => GetConfiguration(filename, false, autosave, autoreload);
+
+	internal JsonWritableConfig GetConfiguration(string filename, bool placeFileAtConfigRoot, bool autosave, bool autoreload)
 	{
 		filename += filename.EndsWith(FileExtension) ? string.Empty : FileExtension;
-		string configFileSubpath = Path.Combine(typeof(TPlugin).Assembly.GetName().Name ?? throw new InvalidOperationException(), filename);
+		string configFileSubpath = placeFileAtConfigRoot ? filename : Path.Combine(typeof(TPlugin).Assembly.GetName().Name ?? throw new InvalidOperationException(), filename);
 		IFileInfo file = _configFileProvider.GetFileInfo(configFileSubpath);
 		
 		return GetConfiguration(file, autosave, autoreload, _loggerFactory);
