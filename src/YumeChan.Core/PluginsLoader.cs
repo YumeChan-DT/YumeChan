@@ -70,14 +70,20 @@ namespace YumeChan.Core
 
 		public virtual void LoadPluginAssemblies()
 		{
-			PluginAssemblies ??= new List<Assembly>();
+			PluginAssemblies ??= new();
 
-			PluginAssemblies.AddRange
-			(
-				from FileInfo file in PluginFiles.DistinctBy(f => f.Name)
-				where file is not null && file.Name != Path.GetFileName(typeof(IPlugin).Assembly.Location)
-				select AssemblyLoadContext.Default.LoadFromAssemblyPath(file.ToString())
-			);
+			// Try to load the assemblies from the file system, warn in console if unsuccessful.
+			foreach (FileInfo file in PluginFiles.DistinctBy(f => f.Name).Where(f => f is not null && f.Name != Path.GetFileName(typeof(IPlugin).Assembly.Location)))
+			{
+				try
+				{
+					PluginAssemblies.Add(AssemblyLoadContext.Default.LoadFromAssemblyPath(file.FullName));
+				}
+				catch (Exception e)
+				{
+					YumeCore.Instance.Logger.LogWarning(e,"Failed to load assembly \"{File.Name}\".", file);
+				}
+			}
 		}
 
 		public virtual IEnumerable<IPlugin> LoadPluginManifests() =>
