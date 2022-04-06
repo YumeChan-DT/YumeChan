@@ -10,14 +10,14 @@ namespace YumeChan.Core
 {
 	public static class Utilities
 	{
-		public static EmbedFooter DefaultCoreFooter { get; } = new EmbedFooter()
+		public static EmbedFooter DefaultCoreFooter { get; } = new()
 		{
 			Text = $"{YumeCore.Instance.CoreProperties.AppDisplayName} v{YumeCore.CoreVersion} - Powered by Nodsoft Systems"
 		};
 
-		public static bool ImplementsInterface(this Type type, Type interfaceType) => type.GetInterfaces().Where(t => t == interfaceType).Select(t => new { }).Any();
+		public static bool ImplementsInterface(this Type type, Type interfaceType) => type.GetInterfaces().Any(t => t == interfaceType);
 
-		public static ICoreProperties PopulateCoreProperties(this ICoreProperties properties)
+		public static ICoreProperties InitDefaults(this ICoreProperties properties)
 		{
 			properties.AppInternalName ??= "YumeChan";
 			properties.AppDisplayName ??= "Yume-Chan";
@@ -28,6 +28,15 @@ namespace YumeChan.Core
 			properties.LavalinkProperties.Hostname ??= "localhost";
 			properties.LavalinkProperties.Port ??= 2333;
 			properties.LavalinkProperties.Password ??= string.Empty;
+
+			return properties;
+		}
+		
+		public static IPluginLoaderProperties InitDefaults(this IPluginLoaderProperties properties)
+		{
+			properties.Nuget.PackageSources ??= new() { "https://api.nuget.org/v3/index.json" };
+			properties.EnabledPlugins ??= new();
+			properties.DisabledPlugins ??= new();
 
 			return properties;
 		}

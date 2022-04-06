@@ -11,6 +11,7 @@ using Unity.Microsoft.DependencyInjection;
 using YumeChan.Core.Config;
 using YumeChan.Core.Services;
 using YumeChan.Core.Services.Config;
+using YumeChan.Core.Services.Plugins.NuGet;
 using YumeChan.PluginBase.Tools;
 using YumeChan.PluginBase.Tools.Data;
 
@@ -48,23 +49,36 @@ namespace YumeChan.Core
 		}
 
 		public IUnityContainer ConfigureContainer(IUnityContainer container) => container
-			.RegisterFactory<DiscordClient>(container => new DiscordClient(new()
-			{
-				Intents = DiscordIntents.All,
-				TokenType = TokenType.Bot,
-				Token = GetBotToken(),
-				LoggerFactory = container.Resolve<ILoggerFactory>(),
-				MinimumLogLevel = LogLevel.Information
-			}), FactoryLifetime.Singleton)
-
+			.RegisterFactory<DiscordClient>(unityContainer => new DiscordClient(new()
+					{
+						Intents = DiscordIntents.All,
+						TokenType = TokenType.Bot,
+						Token = GetBotToken(),
+						LoggerFactory = unityContainer.Resolve<ILoggerFactory>(),
+						MinimumLogLevel = LogLevel.Information
+					}
+				), FactoryLifetime.Singleton
+			)
+			
 			.RegisterSingleton<CommandHandler>()
 			.RegisterSingleton<LavalinkHandler>()
+			.RegisterSingleton<NugetPluginsFetcher>()
 			.RegisterSingleton(typeof(IDatabaseProvider<>), typeof(DatabaseProvider<>))
 			.RegisterSingleton(typeof(IInterfaceConfigProvider<>), typeof(InterfaceConfigProvider<>))
 			.RegisterSingleton(typeof(IJsonConfigProvider<>), typeof(JsonConfigProvider<>))
+			
+			.RegisterFactory<ICoreProperties>(unityContainer =>
+					unityContainer.Resolve<InterfaceConfigProvider<ICoreProperties>>().InitConfig("coreconfig.json", true).InitDefaults(),
+				FactoryLifetime.Singleton
+			)
+			.RegisterFactory<IPluginLoaderProperties>(unityContainer =>
+					unityContainer.Resolve<InterfaceConfigProvider<IPluginLoaderProperties>>().InitConfig("plugins.json", true).InitDefaults(),
+				FactoryLifetime.Singleton
+			)
 
 			.AddServices(new ServiceCollection()
 				.AddHttpClient()
+				.AddNuGetPluginsFetcher()
 			);
 
 
@@ -135,8 +149,8 @@ namespace YumeChan.Core
 				else
 				{
 					ApplicationException e = new("No Bot Token supplied.");
-					Logger.LogCritical(e, "No Bot Token was found in \"coreconfig.json\" Config File, and Environment Variables \"{EnvVar}\" from relevant targets are empty. " +
-											$"\nPlease set a Bot Token before launching the Bot.", envVarName);
+					Logger.LogCritical(e, "No Bot Token was found in \"coreconfig.json\" Config File, and Environment Variables \"{EnvVar}\" from relevant targets are empty. " + $"\nPlease set a Bot Token before launching the Bot.", envVarName);
+
 					throw e;
 				}
 			}
@@ -155,12 +169,14 @@ namespace YumeChan.Core
 					if (token is not null)
 					{
 						foundFromTarget = target;
+
 						return true;
 					}
 				}
 
 				token = null;
 				foundFromTarget = default;
+
 				return false;
 			}
 			else
@@ -168,6 +184,7 @@ namespace YumeChan.Core
 				token = Environment.GetEnvironmentVariable(envVarName);
 
 				foundFromTarget = EnvironmentVariableTarget.Process;
+
 				return token is not null;
 			}
 		}
@@ -177,7 +194,7 @@ namespace YumeChan.Core
 			Logger ??= Services.Resolve<ILogger<YumeCore>>();
 			ConfigProvider ??= Services.Resolve<InterfaceConfigProvider<ICoreProperties>>();
 
-			CoreProperties = ConfigProvider.InitConfig("coreconfig.json", true).PopulateCoreProperties();
+			CoreProperties = ConfigProvider.InitConfig("coreconfig.json", true).InitDefaults();
 			CoreProperties.Path_Core ??= Directory.GetCurrentDirectory();
 			CoreProperties.Path_Plugins ??= Path.Combine(CoreProperties.Path_Core, "Plugins");
 			CoreProperties.Path_Config ??= Path.Combine(CoreProperties.Path_Core, "Config");

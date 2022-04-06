@@ -22,6 +22,7 @@ using YumeChan.PluginBase;
 using YumeChan.PluginBase.Infrastructure;
 using DSharpPlus.SlashCommands.EventArgs;
 using DSharpPlus.Entities;
+using YumeChan.Core.Services.Plugins.NuGet;
 
 namespace YumeChan.Core
 {
@@ -42,15 +43,17 @@ namespace YumeChan.Core
 		private readonly DiscordClient client;
 		private readonly IServiceProvider services;
 		private readonly IUnityContainer container;
+		private readonly NugetPluginsFetcher _pluginsFetcher;
 		private readonly ILogger logger;
 		private readonly PluginsLoader externalModulesLoader;
 
 
-		public CommandHandler(DiscordClient client, ILogger<CommandHandler> logger, IServiceProvider services, IUnityContainer container)
+		public CommandHandler(DiscordClient client, ILogger<CommandHandler> logger, IServiceProvider services, IUnityContainer container, NugetPluginsFetcher pluginsFetcher)
 		{
 			this.client = client;
 			this.services = services;
 			this.container = container;
+			_pluginsFetcher = pluginsFetcher;
 			this.logger = logger;
 
 			externalModulesLoader = new(string.Empty);
@@ -117,6 +120,8 @@ namespace YumeChan.Core
 			logger.LogInformation("Current Plugins directory: {PluginsDirectory}", externalModulesLoader.PluginsLoadDirectory);
 
 			Plugins = new() { new Modules.InternalPlugin() }; // Add YumeCore internal commands
+
+			await _pluginsFetcher.LoadPluginsAsync();
 			externalModulesLoader.ScanDirectoryForPluginFiles();
 			externalModulesLoader.LoadPluginAssemblies();
 
