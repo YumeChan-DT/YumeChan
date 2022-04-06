@@ -1,5 +1,6 @@
 ﻿using Microsoft.Extensions.Primitives;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -103,7 +104,15 @@ internal class JsonWritableConfig : IWritableConfiguration
 	/// Gets a value from the JSON-keyed dictionary, and returns a prefixed <see cref="IWritableConfiguration" /> if the value is a complex object.
 	/// Returns null if a value is not found.
 	/// </summary>
-	public object GetValue(string path)
+	public object GetValue(string path) => GetValue(path, typeof(object));
+
+	/// <inheritdoc />
+	/// <summary>
+	/// Gets a value from the JSON-Keyed dictionary, or returns the default value if the value cannot be casted or is not found.
+	/// </summary>
+	public T GetValue<T>(string path) => GetValue(path, typeof(T)) is T value ? value : default;
+
+	internal object GetValue(string path, Type returnType)
 	{
 		// Sanitize string, then get absolute JSON path relative to the current prefix
 		path = ParseRelativePath(path, CurrentPrefix);
@@ -141,27 +150,23 @@ internal class JsonWritableConfig : IWritableConfiguration
 			}
 		}
 
-		return node switch
+		object returnValue = node switch
 		{
 			// Return the value if it's a primitive type
+			JsonArray when returnType.IsAssignableTo(typeof(IEnumerable)) => node,
 			JsonObject or JsonArray => new JsonWritableConfig(_file, _serializerOptions, _logger, _changeToken, path, false, _autosave, false),
 			_                       => node?.AsValue()
 		};
+
+		return returnValue switch
+		{
+			JsonValue value => value.Deserialize(returnType, _serializerOptions),
+			JsonArray value => value.Deserialize(returnType, _serializerOptions),
+			JsonWritableConfig value => value,
+			null                     => null,
+			_                        => throw new JsonException($"Cannot cast value on key {path} to type {returnType.FullName}.")
+		};
 	}
-
-	/// <inheritdoc />
-	/// <summary>
-	/// Gets a value from the JSON-Keyed dictionary, or returns the default value if the value cannot be casted or is not found.
-	/// </summary>
-	public T GetValue<T>(string path) => GetValue(path, typeof(T)) is T value ? value : default;
-
-	internal object GetValue(string path, Type returnType) => GetValue(path) switch
-	{
-		JsonValue value          => value.Deserialize(returnType, _serializerOptions),
-		JsonWritableConfig value => value,
-		null					 => null,
-		_                        => throw new JsonException($"Cannot cast value on key {path} to type {returnType.FullName}.")
-	};
 
 	/// <inheritdoc />
 	public void SetValue(string path, object value) => SetValue<object>(path, value);
@@ -175,8 +180,7 @@ internal class JsonWritableConfig : IWritableConfiguration
 	internal void SetValue(string path, object value, Type valueType)
 	{
 		path = ParseRelativePath(path, CurrentPrefix);
-
-
+		
 		// Introspect down the JSON tree, until last node is reached
 		JsonNode node = _jsonData;
 
@@ -200,6 +204,18 @@ internal class JsonWritableConfig : IWritableConfiguration
 			if (value is string str)
 			{
 				node[path.Split(':').Last()] = str;
+			}
+			// Special case made for enumerables
+			else if (value is System.Collections.IEnumerable enumerable)
+			{
+				JsonArray arr = new JsonArray();
+
+				foreach (object item in enumerable)
+				{
+					arr.Add(item);
+				}
+
+				node[path.Split(':').Last()] = arr;
 			}
 			else
 			{
