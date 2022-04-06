@@ -35,7 +35,7 @@ namespace YumeChan.Core
 		public InteractivityConfiguration InteractivityConfiguration { get; internal set; }
 		public SlashCommandsConfiguration SlashCommandsConfiguration { get; internal set; }
 
-		public List<Plugin> Plugins { get; internal set; }
+		public List<IPlugin> Plugins { get; internal set; }
 
 		internal ICoreProperties Config { get; set; }
 
@@ -113,16 +113,22 @@ namespace YumeChan.Core
 
 		public async Task RegisterCommandsAsync()
 		{
-			logger.LogInformation("Using PluginBase v{version}.", typeof(Plugin).Assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>().InformationalVersion);
-			logger.LogInformation("Current Plugins directory: {pluginsDirectory}", externalModulesLoader.PluginsLoadDirectory);
+			logger.LogInformation("Using PluginBase v{Version}.", typeof(IPlugin).Assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion);
+			logger.LogInformation("Current Plugins directory: {PluginsDirectory}", externalModulesLoader.PluginsLoadDirectory);
 
 			Plugins = new() { new Modules.InternalPlugin() }; // Add YumeCore internal commands
+			externalModulesLoader.ScanDirectoryForPluginFiles();
 			externalModulesLoader.LoadPluginAssemblies();
 
-			Plugins.AddRange(from Plugin plugin
-							 in externalModulesLoader.LoadPluginManifests()
-							 where !Plugins.Exists(p => p?.AssemblyName == plugin.AssemblyName)
-							 select plugin);
+			foreach (DependencyInjectionHandler handler in externalModulesLoader.LoadDependencyInjectionHandlers())
+			{
+				container.AddServices(handler.ConfigureServices(new ServiceCollection()));
+			}
+
+			Plugins.AddRange(
+				from IPlugin plugin in externalModulesLoader.LoadPluginManifests()
+				where !Plugins.Exists(p => p?.AssemblyName == plugin.AssemblyName)
+				select plugin);
 
 			ulong? slashCommandsGuild = null; // Used for Development only
 #if DEBUG
@@ -136,18 +142,30 @@ namespace YumeChan.Core
 			}
 */
 
-			foreach (DependencyInjectionHandler handler in externalModulesLoader.LoadDependencyInjectionHandlers())
+			foreach (IPlugin plugin in Plugins)
 			{
-				container.AddServices(handler.ConfigureServices(new ServiceCollection()));
-			}
+				try
+				{
+					await plugin.LoadAsync();
+					Commands.RegisterCommands(plugin.GetType().Assembly);
 
-			foreach (Plugin plugin in Plugins)
-			{
-				await plugin.LoadAsync();
-				Commands.RegisterCommands(plugin.GetType().Assembly);
+					SlashCommands.RegisterCommands(plugin.GetType().Assembly, slashCommandsGuild);
+					logger.LogInformation("Loaded Plugin '{Plugin}'.", plugin.AssemblyName);
+				}
+				catch (Exception e)
+				{
+					logger.LogError(e, "An error occured while loading plugin {PluginName}", plugin.AssemblyName);
 
-				SlashCommands.RegisterCommands(plugin.GetType().Assembly, slashCommandsGuild);
-				logger.LogInformation("Loaded Plugin '{Plugin}'.", plugin.AssemblyName);
+					try
+					{
+						await plugin.UnloadAsync();
+					}
+					catch {	}
+
+#if DEBUG
+					throw;
+#endif
+				}
 			}
 
 			Commands.RegisterCommands(Assembly.GetEntryAssembly()); // Add possible Commands from Entry Assembly (contextual)
@@ -161,7 +179,7 @@ namespace YumeChan.Core
 		{
 			Commands.UnregisterCommands(Commands.RegisteredCommands.Values.ToArray());
 
-			foreach (Plugin plugin in new List<Plugin>(Plugins.Where(p => p is not Modules.InternalPlugin)))
+			foreach (IPlugin plugin in new List<IPlugin>(Plugins.Where(p => p is not Modules.InternalPlugin)))
 			{
 				await plugin.UnloadAsync();
 				Plugins.Remove(plugin);
@@ -186,7 +204,7 @@ namespace YumeChan.Core
 					{
 						errorMessages.Add(check switch
 						{
-							RequireOwnerAttribute => $"Sorry. You must be a Bot Owner to run this command.",
+							RequireOwnerAttribute => "Sorry. You must be a Bot Owner to run this command.",
 							RequireDirectMessageAttribute => "Sorry, not here. Please send me a Direct Message with that command.",
 							RequireGuildAttribute => "Sorry, not here. Please send this command in a server.",
 							RequireNsfwAttribute => "Sorry. As much as I'd love to, I've gotta keep the hot stuff to the right channels.",
@@ -202,15 +220,17 @@ namespace YumeChan.Core
 					await e.Context.RespondAsync(string.Join('\n', errorMessages));
 				}
 			}
-
+			else
+			{
 #if DEBUG
-			string response = $"An error occurred : \n```{e.Exception}```";
+				string response = $"An error occurred : \n```{e.Exception}```";
 #else
-			string response = $"Something went wrong while executing your command : \n\n{e.Exception.Message}";
+				string response = $"Something went wrong while executing your command : \n{e.Exception.Message}";
 #endif
 
-			await e.Context.RespondAsync(response);
-			logger.LogError("An error occured executing '{0}' from user '{1}' : \n{2}", e.Command.QualifiedName, e.Context.User.Id, e.Exception);
+				await e.Context.RespondAsync(response);
+				logger.LogError("An error occured executing '{command}' from user '{user}' : \n{exception}", e.Command.QualifiedName, e.Context.User.Id, e.Exception);
+			}		
 		}
 
 
@@ -234,7 +254,7 @@ namespace YumeChan.Core
 
 		public Task OnCommandExecuted(CommandsNextExtension sender, CommandExecutionEventArgs e)
 		{
-			logger.LogDebug("Command '{0}' received from User '{1}'.", e.Command.QualifiedName, e.Context.User.Id);
+			logger.LogDebug("Command '{command}' received from User '{user}'.", e.Command.QualifiedName, e.Context.User.Id);
 			return Task.CompletedTask;
 		}
 
