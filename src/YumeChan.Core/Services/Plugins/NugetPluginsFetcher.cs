@@ -74,7 +74,7 @@ public class NugetPluginsFetcher : IDisposable
 					await GetPackageDependenciesAsync(pluginPackageIdentity, _nugetFramework, sourceRepositories, DependencyContext.Default, allPackages, ct);
 					await InstallPluginPackagesAsync(pluginPackageIdentity, GetPluginPackagesToInstall(pluginPackageIdentity, allPackages), pluginsDirectory, nugetSettings, ct);
 				
-					await FlattenDownloadedPackageToDirectoryStructureAsync(new(Path.Combine(pluginsDirectory, pluginName, "dl")), new(Path.Combine(pluginsDirectory, pluginName)), ct);
+					FlattenDownloadedPackageToDirectoryStructure(new(Path.Combine(pluginsDirectory, pluginName, "dl")), new(Path.Combine(pluginsDirectory, pluginName)), ct);
 
 					_logger.LogDebug("Fetched plugin {PluginName} from NuGet.", pluginName);
 				}
@@ -290,7 +290,7 @@ public class NugetPluginsFetcher : IDisposable
 		return runtimeLib is not null;
 	}
 	
-	private static async Task FlattenDownloadedPackageToDirectoryStructureAsync(DirectoryInfo downloadFolder, DirectoryInfo targetFolder, CancellationToken ct = default)
+	private static void FlattenDownloadedPackageToDirectoryStructure(DirectoryInfo downloadFolder, DirectoryInfo targetFolder, CancellationToken ct = default)
 	{
 		List<DirectoryInfo> directories = new(downloadFolder.GetDirectories("*", SearchOption.AllDirectories).ToList());
 		List<FileInfo> files = new();
