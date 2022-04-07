@@ -3,6 +3,7 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
+using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.Versioning;
@@ -42,7 +43,7 @@ public class NugetPluginsFetcher : IDisposable
 		_coreProperties = coreProperties;
 		_pluginProperties = properties;
 		_sourceCacheContext = new();
-		_nugetFramework = NuGetFramework.ParseFolder(typeof(YumeCore).Assembly.GetCustomAttributes<TargetFrameworkAttribute>().First().ToString());
+		_nugetFramework = NuGetFramework.ParseFrameworkName(typeof(YumeCore).Assembly.GetCustomAttributes<TargetFrameworkAttribute>().First().FrameworkName, DefaultFrameworkNameProvider.Instance);
 	}
 
 	public async Task LoadPluginsAsync(CancellationToken ct = default)
@@ -60,10 +61,12 @@ public class NugetPluginsFetcher : IDisposable
 				{
 					await GetPackageDependenciesAsync(packageIdentity, _nugetFramework, sourceRepositories, allPackages, ct);
 				}
+				
+				_logger.LogDebug("Loaded plugin {PluginName}.", pluginName);
 			}
 		
 			// Get packages to install
-			IEnumerable<SourcePackageDependencyInfo> packagesToInstall = GetPackagesToInstall(_pluginProperties.EnabledPlugins, allPackages);
+			IEnumerable<(SourcePackageDependencyInfo, bool)> packagesToInstall = GetPackagesToInstall(_pluginProperties.EnabledPlugins, allPackages);
 
 			string pluginsDirectory = _coreProperties.Path_Plugins;
 			ISettings? nugetSettings = Settings.LoadDefaultSettings(pluginsDirectory);
@@ -134,10 +137,14 @@ public class NugetPluginsFetcher : IDisposable
  
 			// Add to the list of all packages.
 			availablePackages.Add(dependencyInfo);
+			_logger.LogDebug("Found package {PackageName} {PackageVersion}.", dependencyInfo.Id, dependencyInfo.Version);
  
 			// Recurse through each package.
 			foreach (PackageDependency? dependency in dependencyInfo.Dependencies)
 			{
+				_logger.LogDebug("Introspecting dependency {DependencyId} {DependencyVersion} for package {PackageId} {PackageVersion}",
+					dependency.Id, dependency.VersionRange, package.Id, package.Version);
+				
 				await GetPackageDependenciesAsync(new(dependency.Id, dependency.VersionRange.MinVersion), framework, repositories, availablePackages, ct); 
 			}
  
@@ -145,7 +152,7 @@ public class NugetPluginsFetcher : IDisposable
 		}
 	}
 
-	private IEnumerable<SourcePackageDependencyInfo> GetPackagesToInstall(IEnumerable<string> pluginNames, ICollection<SourcePackageDependencyInfo> allPackages)
+	private IEnumerable<(SourcePackageDependencyInfo, bool)> GetPackagesToInstall(IEnumerable<string> pluginNames, ICollection<SourcePackageDependencyInfo> allPackages)
 	{
 		// Create a package resolver context.
 		PackageResolverContext resolverContext = new(
@@ -163,18 +170,20 @@ public class NugetPluginsFetcher : IDisposable
 		
 		// Resolve the packages and return the results.
 		return resolver.Resolve(resolverContext, CancellationToken.None)
-			.Select(p => allPackages.Single(x => PackageIdentityComparer.Default.Equals(x, p)));
+			.Select(p => (allPackages.Single(x => PackageIdentityComparer.Default.Equals(x, p)), pluginNames.Contains(p.Id)));
 	}
 
-	private async Task InstallPackagesAsync(IEnumerable<SourcePackageDependencyInfo> packagesToInstall, string rootPackagesDirectory, ISettings nugetSettings, CancellationToken ct)
+	private async Task InstallPackagesAsync(IEnumerable<(SourcePackageDependencyInfo, bool)> packagesToInstall, string rootPackagesDirectory, ISettings nugetSettings, CancellationToken ct)
 	{
-		PackagePathResolver packagePathResolver = new(rootPackagesDirectory);
+		PackagePathResolver pluginPackagesPathResolver = new(rootPackagesDirectory);
+		PackagePathResolver dependenciesPathResolver = new(Path.Combine(rootPackagesDirectory, "dependencies"));
+		
 		PackageExtractionContext packageExtractionContext = new(
 			PackageSaveMode.Defaultv3,
 			XmlDocFileSaveMode.Skip,
 			ClientPolicyContext.GetClientPolicy(nugetSettings, NullLogger.Instance), NullLogger.Instance);
 
-		foreach (SourcePackageDependencyInfo package in packagesToInstall)
+		foreach ((SourcePackageDependencyInfo package, bool isPlugin) in packagesToInstall)
 		{
 			DownloadResource? downloadResource = await package.Source.GetResourceAsync<DownloadResource>(ct);
 			
@@ -183,7 +192,9 @@ public class NugetPluginsFetcher : IDisposable
 				package, new(_sourceCacheContext), SettingsUtility.GetGlobalPackagesFolder(nugetSettings), NullLogger.Instance, ct);
 			
 			// Extract the package into the target directory.
-			await PackageExtractor.ExtractPackageAsync(downloadResult.PackageSource, downloadResult.PackageStream, packagePathResolver, packageExtractionContext, ct);
+			await PackageExtractor.ExtractPackageAsync(downloadResult.PackageSource, downloadResult.PackageStream, 
+				isPlugin ? pluginPackagesPathResolver : dependenciesPathResolver,
+				packageExtractionContext, ct);
 		}
 	}
 	
