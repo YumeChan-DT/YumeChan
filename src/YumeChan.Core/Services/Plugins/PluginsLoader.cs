@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.IO;
 using System.Linq;
 using System.Reflection;
@@ -86,17 +87,65 @@ internal class PluginsLoader
 		}
 	}
 
-	public virtual IEnumerable<IPlugin> LoadPluginManifests() =>
-		from Assembly a in PluginAssemblies
-		from Type t in a.ExportedTypes
-		where t.ImplementsInterface(typeof(IPlugin))
-		select InstantiateManifest(t);
+	public virtual IEnumerable<IPlugin> LoadPluginManifests()
+	{
+		List<IPlugin> plugins = new();
 
-	public virtual IEnumerable<DependencyInjectionHandler> LoadDependencyInjectionHandlers() =>
-		from Assembly a in PluginAssemblies
-		from Type t in a.ExportedTypes
-		where t.IsSubclassOf(typeof(DependencyInjectionHandler))
-		select InstantiateInjectionRegistry(t);
+		foreach (Assembly a in PluginAssemblies)
+		{
+			try
+			{
+				// Try to load the plugin manifests from the assemblies, log error in console if unsuccessful.
+				foreach (Type t in a.ExportedTypes.Where(x => x.ImplementsInterface(typeof(IPlugin))))
+				{
+					try
+					{
+						plugins.Add(InstantiateManifest(t));
+					}
+					catch (Exception e)
+					{
+						YumeCore.Instance.Logger.LogError(e,"Failed to instantiate plugin \"{PluginName}\".", t?.Name);
+					}
+				}
+			}
+			catch (Exception e)
+			{
+				YumeCore.Instance.Logger.LogError(e,"Failed to load plugin manifests from assembly \"{AssemblyFullName}\".", a?.FullName);
+			}
+		}
+
+		return plugins;
+	}
+
+	public virtual IEnumerable<DependencyInjectionHandler> LoadDependencyInjectionHandlers()
+	{
+		List<DependencyInjectionHandler> handlers = new();
+
+		foreach (Assembly a in PluginAssemblies)
+		{
+			try
+			{
+				// Try to load the dependency injection handlers from the assemblies, log error in console if unsuccessful.
+				foreach (Type type in a.ExportedTypes.Where(t => t.IsSubclassOf(typeof(DependencyInjectionHandler))))
+				{
+					try
+					{
+						handlers.Add(InstantiateInjectionRegistry(type));
+					}
+					catch (Exception e)
+					{
+						YumeCore.Instance.Logger.LogError(e, "Failed to instantiate dependency injection handler \"{TypeName}\".", type?.Name);
+					}
+				}
+			}
+			catch (Exception e)
+			{
+				YumeCore.Instance.Logger.LogError(e, "Failed to load dependency injection handler types from assembly \"{AssemblyFullName}\".", a?.FullName);
+			}
+		}
+		
+		return handlers;
+	}
 
 	internal static IPlugin InstantiateManifest(Type type) => YumeCore.Instance.Services.Resolve(type) as IPlugin;
 	internal static DependencyInjectionHandler InstantiateInjectionRegistry(Type type) => YumeCore.Instance.Services.Resolve(type) as DependencyInjectionHandler;
