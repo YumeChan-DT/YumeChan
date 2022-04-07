@@ -11,7 +11,7 @@ using Unity.Microsoft.DependencyInjection;
 using YumeChan.Core.Config;
 using YumeChan.Core.Services;
 using YumeChan.Core.Services.Config;
-using YumeChan.Core.Services.Plugins.NuGet;
+using YumeChan.Core.Services.Plugins;
 using YumeChan.PluginBase.Tools;
 using YumeChan.PluginBase.Tools.Data;
 

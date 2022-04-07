@@ -1,14 +1,10 @@
-﻿
-
-#nullable enable
+﻿#nullable enable
 
 using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
-using System.IO;
 using System.Linq;
 using System.Reflection;
-using System.Runtime.InteropServices;
 using System.Runtime.Versioning;
 using System.Threading;
 using System.Threading.Tasks;
@@ -23,9 +19,8 @@ using NuGet.Protocol.Core.Types;
 using NuGet.Resolver;
 using NuGet.Versioning;
 using YumeChan.Core.Config;
-using YumeChan.PluginBase;
 
-namespace YumeChan.Core.Services.Plugins.NuGet;
+namespace YumeChan.Core.Services.Plugins;
 
 /// <summary>
 /// Provides a plugins loader for NuGet package-based plugins.
@@ -74,8 +69,6 @@ public class NugetPluginsFetcher : IDisposable
 			ISettings? nugetSettings = Settings.LoadDefaultSettings(pluginsDirectory);
 		
 			await InstallPackagesAsync(packagesToInstall, pluginsDirectory, nugetSettings, ct);
-
-			return;
 		}
 	}
 

@@ -22,7 +22,7 @@ using YumeChan.PluginBase;
 using YumeChan.PluginBase.Infrastructure;
 using DSharpPlus.SlashCommands.EventArgs;
 using DSharpPlus.Entities;
-using YumeChan.Core.Services.Plugins.NuGet;
+using YumeChan.Core.Services.Plugins;
 
 namespace YumeChan.Core
 {

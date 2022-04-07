@@ -4,7 +4,7 @@ using NuGet.Configuration;
 using NuGet.Protocol.Core.Types;
 using YumeChan.Core.Config;
 
-namespace YumeChan.Core.Services.Plugins.NuGet;
+namespace YumeChan.Core.Services.Plugins;
 
 public static class NugetPluginsLoaderExtensions
 {
