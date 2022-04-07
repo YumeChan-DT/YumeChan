@@ -34,9 +34,9 @@ namespace YumeChan.Core
 		
 		public static IPluginLoaderProperties InitDefaults(this IPluginLoaderProperties properties)
 		{
-			properties.Nuget.PackageSources ??= new() { "https://api.nuget.org/v3/index.json" };
 			properties.EnabledPlugins ??= new();
 			properties.DisabledPlugins ??= new();
+			properties.Nuget.PackageSources ??= new() { "https://api.nuget.org/v3/index.json" };
 
 			return properties;
 		}

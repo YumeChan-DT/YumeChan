@@ -7,6 +7,7 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.Versioning;
+using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyModel;
@@ -21,6 +22,7 @@ using NuGet.Protocol.Core.Types;
 using NuGet.Resolver;
 using NuGet.Versioning;
 using YumeChan.Core.Config;
+using static YumeChan.Core.Services.Plugins.NugetUtilities;
 
 namespace YumeChan.Core.Services.Plugins;
 
@@ -56,7 +58,7 @@ public class NugetPluginsFetcher : IDisposable
 			string pluginsDirectory = _coreProperties.Path_Plugins;
 			ISettings? nugetSettings = Settings.LoadDefaultSettings(pluginsDirectory);
 			
-			foreach (string pluginName in _pluginProperties.EnabledPlugins)
+			foreach (string pluginName in _pluginProperties.EnabledPlugins.AsParallel())
 			{
 				PackageIdentity? pluginPackageIdentity = await GetPackageIdentityAsync(pluginName);
 
@@ -65,6 +67,8 @@ public class NugetPluginsFetcher : IDisposable
 					List<SourcePackageDependencyInfo> allPackages = new();
 					await GetPackageDependenciesAsync(pluginPackageIdentity, _nugetFramework, sourceRepositories, DependencyContext.Default, allPackages, ct);
 					await InstallPluginPackagesAsync(pluginPackageIdentity, GetPluginPackagesToInstall(pluginPackageIdentity, allPackages), pluginsDirectory, nugetSettings, ct);
+					
+					await FlattenDownloadedPackageToDirectoryStructureAsync(new(Path.Combine(pluginsDirectory, pluginName, "dl")), new(Path.Combine(pluginsDirectory, pluginName)), ct);
 				}
 				
 				_logger.LogDebug("Loaded plugin {PluginName}.", pluginName);
@@ -259,7 +263,7 @@ public class NugetPluginsFetcher : IDisposable
 		GC.SuppressFinalize(this);
 	}
 	
-	private bool DependencySuppliedByHost(DependencyContext hostDependencies, PackageDependency dep)
+	private static bool DependencySuppliedByHost(DependencyContext hostDependencies, PackageDependency dep)
 	{
 		// See if a runtime library with the same ID as the package is available in the host's runtime libraries.
 		RuntimeLibrary? runtimeLib = hostDependencies.RuntimeLibraries.FirstOrDefault(r => r.Name == dep.Id);
@@ -275,6 +279,9 @@ public class NugetPluginsFetcher : IDisposable
 		
 		if (runtimeLib is not null)
 		{
+			return true;
+			
+			/*
 			// What version of the library is the host using?
 			NuGetVersion? parsedLibVersion = NuGetVersion.Parse(runtimeLib.Version);
  
@@ -288,8 +295,57 @@ public class NugetPluginsFetcher : IDisposable
 			// Does the host version satisfy the version range of the requested package?
 			// If so, we can provide it; otherwise, we cannot.
 			return dep.VersionRange.Satisfies(parsedLibVersion);
+			*/
 		}
  
 		return false;
 	}
+	
+	private static async Task FlattenDownloadedPackageToDirectoryStructureAsync(DirectoryInfo downloadFolder, DirectoryInfo targetFolder, CancellationToken ct = default)
+	{
+		List<DirectoryInfo> directories = new(downloadFolder.GetDirectories("*", SearchOption.AllDirectories).ToList());
+		List<FileInfo> files = new();
+
+		// Sort all directories by matched moniker, then by last version, and pull all .dll files to "files" list.
+		foreach (Regex regex in TargetMonikerRegexes)
+		{
+			foreach (DirectoryInfo dir in directories.Where(d => regex.IsMatch(d.FullName)).OrderByDescending(d => d.Name, StringComparer.OrdinalIgnoreCase))
+			{
+				files.AddRange(dir.GetFiles("*.dll", SearchOption.AllDirectories));
+			}
+		}
+		
+		// Move all selected files to the target folder (if not present already).
+		foreach (FileInfo file in files.AsParallel())
+		{
+			if (!File.Exists(Path.Combine(targetFolder.FullName, file.Name)))
+			{
+				file.MoveTo(Path.Combine(targetFolder.FullName, file.Name));
+			}
+		}
+
+		// Delete the downloaded package (download folder).
+		// downloadFolder.Delete(true);
+	}
+}
+
+public static class NugetUtilities
+{
+	public static IEnumerable<Regex> TargetMonikerRegexes { get; } = new List<Regex>
+	{
+		// net x.x (5.0+) moniker
+		new(@"net\d+\.\d+"),
+		
+		// netstandard x.x moniker
+		new(@"netstandard\d+\.\d+"),
+		
+		// netcoreapp x.x moniker
+		new(@"netcoreapp\d+\.\d+"),
+
+		// net xx moniker (Framework)
+		new(@"net\d+"),
+		
+		// Catch-all & non-monikers (last-resort default)
+		new(@".*")
+	};
 }
