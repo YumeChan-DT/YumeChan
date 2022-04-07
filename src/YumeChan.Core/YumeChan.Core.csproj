@@ -2,7 +2,7 @@
 
 	<PropertyGroup>
 		<TargetFramework>net6.0</TargetFramework>
-		<Version>2.4</Version>
+		<Version>2.6.1</Version>
 		<Authors>Sakura Akeno Isayeki</Authors>
 		<Company>Nodsoft Systems</Company>
 		<Product>Yume-Chan</Product>
@@ -24,11 +24,11 @@
 
 	<ItemGroup>
 		<PackageReference Include="Castle.Core" Version="4.4.1" />
-		<PackageReference Include="DSharpPlus" Version="4.2.0-nightly-01102" />
-		<PackageReference Include="DSharpPlus.CommandsNext" Version="4.2.0-nightly-01102" />
-		<PackageReference Include="DSharpPlus.Interactivity" Version="4.2.0-nightly-01102" />
-		<PackageReference Include="DSharpPlus.Lavalink" Version="4.2.0-nightly-01102" />
-		<PackageReference Include="DSharpPlus.SlashCommands" Version="4.2.0-nightly-01102" />
+		<PackageReference Include="DSharpPlus" Version="4.2.0-nightly-01107" />
+		<PackageReference Include="DSharpPlus.CommandsNext" Version="4.2.0-nightly-01107" />
+		<PackageReference Include="DSharpPlus.Interactivity" Version="4.2.0-nightly-01107" />
+		<PackageReference Include="DSharpPlus.Lavalink" Version="4.2.0-nightly-01107" />
+		<PackageReference Include="DSharpPlus.SlashCommands" Version="4.2.0-nightly-01107" />
 		<PackageReference Include="Microsoft.EntityFrameworkCore" Version="6.0.3" />
 		<PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="6.0.0" />
 		<PackageReference Include="Microsoft.Extensions.FileProviders.Physical" Version="6.0.0" />
