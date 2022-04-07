@@ -62,16 +62,26 @@ public class NugetPluginsFetcher : IDisposable
 			{
 				PackageIdentity? pluginPackageIdentity = await GetPackageIdentityAsync(pluginName);
 
-				if (pluginPackageIdentity is not null)
+				if (pluginPackageIdentity is null)
+				{
+					continue;
+				}
+
+				// Check if the package isn't already fetched and installed locally
+				if (!File.Exists(Path.Combine(pluginsDirectory, pluginPackageIdentity.Id, $"{pluginPackageIdentity.Id}.dll" )))
 				{
 					List<SourcePackageDependencyInfo> allPackages = new();
 					await GetPackageDependenciesAsync(pluginPackageIdentity, _nugetFramework, sourceRepositories, DependencyContext.Default, allPackages, ct);
 					await InstallPluginPackagesAsync(pluginPackageIdentity, GetPluginPackagesToInstall(pluginPackageIdentity, allPackages), pluginsDirectory, nugetSettings, ct);
-					
-					await FlattenDownloadedPackageToDirectoryStructureAsync(new(Path.Combine(pluginsDirectory, pluginName, "dl")), new(Path.Combine(pluginsDirectory, pluginName)), ct);
-				}
 				
-				_logger.LogDebug("Loaded plugin {PluginName}.", pluginName);
+					await FlattenDownloadedPackageToDirectoryStructureAsync(new(Path.Combine(pluginsDirectory, pluginName, "dl")), new(Path.Combine(pluginsDirectory, pluginName)), ct);
+
+					_logger.LogDebug("Fetched plugin {PluginName} from NuGet.", pluginName);
+				}
+				else
+				{
+					_logger.LogDebug("Plugin {PluginName} is already present locally, ignoring NuGet fetch.", pluginName);
+				}
 			}
 		}
 	}
@@ -304,7 +314,7 @@ public class NugetPluginsFetcher : IDisposable
 		}
 
 		// Delete the downloaded package (download folder).
-		// downloadFolder.Delete(true);
+		downloadFolder.Delete(true);
 	}
 }
 
