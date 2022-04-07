@@ -149,12 +149,12 @@ public class NugetPluginsFetcher : IDisposable
 			
 			// Add to the list of all packages.
 			availablePackages.Add(actualSourceDep);
-			_logger.LogDebug("Found package {PackageName} {PackageVersion}.", dependencyInfo.Id, dependencyInfo.Version);
+			_logger.LogTrace("Found package {PackageName} {PackageVersion}.", dependencyInfo.Id, dependencyInfo.Version);
  
 			// Recurse through each package.
 			foreach (PackageDependency? dependency in actualSourceDep.Dependencies)
 			{
-				_logger.LogDebug("Introspecting dependency {DependencyId} {DependencyVersion} for package {PackageId} {PackageVersion}",
+				_logger.LogTrace("Introspecting dependency {DependencyId} {DependencyVersion} for package {PackageId} {PackageVersion}",
 					dependency.Id, dependency.VersionRange, package.Id, package.Version);
 				
 				await GetPackageDependenciesAsync(new(dependency.Id, dependency.VersionRange.MinVersion), framework, repositories, hostDependencies, availablePackages, ct); 
@@ -277,28 +277,7 @@ public class NugetPluginsFetcher : IDisposable
 			}
 		}
 		
-		if (runtimeLib is not null)
-		{
-			return true;
-			
-			/*
-			// What version of the library is the host using?
-			NuGetVersion? parsedLibVersion = NuGetVersion.Parse(runtimeLib.Version);
- 
-			if (parsedLibVersion.IsPrerelease)
-			{
-				// Always use pre-release versions from the host, otherwise it becomes
-				// a nightmare to develop across multiple active versions.
-				return true;
-			}
-
-			// Does the host version satisfy the version range of the requested package?
-			// If so, we can provide it; otherwise, we cannot.
-			return dep.VersionRange.Satisfies(parsedLibVersion);
-			*/
-		}
- 
-		return false;
+		return runtimeLib is not null;
 	}
 	
 	private static async Task FlattenDownloadedPackageToDirectoryStructureAsync(DirectoryInfo downloadFolder, DirectoryInfo targetFolder, CancellationToken ct = default)
