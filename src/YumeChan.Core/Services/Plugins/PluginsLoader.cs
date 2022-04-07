@@ -78,11 +78,23 @@ internal class PluginsLoader
 		{
 			try
 			{
-				PluginAssemblies.Add(AssemblyLoadContext.Default.LoadFromAssemblyPath(file.FullName));
+				Assembly a = AssemblyLoadContext.Default.LoadFromAssemblyPath(file.FullName);
+
+				// Check if the assembly loads its types properly.
+				if (a.GetTypes().Any())
+				{
+					PluginAssemblies.Add(a);
+				}
 			}
+			// Catch any assemblies with dependency issues, or broken types.
+			catch (ReflectionTypeLoadException e) when (e.LoaderExceptions.Any(x => x.GetType() == typeof(FileNotFoundException)))
+			{
+				YumeCore.Instance.Logger.LogDebug("Assembly {FileName} is not suitable for loading, skipping it.", file.Name);
+			}
+			// Anything else is strange. Log it as a warning.
 			catch (Exception e)
 			{
-				YumeCore.Instance.Logger.LogWarning(e,"Failed to load assembly \"{File.Name}\".", file);
+				YumeCore.Instance.Logger.LogWarning(e,"Failed to load assembly \"{FileName}\".", file);
 			}
 		}
 	}
