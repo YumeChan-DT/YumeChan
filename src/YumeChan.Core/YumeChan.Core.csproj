@@ -31,6 +31,7 @@
 		<PackageReference Include="DSharpPlus.SlashCommands" Version="4.2.0-nightly-01107" />
 		<PackageReference Include="Microsoft.EntityFrameworkCore" Version="6.0.3" />
 		<PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="6.0.0" />
+		<PackageReference Include="Microsoft.Extensions.DependencyModel" Version="6.0.0" />
 		<PackageReference Include="Microsoft.Extensions.FileProviders.Physical" Version="6.0.0" />
 		<PackageReference Include="Microsoft.Extensions.Http" Version="6.0.0" />
 		<PackageReference Include="Microsoft.Extensions.Logging" Version="6.0.0" />

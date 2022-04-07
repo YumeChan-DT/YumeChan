@@ -9,6 +9,7 @@ using System.Reflection;
 using System.Runtime.Versioning;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Extensions.DependencyModel;
 using Microsoft.Extensions.Logging;
 using NuGet.Common;
 using NuGet.Configuration;
@@ -49,29 +50,25 @@ public class NugetPluginsFetcher : IDisposable
 	public async Task LoadPluginsAsync(CancellationToken ct = default)
 	{
 		ImmutableArray<SourceRepository> sourceRepositories = _sourceRepositoryProvider.GetRepositories().ToImmutableArray();
-		List<SourcePackageDependencyInfo> allPackages = new();
 
 		if (_pluginProperties is { EnabledPlugins.Count: > 0 })
 		{
+			string pluginsDirectory = _coreProperties.Path_Plugins;
+			ISettings? nugetSettings = Settings.LoadDefaultSettings(pluginsDirectory);
+			
 			foreach (string pluginName in _pluginProperties.EnabledPlugins)
 			{
-				PackageIdentity? packageIdentity = await GetPackageIdentityAsync(pluginName);
+				PackageIdentity? pluginPackageIdentity = await GetPackageIdentityAsync(pluginName);
 
-				if (packageIdentity is not null)
+				if (pluginPackageIdentity is not null)
 				{
-					await GetPackageDependenciesAsync(packageIdentity, _nugetFramework, sourceRepositories, allPackages, ct);
+					List<SourcePackageDependencyInfo> allPackages = new();
+					await GetPackageDependenciesAsync(pluginPackageIdentity, _nugetFramework, sourceRepositories, DependencyContext.Default, allPackages, ct);
+					await InstallPluginPackagesAsync(pluginPackageIdentity, GetPluginPackagesToInstall(pluginPackageIdentity, allPackages), pluginsDirectory, nugetSettings, ct);
 				}
 				
 				_logger.LogDebug("Loaded plugin {PluginName}.", pluginName);
 			}
-		
-			// Get packages to install
-			IEnumerable<(SourcePackageDependencyInfo, bool)> packagesToInstall = GetPackagesToInstall(_pluginProperties.EnabledPlugins, allPackages);
-
-			string pluginsDirectory = _coreProperties.Path_Plugins;
-			ISettings? nugetSettings = Settings.LoadDefaultSettings(pluginsDirectory);
-		
-			await InstallPackagesAsync(packagesToInstall, pluginsDirectory, nugetSettings, ct);
 		}
 	}
 
@@ -115,7 +112,7 @@ public class NugetPluginsFetcher : IDisposable
 	}
 
 	private async Task GetPackageDependenciesAsync(PackageIdentity package, NuGetFramework framework, ImmutableArray<SourceRepository> repositories,
-		ICollection<SourcePackageDependencyInfo> availablePackages, CancellationToken ct)
+		DependencyContext hostDependencies, ICollection<SourcePackageDependencyInfo> availablePackages, CancellationToken ct)
 	{
 		// Don't recurse over a package we've already seen.
 		if (availablePackages.Contains(package))
@@ -135,28 +132,40 @@ public class NugetPluginsFetcher : IDisposable
 				continue;
 			}
  
+			// Filter the dependency info.
+			// Don't bring in any dependencies that are provided by the host.
+			SourcePackageDependencyInfo actualSourceDep = new(
+				dependencyInfo.Id,
+				dependencyInfo.Version,
+				dependencyInfo.Dependencies.Where(dep => !DependencySuppliedByHost(hostDependencies, dep)),
+				dependencyInfo.Listed,
+				dependencyInfo.Source);
+ 
+			availablePackages.Add(actualSourceDep);
+			
 			// Add to the list of all packages.
-			availablePackages.Add(dependencyInfo);
+			availablePackages.Add(actualSourceDep);
 			_logger.LogDebug("Found package {PackageName} {PackageVersion}.", dependencyInfo.Id, dependencyInfo.Version);
  
 			// Recurse through each package.
-			foreach (PackageDependency? dependency in dependencyInfo.Dependencies)
+			foreach (PackageDependency? dependency in actualSourceDep.Dependencies)
 			{
 				_logger.LogDebug("Introspecting dependency {DependencyId} {DependencyVersion} for package {PackageId} {PackageVersion}",
 					dependency.Id, dependency.VersionRange, package.Id, package.Version);
 				
-				await GetPackageDependenciesAsync(new(dependency.Id, dependency.VersionRange.MinVersion), framework, repositories, availablePackages, ct); 
+				await GetPackageDependenciesAsync(new(dependency.Id, dependency.VersionRange.MinVersion), framework, repositories, hostDependencies, availablePackages, ct); 
 			}
  
 			break;
 		}
 	}
 
+	
 	private IEnumerable<(SourcePackageDependencyInfo, bool)> GetPackagesToInstall(IEnumerable<string> pluginNames, ICollection<SourcePackageDependencyInfo> allPackages)
 	{
 		// Create a package resolver context.
 		PackageResolverContext resolverContext = new(
-			DependencyBehavior.Lowest,
+			DependencyBehavior.Highest,
 			pluginNames,
 			Enumerable.Empty<string>(),
 			Enumerable.Empty<PackageReference>(),
@@ -173,13 +182,34 @@ public class NugetPluginsFetcher : IDisposable
 			.Select(p => (allPackages.Single(x => PackageIdentityComparer.Default.Equals(x, p)), pluginNames.Contains(p.Id)));
 	}
 
+	private IEnumerable<SourcePackageDependencyInfo> GetPluginPackagesToInstall(PackageIdentity pluginPackage, IEnumerable<SourcePackageDependencyInfo> allPackages)
+	{
+		// Create a package resolver context.
+		PackageResolverContext resolverContext = new(
+			DependencyBehavior.Highest,
+			new[] { pluginPackage.Id },
+			Enumerable.Empty<string>(),
+			Enumerable.Empty<PackageReference>(),
+			Enumerable.Empty<PackageIdentity>(),
+			allPackages,
+			_sourceRepositoryProvider.GetRepositories().Select(s => s.PackageSource),
+			NullLogger.Instance);
+		
+		// Create a package resolver.
+		PackageResolver resolver = new();
+		
+		// Resolve the packages and return the results.
+		return resolver.Resolve(resolverContext, CancellationToken.None)
+			.Select(p => allPackages.First(x => PackageIdentityComparer.Default.Equals(x, p)));
+	}
+
 	private async Task InstallPackagesAsync(IEnumerable<(SourcePackageDependencyInfo, bool)> packagesToInstall, string rootPackagesDirectory, ISettings nugetSettings, CancellationToken ct)
 	{
 		PackagePathResolver pluginPackagesPathResolver = new(rootPackagesDirectory);
 		PackagePathResolver dependenciesPathResolver = new(Path.Combine(rootPackagesDirectory, "dependencies"));
 		
 		PackageExtractionContext packageExtractionContext = new(
-			PackageSaveMode.Defaultv3,
+			PackageSaveMode.Files,
 			XmlDocFileSaveMode.Skip,
 			ClientPolicyContext.GetClientPolicy(nugetSettings, NullLogger.Instance), NullLogger.Instance);
 
@@ -197,10 +227,69 @@ public class NugetPluginsFetcher : IDisposable
 				packageExtractionContext, ct);
 		}
 	}
+
+	private async Task InstallPluginPackagesAsync(PackageIdentity plugin, IEnumerable<SourcePackageDependencyInfo> packages, string rootPluginsDirectory, ISettings nugetSettings, CancellationToken ct)
+	{
+		PluginDependenciesPathResolver pluginDependenciesPathResolver = new(rootPluginsDirectory, plugin.Id);
+		
+		PackageExtractionContext packageExtractionContext = new(
+			PackageSaveMode.Files,
+			XmlDocFileSaveMode.Skip,
+			ClientPolicyContext.GetClientPolicy(nugetSettings, NullLogger.Instance), 
+			NullLogger.Instance);
+
+		foreach (SourcePackageDependencyInfo package in packages)
+		{
+			DownloadResource? downloadResource = await package.Source.GetResourceAsync<DownloadResource>(ct);
+			
+			// Download the package (or fetch it from the cache).
+			DownloadResourceResult downloadResult = await downloadResource.GetDownloadResourceResultAsync(
+				package, new(_sourceCacheContext), SettingsUtility.GetGlobalPackagesFolder(nugetSettings), NullLogger.Instance, ct);
+			
+			// Extract the package into the target directory.
+			await PackageExtractor.ExtractPackageAsync(downloadResult.PackageSource, downloadResult.PackageStream, 
+				pluginDependenciesPathResolver,
+				packageExtractionContext, ct);
+		}
+	}
 	
 	public void Dispose()
 	{
 		_sourceCacheContext.Dispose();
 		GC.SuppressFinalize(this);
+	}
+	
+	private bool DependencySuppliedByHost(DependencyContext hostDependencies, PackageDependency dep)
+	{
+		// See if a runtime library with the same ID as the package is available in the host's runtime libraries.
+		RuntimeLibrary? runtimeLib = hostDependencies.RuntimeLibraries.FirstOrDefault(r => r.Name == dep.Id);
+ 
+		// If not, does it exist as a .dll file, in the host's runtime directory?
+		if (runtimeLib is null)
+		{
+			if (File.Exists(Path.Combine(Assembly.GetExecutingAssembly().Location, dep.Id + ".dll")))
+			{
+				return true;
+			}
+		}
+		
+		if (runtimeLib is not null)
+		{
+			// What version of the library is the host using?
+			NuGetVersion? parsedLibVersion = NuGetVersion.Parse(runtimeLib.Version);
+ 
+			if (parsedLibVersion.IsPrerelease)
+			{
+				// Always use pre-release versions from the host, otherwise it becomes
+				// a nightmare to develop across multiple active versions.
+				return true;
+			}
+
+			// Does the host version satisfy the version range of the requested package?
+			// If so, we can provide it; otherwise, we cannot.
+			return dep.VersionRange.Satisfies(parsedLibVersion);
+		}
+ 
+		return false;
 	}
 }
