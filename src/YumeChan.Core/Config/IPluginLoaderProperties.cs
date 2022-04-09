@@ -11,16 +11,19 @@ public interface IPluginLoaderProperties
 	/// Nuget settings to use for plugin installation.
 	/// </summary>
 	public INugetProperties Nuget { get; internal set; }
-	
+
 	/// <summary>
 	/// List of disabled plugins (we ignore these).
 	/// </summary>
 	public List<string> DisabledPlugins { get; internal set; }
 	
 	/// <summary>
-	/// List of enabled plugins (load or fetch these).
+	/// Dictionnary of enabled plugins (load or fetch these).
 	/// </summary>
-	public List<string> EnabledPlugins { get; internal set; }
+	/// <remarks>
+	/// Key is the plugin name, value is the version.
+	/// </remarks>
+	public Dictionary<string, string?> EnabledPlugins { get; internal set; }
 }
 
 /// <summary>

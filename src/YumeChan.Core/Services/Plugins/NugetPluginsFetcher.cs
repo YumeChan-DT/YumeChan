@@ -3,6 +3,7 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Reflection;
@@ -57,32 +58,50 @@ public class NugetPluginsFetcher : IDisposable
 		{
 			string pluginsDirectory = _coreProperties.Path_Plugins;
 			ISettings? nugetSettings = Settings.LoadDefaultSettings(pluginsDirectory);
-			
-			foreach (string pluginName in _pluginProperties.EnabledPlugins.AsParallel())
-			{
-				PackageIdentity? pluginPackageIdentity = await GetPackageIdentityAsync(pluginName);
 
-				if (pluginPackageIdentity is null)
+			await Parallel.ForEachAsync(_pluginProperties.EnabledPlugins, ct, async (plugin, ct) =>
 				{
-					continue;
-				}
+					// Get the package metadata for specified name and version (default to latest version)
+					PackageIdentity? pluginPackageIdentity = await GetPackageIdentityAsync(plugin.Key, plugin.Value) ?? await GetPackageIdentityAsync(plugin.Key);
 
-				// Check if the package isn't already fetched and installed locally
-				if (!File.Exists(Path.Combine(pluginsDirectory, pluginPackageIdentity.Id, $"{pluginPackageIdentity.Id}.dll" )))
-				{
-					List<SourcePackageDependencyInfo> allPackages = new();
-					await GetPackageDependenciesAsync(pluginPackageIdentity, _nugetFramework, sourceRepositories, DependencyContext.Default, allPackages, ct);
-					await InstallPluginPackagesAsync(pluginPackageIdentity, GetPluginPackagesToInstall(pluginPackageIdentity, allPackages), pluginsDirectory, nugetSettings, ct);
-				
-					FlattenDownloadedPackageToDirectoryStructure(new(Path.Combine(pluginsDirectory, pluginName, "dl")), new(Path.Combine(pluginsDirectory, pluginName)), ct);
+					if (pluginPackageIdentity is null)
+					{
+						_logger.LogWarning("Plugin {PluginKey} is not found in the NuGet repository.", plugin.Key);
 
-					_logger.LogDebug("Fetched plugin {PluginName} from NuGet.", pluginName);
+						return;
+					}
+
+					NuGetVersion? localPluginVersion = GetLocalPackageVersion(pluginsDirectory, pluginPackageIdentity.Id);
+					
+					// Is an update available?
+					bool shouldRefreshPackage = localPluginVersion != pluginPackageIdentity.Version;
+
+					if (shouldRefreshPackage && localPluginVersion is not null)
+					{
+						_logger.LogInformation("Versions have changed for plugin {PluginKey} (currently {PluginCurrentVersion}, expected {PluginExpectedVersion})", 
+							plugin.Key, localPluginVersion, pluginPackageIdentity.Version);
+
+						// Perform pre-update files cleanup.
+						DeletePluginPackage(pluginsDirectory, plugin.Key);
+					}
+
+					// Check if the package isn't already fetched and installed locally, or if the package is newer than the local version.
+					if (shouldRefreshPackage || !File.Exists(Path.Combine(pluginsDirectory, pluginPackageIdentity.Id, $"{pluginPackageIdentity.Id}.dll")))
+					{
+						List<SourcePackageDependencyInfo> allPackages = new();
+						await GetPackageDependenciesAsync(pluginPackageIdentity, _nugetFramework, sourceRepositories, DependencyContext.Default, allPackages, ct);
+						await InstallPluginPackagesAsync(pluginPackageIdentity, GetPluginPackagesToInstall(pluginPackageIdentity, allPackages), pluginsDirectory, nugetSettings, ct);
+
+						FlattenDownloadedPackageToDirectoryStructure(new(Path.Combine(pluginsDirectory, plugin.Key, "dl")), new(Path.Combine(pluginsDirectory, plugin.Key)), ct);
+
+						_logger.LogDebug("Fetched plugin {PluginName} v{PluginVersion} from NuGet.", pluginPackageIdentity.Id, pluginPackageIdentity.Version);
+					}
+					else
+					{
+						_logger.LogDebug("Plugin {PluginName} v{PluginVersion} is already present locally, ignoring NuGet fetch.", pluginPackageIdentity.Id, pluginPackageIdentity.Version);
+					}
 				}
-				else
-				{
-					_logger.LogDebug("Plugin {PluginName} is already present locally, ignoring NuGet fetch.", pluginName);
-				}
-			}
+			);
 		}
 	}
 
@@ -96,25 +115,11 @@ public class NugetPluginsFetcher : IDisposable
 			FindPackageByIdResource? findPackageResource = await repository.GetResourceAsync<FindPackageByIdResource>();
 			IEnumerable<NuGetVersion>? allVersions = await findPackageResource.GetAllVersionsAsync(packageName, _sourceCacheContext, NullLogger.Instance, CancellationToken.None);
 
-			NuGetVersion? selectedVersion;
+			// Find a corresponding package within the specified range, once parsed, or default to the latest version.
+			NuGetVersion? selectedVersion = version is not null && VersionRange.TryParse(version, out VersionRange? range) 
+				? range.FindBestMatch(allVersions.Where(v => allowPrerelease || !v.IsPrerelease))
+				: allVersions.LastOrDefault(v => v.IsPrerelease == allowPrerelease);
 
-			if (version is not null)
-			{
-				if (!VersionRange.TryParse(version, out VersionRange? range))
-				{
-					throw new InvalidOperationException($"Invalid version range provided for package {packageName}: {version}");
-				}
-				
-				// Find the best package version match for the range.
-				// Consider pre-release versions if pre-releases are allowed.
-				selectedVersion = range.FindBestMatch(allVersions.Where(v => allowPrerelease || !v.IsPrerelease));
-			}
-			else
-			{
-				// No version; choose the latest, allow pre-release if configured.
-				selectedVersion = allVersions.LastOrDefault(v => v.IsPrerelease == allowPrerelease);
-			}
-			
 			if (selectedVersion is not null)
 			{
 				return new(packageName, selectedVersion);
@@ -174,28 +179,6 @@ public class NugetPluginsFetcher : IDisposable
 		}
 	}
 
-	
-	private IEnumerable<(SourcePackageDependencyInfo, bool)> GetPackagesToInstall(IEnumerable<string> pluginNames, ICollection<SourcePackageDependencyInfo> allPackages)
-	{
-		// Create a package resolver context.
-		PackageResolverContext resolverContext = new(
-			DependencyBehavior.Highest,
-			pluginNames,
-			Enumerable.Empty<string>(),
-			Enumerable.Empty<PackageReference>(),
-			Enumerable.Empty<PackageIdentity>(),
-			allPackages,
-			_sourceRepositoryProvider.GetRepositories().Select(s => s.PackageSource),
-			NullLogger.Instance);
-		
-		// Create a package resolver.
-		PackageResolver resolver = new();
-		
-		// Resolve the packages and return the results.
-		return resolver.Resolve(resolverContext, CancellationToken.None)
-			.Select(p => (allPackages.Single(x => PackageIdentityComparer.Default.Equals(x, p)), pluginNames.Contains(p.Id)));
-	}
-
 	private IEnumerable<SourcePackageDependencyInfo> GetPluginPackagesToInstall(PackageIdentity pluginPackage, IEnumerable<SourcePackageDependencyInfo> allPackages)
 	{
 		// Create a package resolver context.
@@ -215,31 +198,6 @@ public class NugetPluginsFetcher : IDisposable
 		// Resolve the packages and return the results.
 		return resolver.Resolve(resolverContext, CancellationToken.None)
 			.Select(p => allPackages.First(x => PackageIdentityComparer.Default.Equals(x, p)));
-	}
-
-	private async Task InstallPackagesAsync(IEnumerable<(SourcePackageDependencyInfo, bool)> packagesToInstall, string rootPackagesDirectory, ISettings nugetSettings, CancellationToken ct)
-	{
-		PackagePathResolver pluginPackagesPathResolver = new(rootPackagesDirectory);
-		PackagePathResolver dependenciesPathResolver = new(Path.Combine(rootPackagesDirectory, "dependencies"));
-		
-		PackageExtractionContext packageExtractionContext = new(
-			PackageSaveMode.Files,
-			XmlDocFileSaveMode.Skip,
-			ClientPolicyContext.GetClientPolicy(nugetSettings, NullLogger.Instance), NullLogger.Instance);
-
-		foreach ((SourcePackageDependencyInfo package, bool isPlugin) in packagesToInstall)
-		{
-			DownloadResource? downloadResource = await package.Source.GetResourceAsync<DownloadResource>(ct);
-			
-			// Download the package (or fetch it from the cache).
-			DownloadResourceResult downloadResult = await downloadResource.GetDownloadResourceResultAsync(
-				package, new(_sourceCacheContext), SettingsUtility.GetGlobalPackagesFolder(nugetSettings), NullLogger.Instance, ct);
-			
-			// Extract the package into the target directory.
-			await PackageExtractor.ExtractPackageAsync(downloadResult.PackageSource, downloadResult.PackageStream, 
-				isPlugin ? pluginPackagesPathResolver : dependenciesPathResolver,
-				packageExtractionContext, ct);
-		}
 	}
 
 	private async Task InstallPluginPackagesAsync(PackageIdentity plugin, IEnumerable<SourcePackageDependencyInfo> packages, string rootPluginsDirectory, ISettings nugetSettings, CancellationToken ct)
@@ -316,6 +274,25 @@ public class NugetPluginsFetcher : IDisposable
 		// Delete the downloaded package (download folder).
 		downloadFolder.Delete(true);
 	}
+
+	private static void DeletePluginPackage(string pluginsDirectory, string packageName)
+	{
+		DirectoryInfo pluginPackageFolder = new(Path.Combine(pluginsDirectory, packageName));
+		
+		if (pluginPackageFolder.GetFiles("*.dll", SearchOption.AllDirectories).Length > 0)
+		{
+			pluginPackageFolder.Delete(true);
+		}
+	}
+	
+	/// <summary>
+	/// Returns the package version of the corresponding .dll file's FileVersion, if present in the plugin package folder.
+	/// </summary>
+	private static NuGetVersion? GetLocalPackageVersion(string pluginsDirectory, string packageName) 
+		=> new DirectoryInfo(Path.Combine(pluginsDirectory, packageName)).Exists 
+			&& FileVersionInfo.GetVersionInfo(Path.Combine(pluginsDirectory, packageName, $"{packageName}.dll")) is { } fileVersionInfo 
+				? new(fileVersionInfo.FileVersion) 
+				: null;
 }
 
 public static class NugetUtilities
