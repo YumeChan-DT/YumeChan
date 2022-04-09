@@ -7,7 +7,7 @@ using System.IO;
 using System.Text.Encodings.Web;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using System.Text.Unicode;
+using YumeChan.Core.Infrastructure.Json.Converters;
 using YumeChan.PluginBase;
 using YumeChan.PluginBase.Tools;
 
@@ -21,13 +21,15 @@ public class JsonConfigProvider<TPlugin> : IJsonConfigProvider<TPlugin> where TP
 	private readonly ILogger<JsonConfigProvider<TPlugin>> _logger;
 
 	private const string FileExtension = ".json";
-	
-	private static JsonSerializerOptions JsonSerializerOptions { get; } = new()
+
+	private static JsonSerializerOptions JsonSerializerOptions { get; } = new JsonSerializerOptions()
 	{
 		AllowTrailingCommas = true,
 		WriteIndented = true,
 		NumberHandling = JsonNumberHandling.AllowReadingFromString,
-		Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping
+		Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
+		ReadCommentHandling = JsonCommentHandling.Skip,
+		Converters = {  new JsonStringEnumConverter() }		
 	};
 
 	public JsonConfigProvider(ILoggerFactory loggerFactory)

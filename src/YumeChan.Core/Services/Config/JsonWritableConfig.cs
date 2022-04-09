@@ -30,12 +30,28 @@ internal class JsonWritableConfig : IWritableConfiguration
 	private readonly bool _autosave;
 	private JsonNode _jsonData;
 
+
+	/// <summary>
+	/// Public constructor, used to create or load a new configuration file.
+	/// </summary>
 	public JsonWritableConfig(FileInfo file, JsonSerializerOptions serializerOptions, ILogger<JsonWritableConfig> logger,
 		IChangeToken changeToken = null,
 		string prefix = null,
 		bool firstLoad = false,
 		bool autosave = true,
 		bool autoreload = true)
+		: this(file, serializerOptions, logger, changeToken, prefix, firstLoad, autosave, autoreload, null) { }
+	
+	/// <summary>
+	/// Private constructor, used in section loading and nested operations.
+	/// </summary>
+	private JsonWritableConfig(FileInfo file, JsonSerializerOptions serializerOptions, ILogger<JsonWritableConfig> logger,
+		IChangeToken changeToken = null,
+		string prefix = null,
+		bool firstLoad = false,
+		bool autosave = true,
+		bool autoreload = true,
+		JsonNode jsonData = null)
 	{
 		_file = file ?? throw new ArgumentNullException(nameof(file));
 		_logger = logger;
@@ -56,7 +72,7 @@ internal class JsonWritableConfig : IWritableConfiguration
 			_autosave = true;
 		}
 
-		if (!firstLoad)
+		if (jsonData is null && !firstLoad)
 		{
 			try
 			{
@@ -68,8 +84,8 @@ internal class JsonWritableConfig : IWritableConfiguration
 			}
 		}
 
-		// Fallback to creating a new dictionnary if _jsonData is null
-		_jsonData ??= new JsonObject();
+		// Fallback to creating a new dictionnary if _jsonData is null, and a null jsonData was provided.
+		_jsonData ??= jsonData ?? new JsonObject();
 	}
 
 	/// <inheritdoc />
@@ -154,7 +170,8 @@ internal class JsonWritableConfig : IWritableConfiguration
 		{
 			// Return the value if it's a primitive type
 			JsonArray when returnType.IsAssignableTo(typeof(IEnumerable)) => node,
-			JsonObject or JsonArray => new JsonWritableConfig(_file, _serializerOptions, _logger, _changeToken, path, false, _autosave, false),
+			JsonObject when returnType.IsAssignableTo(typeof(IDictionary)) => node,
+			JsonObject or JsonArray => new JsonWritableConfig(_file, _serializerOptions, _logger, _changeToken, path, false, _autosave, false, _jsonData),
 			_                       => node?.AsValue()
 		};
 
@@ -162,6 +179,7 @@ internal class JsonWritableConfig : IWritableConfiguration
 		{
 			JsonValue value => value.Deserialize(returnType, _serializerOptions),
 			JsonArray value => value.Deserialize(returnType, _serializerOptions),
+			JsonObject value => value.Deserialize(returnType, _serializerOptions),
 			JsonWritableConfig value => value,
 			null                     => null,
 			_                        => throw new JsonException($"Cannot cast value on key {path} to type {returnType.FullName}.")
@@ -205,10 +223,23 @@ internal class JsonWritableConfig : IWritableConfiguration
 			{
 				node[path.Split(':').Last()] = str;
 			}
-			// Special case made for enumerables
-			else if (value is System.Collections.IEnumerable enumerable)
+			// Special case for Dictionary types
+			else if (value is IDictionary dictionary)
 			{
-				JsonArray arr = new JsonArray();
+				JsonObject jsonObject = new();
+
+				foreach (DictionaryEntry entry in dictionary)
+				{
+					// I swear this is the only way to do this... Serialize the value to JSON, then deserialize it back to a JsonNode...
+					jsonObject[entry.Key.ToString()] = JsonNode.Parse(JsonSerializer.Serialize(entry.Value, _serializerOptions));
+				}
+
+				node[path.Split(':').Last()] = jsonObject;
+			}
+			// Special case made for enumerables
+			else if (value is IEnumerable enumerable)
+			{
+				JsonArray arr = new();
 
 				foreach (object item in enumerable)
 				{
@@ -280,6 +311,6 @@ internal class JsonWritableConfig : IWritableConfiguration
 
 		prefix = CurrentPrefix is not null ? $"{CurrentPrefix}:{prefix}" : prefix;
 
-		return new(_file, _serializerOptions, _logger, _changeToken, prefix, IsFirstLoad, _autosave, _autoreload);
+		return new(_file, _serializerOptions, _logger, _changeToken, prefix, IsFirstLoad, _autosave, _autoreload, _jsonData);
 	}
 }
