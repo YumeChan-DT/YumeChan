@@ -4,6 +4,7 @@ using System;
 using System.Threading.Tasks;
 using System.Linq;
 using System.Reflection;
+using NuGet.Packaging;
 using static DSharpPlus.Entities.DiscordEmbedBuilder;
 
 namespace YumeChan.Core
@@ -34,9 +35,17 @@ namespace YumeChan.Core
 		
 		public static IPluginLoaderProperties InitDefaults(this IPluginLoaderProperties properties)
 		{
-			properties.EnabledPlugins ??= new();
-			properties.DisabledPlugins ??= new();
-			properties.Nuget.PackageSources ??= new() { "https://api.nuget.org/v3/index.json" };
+			// Add default plugins if empty.
+			if (properties.EnabledPlugins.Count is 0)
+			{
+				properties.EnabledPlugins.Add("YumeChan.PluginBase", "*");
+			}
+
+			// ...Same for package sources.
+			if (properties.Nuget.PackageSources.Count is 0)
+			{
+				properties.Nuget.PackageSources.Add("https://api.nuget.org/v3/index.json");
+			}
 
 			return properties;
 		}

@@ -1,8 +1,4 @@
-﻿using System.Runtime.CompilerServices;
-
-
-[assembly: InternalsVisibleTo("DynamicProxyGenAssembly2")]
-namespace YumeChan.Core.Config;
+﻿namespace YumeChan.Core.Config;
 
 public interface ICoreProperties
 {
