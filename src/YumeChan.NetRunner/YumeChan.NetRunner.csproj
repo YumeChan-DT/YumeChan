@@ -32,6 +32,7 @@
 
 	<ItemGroup>
 		<ProjectReference Include="..\YumeChan.Core\YumeChan.Core.csproj" />
+		<ProjectReference Include="..\YumeChan.NetRunner.Plugins\YumeChan.NetRunner.Plugins.csproj" />
 	</ItemGroup>
 
 	<ItemGroup>
