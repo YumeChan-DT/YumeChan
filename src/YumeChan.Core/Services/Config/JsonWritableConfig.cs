@@ -22,13 +22,13 @@ internal class JsonWritableConfig : IWritableConfiguration
 
 	public bool IsFirstLoad { get; }
 
-	private readonly FileInfo _file;
+	internal readonly FileInfo _file;
 	private readonly ILogger<JsonWritableConfig> _logger;
 	private readonly bool _autoreload;
 	private readonly JsonSerializerOptions _serializerOptions;
 	private readonly IChangeToken _changeToken;
 	private readonly bool _autosave;
-	private JsonNode _jsonData;
+	internal JsonNode JsonData;
 
 
 	/// <summary>
@@ -85,7 +85,7 @@ internal class JsonWritableConfig : IWritableConfiguration
 		}
 
 		// Fallback to creating a new dictionnary if _jsonData is null, and a null jsonData was provided.
-		_jsonData ??= jsonData ?? new JsonObject();
+		JsonData ??= jsonData ?? new JsonObject();
 	}
 
 	/// <inheritdoc />
@@ -101,7 +101,7 @@ internal class JsonWritableConfig : IWritableConfiguration
 	public async Task LoadFromFileAsync()
 	{
 		await using FileStream stream = _file.OpenRead();
-		_jsonData = await JsonSerializer.DeserializeAsync<JsonNode>(stream, _serializerOptions);
+		JsonData = await JsonSerializer.DeserializeAsync<JsonNode>(stream, _serializerOptions);
 		_logger.LogDebug("Loaded config file {FileName}.", _file.FullName);
 	}
 
@@ -111,7 +111,7 @@ internal class JsonWritableConfig : IWritableConfiguration
 	public async Task SaveToFileAsync()
 	{
 		await using FileStream stream = _file.OpenWrite();
-		await JsonSerializer.SerializeAsync(stream, _jsonData, _serializerOptions);
+		await JsonSerializer.SerializeAsync(stream, JsonData, _serializerOptions);
 		_logger.LogDebug("Saved config file {FileName}.", _file.FullName);
 	}
 
@@ -134,7 +134,7 @@ internal class JsonWritableConfig : IWritableConfiguration
 		path = ParseRelativePath(path, CurrentPrefix);
 
 		// Introspect down the JSON tree
-		JsonNode node = _jsonData;
+		JsonNode node = JsonData;
 
 		foreach (string key in path.Split(':'))
 		{
@@ -169,10 +169,10 @@ internal class JsonWritableConfig : IWritableConfiguration
 		object returnValue = node switch
 		{
 			// Return the value if it's a primitive type
+			JsonObject when returnType.IsAssignableTo(typeof(IDictionary)) || returnType.GetGenericTypeDefinition() == typeof(IDictionary<,>) => node,
 			JsonArray when returnType.IsAssignableTo(typeof(IEnumerable)) => node,
-			JsonObject when returnType.IsAssignableTo(typeof(IDictionary)) => node,
-			JsonObject or JsonArray => new JsonWritableConfig(_file, _serializerOptions, _logger, _changeToken, path, false, _autosave, false, _jsonData),
-			_                       => node?.AsValue()
+			JsonObject or JsonArray => new JsonWritableConfig(_file, _serializerOptions, _logger, _changeToken, path, false, _autosave, false, JsonData),
+			_ => node?.AsValue()
 		};
 
 		return returnValue switch
@@ -200,7 +200,7 @@ internal class JsonWritableConfig : IWritableConfiguration
 		path = ParseRelativePath(path, CurrentPrefix);
 		
 		// Introspect down the JSON tree, until last node is reached
-		JsonNode node = _jsonData;
+		JsonNode node = JsonData;
 
 		foreach (string key in path.Split(':'))
 		{
@@ -209,7 +209,7 @@ internal class JsonWritableConfig : IWritableConfiguration
 				JsonObject obj when ((IDictionary<string, JsonNode>)obj).TryGetValue(key, out JsonNode jsonValue) => jsonValue,
 				JsonObject obj                                                                                    => obj[key] = new JsonObject(),
 				JsonArray arr                                                                                     => int.TryParse(key, out int index) && index >= 0 && index < arr.Count ? arr[index] : arr[index] = new JsonArray(),
-				_                                                                                                 => _jsonData[key] = new JsonObject()
+				_                                                                                                 => JsonData[key] = new JsonObject()
 			};
 		}
 
@@ -311,6 +311,6 @@ internal class JsonWritableConfig : IWritableConfiguration
 
 		prefix = CurrentPrefix is not null ? $"{CurrentPrefix}:{prefix}" : prefix;
 
-		return new(_file, _serializerOptions, _logger, _changeToken, prefix, IsFirstLoad, _autosave, _autoreload, _jsonData);
+		return new(_file, _serializerOptions, _logger, _changeToken, prefix, IsFirstLoad, _autosave, _autoreload, JsonData);
 	}
 }
