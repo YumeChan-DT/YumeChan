@@ -128,7 +128,7 @@ internal class JsonWritableConfig : IWritableConfiguration
 	/// </summary>
 	public T GetValue<T>(string path) => GetValue(path, typeof(T)) is T value ? value : default;
 
-	internal object GetValue(string path, Type returnType)
+	internal object GetValue(string path, Type returnType, bool returnRaw = false)
 	{
 		// Sanitize string, then get absolute JSON path relative to the current prefix
 		path = ParseRelativePath(path, CurrentPrefix);
@@ -168,8 +168,11 @@ internal class JsonWritableConfig : IWritableConfiguration
 
 		object returnValue = node switch
 		{
-			// Return the value if it's a primitive type
-			JsonObject when returnType.IsAssignableTo(typeof(IDictionary)) || returnType.GetGenericTypeDefinition() == typeof(IDictionary<,>) => node,
+			// If returnRaw is true, return the raw value.
+			_ when returnRaw => node.ToJsonString(_serializerOptions),
+			
+			// Return the value if it's a primitive type, or adapt it to the returnType.
+			JsonObject when returnType.IsAssignableTo(typeof(IDictionary)) || returnType.IsGenericType && returnType.GetGenericTypeDefinition() == typeof(IDictionary<,>) => node,
 			JsonArray when returnType.IsAssignableTo(typeof(IEnumerable)) => node,
 			JsonObject or JsonArray => new JsonWritableConfig(_file, _serializerOptions, _logger, _changeToken, path, false, _autosave, false, JsonData),
 			_ => node?.AsValue()
@@ -177,6 +180,10 @@ internal class JsonWritableConfig : IWritableConfiguration
 
 		return returnValue switch
 		{
+			// If returnRaw is true, return the raw value.
+			string s when returnRaw => s,
+			
+			// Otherwise, try to cast the value to the returnType.
 			JsonValue value => value.Deserialize(returnType, _serializerOptions),
 			JsonArray value => value.Deserialize(returnType, _serializerOptions),
 			JsonObject value => value.Deserialize(returnType, _serializerOptions),
