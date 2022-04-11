@@ -15,7 +15,7 @@ public interface IPluginLoaderProperties
 	/// <summary>
 	/// List of disabled plugins (we ignore these).
 	/// </summary>
-	public List<string> DisabledPlugins { get; internal set; }
+	public IList<string> DisabledPlugins { get; internal set; }
 	
 	/// <summary>
 	/// Dictionnary of enabled plugins (load or fetch these).
@@ -23,7 +23,7 @@ public interface IPluginLoaderProperties
 	/// <remarks>
 	/// Key is the plugin name, value is the version.
 	/// </remarks>
-	public Dictionary<string, string?> EnabledPlugins { get; internal set; }
+	public IDictionary<string, string?> EnabledPlugins { get; internal set; }
 }
 
 /// <summary>
@@ -34,10 +34,10 @@ public interface INugetProperties
 	/// <summary>
 	/// Package source feeds to use for plugin installation.
 	/// </summary>
-	public List<string> PackageSources { get; internal set; }
+	public IList<string> PackageSources { get; internal set; }
 	
 	/// <summary>
 	/// Packages to be excluded from fetching (dependency was already met, etc).
 	/// </summary>
-	public List<string> ExcludedPackages { get; internal set; }
+	public IList<string> ExcludedPackages { get; internal set; }
 }

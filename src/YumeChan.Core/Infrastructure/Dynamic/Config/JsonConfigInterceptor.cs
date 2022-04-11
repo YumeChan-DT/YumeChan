@@ -45,19 +45,53 @@ internal sealed class JsonConfigInterceptor : IInterceptor
 			{
 				// Getter
 				Type type = invocation.Method.ReturnType;
-			
-				// Assign values and Instantiate new proxies for nested interface properties
-				invocation.ReturnValue = type.IsInterface 
-					? InterfaceWritableConfigWrapper.CreateInstance(_config.GetSectionInternal(propertyName), type) 
-					: _config.GetValue(propertyName, type);
+
+				/*
+				 * Use an intercepting proxy to handle setting elements in Lists, Dictionaries, and all associated interfaces
+				 */
+				
+				// Lists
+				if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(IList<>))
+				{
+					
+					IList list = _config.GetValue(propertyName, type) as IList;
+						
+					// Instantiate a new DynamicJsonList to handle the list (use Activator.CreateInstance to avoid the need for a strongly-typed constructor)
+					invocation.ReturnValue = Activator.CreateInstance(typeof(DynamicJsonList<>).MakeGenericType(type.GetGenericArguments()[0]),
+						_config, propertyName, list);
+				}
+				// Dictionaries
+				else if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(IDictionary<,>))
+				{
+					
+					IDictionary dictionary = _config.GetValue(propertyName, type) as IDictionary;
+					
+					// Instantiate a new DynamicJsonDictionary to handle the list (use Activator.CreateInstance to avoid the need for a strongly-typed constructor)
+					invocation.ReturnValue = Activator.CreateInstance(typeof(DynamicJsonDictionary<,>).MakeGenericType(type.GetGenericArguments()), 
+						_config, propertyName, dictionary);
+				}
+				// Non-list, and non-dictionary. It will either be a nested interface or a primitive type.
+				else
+				{
+					
+					// Assign values and Instantiate new proxies for nested interface properties
+					invocation.ReturnValue = type.IsInterface 
+						? InterfaceWritableConfigWrapper.CreateInstance(_config.GetSectionInternal(propertyName), type) 
+						: _config.GetValue(propertyName, type);
+				}
 			}
 		}
-		catch (InvalidOperationException e)
+		catch (InvalidOperationException)
 		{
-			// If the property id not found, it may be an enumerator, so try to get the value as an enumerator.
+			// If the property is not found, it may be an enumerator, so try to get the value as an enumerator.
 			if (property == nameof(IEnumerable.GetEnumerator))
 			{
 				
+			}
+			// Otherwise, the property is not found.
+			else
+			{
+				throw;
 			}
 		}
 	}
