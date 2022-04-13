@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 using Microsoft.OpenApi.Models;
 using Swashbuckle.AspNetCore.SwaggerGen;
 using YumeChan.NetRunner.Plugins.Infrastructure.Api;
@@ -17,19 +18,24 @@ public static class ApiPluginDependencyExtensions
 		services.AddSingleton<IActionDescriptorChangeProvider>(PluginActionDescriptorChangeProvider.Instance);
 		services.AddSingleton(PluginActionDescriptorChangeProvider.Instance);
 
+		services.AddEndpointsApiExplorer();
+		
 		services.AddHostedService<ApiPluginLoader>();
 
 		return services;
 	}
 
-	public static IServiceCollection AddApiPluginsSwagger(this IServiceCollection services, Action<SwaggerGenOptions> swaggerOptions = null)
+	public static IServiceCollection AddApiPluginsSwagger(this IServiceCollection services, Action<SwaggerGenOptions>? swaggerOptions = null)
 	{
-		services.AddSingleton(new SwaggerEndpointEnumerator { Endpoints = { new() { Name = "YumeChan.NetRunner", Url = "/swagger/YumeChan.NetRunner/swagger.json" } } });
+		SwaggerDocumentEnumerator swaggerDocsEnumerator = new() { Documents = { { "YumeChan.NetRunner", new() { Title = "YumeChan.NetRunner" } } } };
 		
+		services.AddSingleton(new SwaggerEndpointEnumerator { Endpoints = { new() { Name = "YumeChan.NetRunner", Url = "/swagger/YumeChan.NetRunner/swagger.json" } } });
+		services.AddSingleton(swaggerDocsEnumerator);
+
 		return services.AddSwaggerGen(options =>
 			{
-				options.SwaggerDoc("YumeChan.NetRunner", new() { Title = "YumeChan.NetRunner" });
-				
+				options.SwaggerGeneratorOptions.SwaggerDocs = swaggerDocsEnumerator.Documents;
+
 				// Discord Authentication
 				options.AddSecurityDefinition("oauth2", new()
 					{
@@ -66,11 +72,8 @@ public static class ApiPluginDependencyExtensions
 				);
 
 				// Finally use the provided swagger options.
-				if (swaggerOptions is not null)
-				{
-					swaggerOptions(options);
-				}
-				
+				swaggerOptions?.Invoke(options);
+
 				options.DocumentFilter<PluginNamespaceDocumentFilter>();
 			}
 		);
@@ -79,16 +82,18 @@ public static class ApiPluginDependencyExtensions
 	public static IApplicationBuilder UseApiPluginsSwagger(this IApplicationBuilder app)
 	{
 		app.UseSwagger(options => options.RouteTemplate = "swagger/{documentName}/swagger.json");
+		
 		app.UseSwaggerUI(options =>
-		{
-			options.ConfigObject.Urls = app.ApplicationServices.GetRequiredService<SwaggerEndpointEnumerator>();
-			options.RoutePrefix = "swagger";
-		});
+			{
+				options.ConfigObject.Urls = app.ApplicationServices.GetRequiredService<SwaggerEndpointEnumerator>();
+				options.RoutePrefix = "swagger";
+			}
+		);
 
 		return app;
 	}
-	
-	
-	public static void ConfigurePluginNameRoutingToken(this MvcOptions options, string tokenName = "plugin") 
+
+
+	public static void ConfigurePluginNameRoutingToken(this MvcOptions options, string tokenName = "plugin")
 		=> options.Conventions.Add(new CustomRouteToken(tokenName, c => c.ControllerType.Namespace));
 }

@@ -38,5 +38,8 @@ public class PluginApiRoutingConvention : IControllerModelConvention
 		{
 			Template = $"/api/{pluginName}/[controller]"
 		};
+		
+		// Little bonus: Set the ApiExplorer settings (very useful for Swagger).
+		controller.ApiExplorer.GroupName = pluginName;
 	}
 }
