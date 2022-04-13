@@ -1,11 +1,16 @@
 ﻿using System.Reflection;
 using Microsoft.AspNetCore.Mvc.ApplicationParts;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.OpenApi.Models;
 using Swashbuckle.AspNetCore.Swagger;
 using Swashbuckle.AspNetCore.SwaggerGen;
+using Unity;
+using Unity.Microsoft.DependencyInjection;
 using YumeChan.Core;
 using YumeChan.Core.Services.Plugins;
 using YumeChan.NetRunner.Plugins.Infrastructure.Api;
+using YumeChan.NetRunner.Plugins.Infrastructure.Swagger;
 using YumeChan.PluginBase;
 
 namespace YumeChan.NetRunner.Plugins.Services;
@@ -18,19 +23,21 @@ public class ApiPluginLoader : IHostedService
 	private readonly ApplicationPartManager _appPartManager;
 	private readonly PluginActionDescriptorChangeProvider _descriptorChangeProvider;
 	private readonly PluginLifetimeListener _lifetimeListener;
+	private readonly SwaggerEndpointEnumerator _swaggerEndpointEnumerator;
 	private readonly ISwaggerProvider _swaggerProvider;
-	private readonly ISchemaGenerator _schemaGenerator;
+	private readonly IUnityContainer _container;
 
 	public ApiPluginLoader(ApplicationPartManager appPartManager, PluginActionDescriptorChangeProvider descriptorChangeProvider, PluginLifetimeListener lifetimeListener,
-		ISwaggerProvider swaggerProvider, ISchemaGenerator schemaGenerator)
+		SwaggerEndpointEnumerator swaggerEndpointEnumerator, ISwaggerProvider swaggerProvider, IUnityContainer container)
 	{
 		_appPartManager = appPartManager;
 		_descriptorChangeProvider = descriptorChangeProvider;
 		
 		// Hook up methods to listen for plugin lifetime events
 		_lifetimeListener = lifetimeListener;
+		_swaggerEndpointEnumerator = swaggerEndpointEnumerator;
 		_swaggerProvider = swaggerProvider;
-		_schemaGenerator = schemaGenerator;
+		_container = container;
 	}
 
 	/// <summary>
@@ -46,9 +53,20 @@ public class ApiPluginLoader : IHostedService
 		_descriptorChangeProvider.HasChanged = true;
 		_descriptorChangeProvider.TokenSource.Cancel();
 		
-		// Then generate the swagger documentation for the plugin
-
+		// Generate a new Swagger document for the plugin
+		ServiceCollection s = new();
 		
+		s.ConfigureSwaggerGen(o => o.SwaggerDoc(plugin.AssemblyName, new()
+		{
+			Title = plugin.AssemblyName, 
+			Description = plugin.DisplayName,
+			Version = plugin.Version
+		}));
+		
+		_container.AddServices(s);
+
+		// Add the document's URL to the Endpoint enumerator.
+		_swaggerEndpointEnumerator.Endpoints.Add(new() { Name = plugin.AssemblyName, Url = $"/swagger/{plugin.AssemblyName}/swagger.json" });
 	}
 	
 	/// <summary>
@@ -69,7 +87,7 @@ public class ApiPluginLoader : IHostedService
 		// Start by catching up on previously loaded plugins
 		foreach (IPlugin plugin in YumeCore.Instance.CommandHandler.Plugins)
 		{
-			_appPartManager.ApplicationParts.Add(new AssemblyPart(plugin.GetType().Assembly));
+			LoadApiPlugin(plugin);
 		}
 
 		// Notify the descriptor change provider that the plugins have been loaded.

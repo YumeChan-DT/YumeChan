@@ -99,12 +99,8 @@ public class Startup
 
 		
 		app.UseStaticFiles();
-		
-		app.UseSwagger(options => options.RouteTemplate = "swagger/{documentName}/swagger.json");
-		app.UseSwaggerUI(options =>
-		{
-			options.RoutePrefix = "swagger";
-		});
+
+		app.UseApiPluginsSwagger();
 
 		app.UseHttpsRedirection();
 		app.UseRouting();

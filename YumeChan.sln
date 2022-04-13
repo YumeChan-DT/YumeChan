@@ -16,7 +16,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "YumeChan.NetRunner", "src\Y
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "YumeChan.PluginBase", "src\YumeChan.PluginBase\YumeChan.PluginBase.csproj", "{BA3AB42C-6875-4F32-9476-89EB8432716C}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "YumeChan.NetRunner.Plugins", "src\YumeChan.Netrunner.Plugins\YumeChan.NetRunner.Plugins.csproj", "{ED8DDB07-7915-437F-9EBA-635EFA286161}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "YumeChan.NetRunner.Plugins", "src\YumeChan.NetRunner.Plugins\YumeChan.NetRunner.Plugins.csproj", "{ED8DDB07-7915-437F-9EBA-635EFA286161}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
