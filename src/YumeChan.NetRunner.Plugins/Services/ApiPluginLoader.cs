@@ -1,6 +1,8 @@
 ﻿using System.Reflection;
 using Microsoft.AspNetCore.Mvc.ApplicationParts;
 using Microsoft.Extensions.Hosting;
+using Swashbuckle.AspNetCore.Swagger;
+using Swashbuckle.AspNetCore.SwaggerGen;
 using YumeChan.Core;
 using YumeChan.Core.Services.Plugins;
 using YumeChan.NetRunner.Plugins.Infrastructure.Api;
@@ -16,21 +18,26 @@ public class ApiPluginLoader : IHostedService
 	private readonly ApplicationPartManager _appPartManager;
 	private readonly PluginActionDescriptorChangeProvider _descriptorChangeProvider;
 	private readonly PluginLifetimeListener _lifetimeListener;
+	private readonly ISwaggerProvider _swaggerProvider;
+	private readonly ISchemaGenerator _schemaGenerator;
 
-	public ApiPluginLoader(ApplicationPartManager appPartManager, PluginActionDescriptorChangeProvider descriptorChangeProvider, PluginLifetimeListener lifetimeListener)
+	public ApiPluginLoader(ApplicationPartManager appPartManager, PluginActionDescriptorChangeProvider descriptorChangeProvider, PluginLifetimeListener lifetimeListener,
+		ISwaggerProvider swaggerProvider, ISchemaGenerator schemaGenerator)
 	{
 		_appPartManager = appPartManager;
 		_descriptorChangeProvider = descriptorChangeProvider;
 		
 		// Hook up methods to listen for plugin lifetime events
 		_lifetimeListener = lifetimeListener;
+		_swaggerProvider = swaggerProvider;
+		_schemaGenerator = schemaGenerator;
 	}
 
 	/// <summary>
 	/// Loads the plugin's assembly as an MVC Application Part.
 	/// </summary>
 	/// <param name="plugin">The plugin to load assembly for.</param>
-	public virtual void LoadPluginApplicationPart(IPlugin plugin)
+	public virtual void LoadApiPlugin(IPlugin plugin)
 	{
 		Assembly assembly = plugin.GetType().Assembly;
 		_appPartManager.ApplicationParts.Add(new AssemblyPart(assembly));
@@ -38,13 +45,17 @@ public class ApiPluginLoader : IHostedService
 		// Notify the descriptor change provider that the plugin has been loaded.
 		_descriptorChangeProvider.HasChanged = true;
 		_descriptorChangeProvider.TokenSource.Cancel();
+		
+		// Then generate the swagger documentation for the plugin
+
+		
 	}
 	
 	/// <summary>
 	/// Unloads the plugin's assembly as an MVC Application Part.
 	/// </summary>
 	/// <param name="plugin">The plugin to unload assembly for.</param>
-	public virtual void UnloadPluginApplicationPart(IPlugin plugin)
+	public virtual void UnloadApiPlugin(IPlugin plugin)
 	{
 		_appPartManager.ApplicationParts.Remove(_appPartManager.ApplicationParts.First(part => part.Name == plugin.AssemblyName));
 		
@@ -66,13 +77,13 @@ public class ApiPluginLoader : IHostedService
 		_descriptorChangeProvider.TokenSource.Cancel();
 
 		// Okay! Time for work now ^^
-		_lifetimeListener.PluginLoaded += LoadPluginApplicationPart;
-		_lifetimeListener.PluginUnloaded += UnloadPluginApplicationPart;
+		_lifetimeListener.PluginLoaded += LoadApiPlugin;
+		_lifetimeListener.PluginUnloaded += UnloadApiPlugin;
 	}
 
 	public async Task StopAsync(CancellationToken cancellationToken)
 	{
-		_lifetimeListener.PluginLoaded -= LoadPluginApplicationPart;
-		_lifetimeListener.PluginUnloaded -= UnloadPluginApplicationPart;
+		_lifetimeListener.PluginLoaded -= LoadApiPlugin;
+		_lifetimeListener.PluginUnloaded -= UnloadApiPlugin;
 	}
 }

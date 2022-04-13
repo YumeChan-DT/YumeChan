@@ -10,6 +10,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Microsoft.OpenApi.Models;
 using YumeChan.NetRunner.Infrastructure.Blazor;
 using YumeChan.NetRunner.Plugins.Infrastructure;
 using YumeChan.NetRunner.Plugins.Infrastructure.Api;
@@ -38,7 +39,8 @@ public class Startup
 		);
 
 		services.AddApiPluginSupport();
-		
+		services.AddApiPluginsSwagger();
+
 		services.AddRazorPages();
 		services.AddServerSideBlazor();
 		services.AddHttpContextAccessor();
@@ -69,6 +71,8 @@ public class Startup
 			x.ClearProviders();
 		});
 
+		
+
 		services.AddSingleton<IComponentActivator, ComponentActivator>();
 		services.AddSingleton(YumeCore.Instance);
 
@@ -93,8 +97,16 @@ public class Startup
 			app.UseForwardedHeaders(new() { ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto });
 		}
 
-		app.UseHttpsRedirection();
+		
 		app.UseStaticFiles();
+		
+		app.UseSwagger(options => options.RouteTemplate = "swagger/{documentName}/swagger.json");
+		app.UseSwaggerUI(options =>
+		{
+			options.RoutePrefix = "swagger";
+		});
+
+		app.UseHttpsRedirection();
 		app.UseRouting();
 
 		app.UseAuthentication();
@@ -103,8 +115,6 @@ public class Startup
 		app.UseEndpoints(endpoints =>
 		{
 			endpoints.MapControllers();
-			endpoints.MapControllerRoute("api", "api/{controller}/{action}/{id?}");
-			endpoints.MapControllerRoute("api-plugins", "api/{plugin}/{controller}/{action}/{id?}");
 			endpoints.MapBlazorHub();
 			
 			endpoints.MapFallback("/api/{*path}", context =>
