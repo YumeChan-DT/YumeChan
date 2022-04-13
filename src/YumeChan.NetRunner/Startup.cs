@@ -1,3 +1,4 @@
+using System.Reflection;
 using AspNet.Security.OAuth.Discord;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
@@ -11,6 +12,8 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using YumeChan.NetRunner.Infrastructure.Blazor;
+using YumeChan.NetRunner.Plugins.Infrastructure;
+using YumeChan.NetRunner.Plugins.Infrastructure.Api;
 using YumeChan.NetRunner.Services.Authentication;
 
 namespace YumeChan.NetRunner;
@@ -28,6 +31,18 @@ public class Startup
 	// For more information on how to configure your application, visit https://go.microsoft.com/fwlink/?LinkID=398940
 	public void ConfigureServices(IServiceCollection services)
 	{
+		services.AddControllers(builder =>
+			{
+				// builder.Conventions.Add(new PluginApiRoutingConvention());
+			}
+		);
+
+		services.AddApiPluginSupport();
+		
+		services.AddRazorPages();
+		services.AddServerSideBlazor();
+		services.AddHttpContextAccessor();
+
 		services.AddAuthentication(options =>
 		{
 			options.DefaultScheme = CookieAuthenticationDefaults.AuthenticationScheme;
@@ -48,10 +63,6 @@ public class Startup
 			options.CorrelationCookie.SecurePolicy = CookieSecurePolicy.SameAsRequest;
 			options.CorrelationCookie.SameSite = SameSiteMode.Lax;
 		});
-
-		services.AddRazorPages();
-		services.AddServerSideBlazor();
-		services.AddHttpContextAccessor();
 
 		services.AddLogging(x =>
 		{
@@ -92,7 +103,15 @@ public class Startup
 		app.UseEndpoints(endpoints =>
 		{
 			endpoints.MapControllers();
+			endpoints.MapControllerRoute("api", "api/{controller}/{action}/{id?}");
+			endpoints.MapControllerRoute("api_plugins", "api/{plugin}/{controller}/{action}/{id?}");
 			endpoints.MapBlazorHub();
+			
+			endpoints.MapFallback("/api/{*path}", async context =>
+			{
+				await context.Response.WriteAsync("404");
+			});
+			
 			endpoints.MapFallbackToPage("/_Host");
 		});
 	}

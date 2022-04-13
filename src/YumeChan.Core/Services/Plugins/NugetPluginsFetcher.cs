@@ -50,7 +50,7 @@ public class NugetPluginsFetcher : IDisposable
 		_nugetFramework = NuGetFramework.ParseFrameworkName(typeof(YumeCore).Assembly.GetCustomAttributes<TargetFrameworkAttribute>().First().FrameworkName, DefaultFrameworkNameProvider.Instance);
 	}
 
-	public async Task LoadPluginsAsync(CancellationToken ct = default)
+	public async Task FetchPluginsAsync(CancellationToken ct = default)
 	{
 		ImmutableArray<SourceRepository> sourceRepositories = _sourceRepositoryProvider.GetRepositories().ToImmutableArray();
 

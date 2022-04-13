@@ -1,3 +1,4 @@
+using System.Threading;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -8,6 +9,7 @@ using Serilog.Extensions.Logging;
 using Unity;
 using Unity.Microsoft.DependencyInjection;
 using Unity.Microsoft.Logging;
+using YumeChan.NetRunner.Plugins.Services;
 
 namespace YumeChan.NetRunner;
 
@@ -30,7 +32,7 @@ public static class Program
 
 		YumeCore.Instance.Services = container;
 
-		await YumeCore.Instance.StartBotAsync();
+		await YumeCore.Instance.StartBotAsync().ConfigureAwait(false);
 		await host.RunAsync();
 	}
 	public static IHostBuilder CreateHostBuilder(string[] args)

@@ -41,23 +41,26 @@ public class CommandHandler
 
 	internal ICoreProperties Config { get; set; }
 
-	private readonly DiscordClient client;
-	private readonly IServiceProvider services;
-	private readonly IUnityContainer container;
+	private readonly DiscordClient _client;
+	private readonly IServiceProvider _services;
+	private readonly IUnityContainer _container;
 	private readonly NugetPluginsFetcher _pluginsFetcher;
-	private readonly ILogger logger;
-	private readonly PluginsLoader externalModulesLoader;
+	private readonly PluginLifetimeListener _pluginLifetimeListener;
+	private readonly ILogger _logger;
+	private readonly PluginsLoader _externalModulesLoader;
 
 
-	public CommandHandler(DiscordClient client, ILogger<CommandHandler> logger, IServiceProvider services, IUnityContainer container, NugetPluginsFetcher pluginsFetcher)
+	public CommandHandler(DiscordClient client, ILogger<CommandHandler> logger, IServiceProvider services, IUnityContainer container, NugetPluginsFetcher pluginsFetcher,
+		PluginLifetimeListener pluginLifetimeListener)
 	{
-		this.client = client;
-		this.services = services;
-		this.container = container;
+		_client = client;
+		_services = services;
+		_container = container;
 		_pluginsFetcher = pluginsFetcher;
-		this.logger = logger;
+		_pluginLifetimeListener = pluginLifetimeListener;
+		_logger = logger;
 
-		externalModulesLoader = new(string.Empty);
+		_externalModulesLoader = new(string.Empty);
 	}
 
 
@@ -65,7 +68,7 @@ public class CommandHandler
 	{
 		CommandsConfiguration ??= new()
 		{
-			Services = services,
+			Services = _services,
 			StringPrefixes = new[] { Config.CommandPrefix }
 		};
 
@@ -76,12 +79,12 @@ public class CommandHandler
 
 		SlashCommandsConfiguration ??= new()
 		{
-			Services = services
+			Services = _services
 		};
 
-		Commands = client.UseCommandsNext(CommandsConfiguration);
-		Interactivity = client.UseInteractivity(InteractivityConfiguration);
-		SlashCommands = client.UseSlashCommands(SlashCommandsConfiguration);
+		Commands = _client.UseCommandsNext(CommandsConfiguration);
+		Interactivity = _client.UseInteractivity(InteractivityConfiguration);
+		SlashCommands = _client.UseSlashCommands(SlashCommandsConfiguration);
 
 		Commands.CommandErrored += OnCommandErroredAsync;
 		Commands.CommandExecuted += OnCommandExecuted;
@@ -98,7 +101,7 @@ public class CommandHandler
 
 	private Task OnSlashCommandErroredAsync(SlashCommandsExtension _, SlashCommandErrorEventArgs e)
 	{
-		logger.LogError(e.Exception, "An error occured executing SlashCommand {cmd} :", e.Context.CommandName);
+		_logger.LogError(e.Exception, "An error occured executing SlashCommand {cmd} :", e.Context.CommandName);
 
 #if DEBUG
 		throw e.Exception;
@@ -117,21 +120,21 @@ public class CommandHandler
 
 	public async Task RegisterCommandsAsync()
 	{
-		logger.LogInformation("Using PluginBase v{Version}.", typeof(IPlugin).Assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion);
-		logger.LogInformation("Current Plugins directory: {PluginsDirectory}", externalModulesLoader.PluginsLoadDirectory);
+		_logger.LogInformation("Using PluginBase v{Version}.", typeof(IPlugin).Assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion);
+		_logger.LogInformation("Current Plugins directory: {PluginsDirectory}", _externalModulesLoader.PluginsLoadDirectory);
 
 		Plugins = new() { new Modules.InternalPlugin() }; // Add YumeCore internal commands
 
-		await _pluginsFetcher.LoadPluginsAsync();
-		externalModulesLoader.ScanDirectoryForPluginFiles();
-		externalModulesLoader.LoadPluginAssemblies();
+		await _pluginsFetcher.FetchPluginsAsync();
+		_externalModulesLoader.ScanDirectoryForPluginFiles();
+		_externalModulesLoader.LoadPluginAssemblies();
 
-		foreach (DependencyInjectionHandler handler in externalModulesLoader.LoadDependencyInjectionHandlers())
+		foreach (DependencyInjectionHandler handler in _externalModulesLoader.LoadDependencyInjectionHandlers())
 		{
-			container.AddServices(handler.ConfigureServices(new ServiceCollection()));
+			_container.AddServices(handler.ConfigureServices(new ServiceCollection()));
 		}
 
-		List<IPlugin> plugins = externalModulesLoader.LoadPluginManifests().ToList();
+		List<IPlugin> plugins = _externalModulesLoader.LoadPluginManifests().ToList();
 
 		// Scan for NetRunner plugins when YumeCore was loaded from a ConsoleRunner, and if DisallowNetRunnerPlugins is set to true in the config.
 		if (Assembly.GetEntryAssembly()?.GetName().Name == "YumeChan.ConsoleRunner" && YumeCore.Instance.CoreProperties.DisallowNetRunnerPlugins is true
@@ -165,11 +168,13 @@ public class CommandHandler
 				Commands.RegisterCommands(plugin.GetType().Assembly);
 
 				SlashCommands.RegisterCommands(plugin.GetType().Assembly, slashCommandsGuild);
-				logger.LogInformation("Loaded Plugin '{Plugin}'.", plugin.AssemblyName);
+				_logger.LogInformation("Loaded Plugin '{Plugin}'.", plugin.AssemblyName);
+				
+				_pluginLifetimeListener.NotifyPluginLoaded(plugin);
 			}
 			catch (Exception e)
 			{
-				logger.LogError(e, "An error occured while loading plugin {PluginName}", plugin.AssemblyName);
+				_logger.LogError(e, "An error occured while loading plugin {PluginName}", plugin.AssemblyName);
 
 				try
 				{
@@ -199,7 +204,9 @@ public class CommandHandler
 			await plugin.UnloadAsync();
 			Plugins.Remove(plugin);
 
-			logger.LogInformation("Removed Plugin '{Plugin}'.", plugin.AssemblyName);
+			_logger.LogInformation("Removed Plugin '{Plugin}'.", plugin.AssemblyName);
+			
+			_pluginLifetimeListener.NotifyPluginUnloaded(plugin);
 		}
 	}
 
@@ -244,7 +251,7 @@ public class CommandHandler
 #endif
 
 			await e.Context.RespondAsync(response);
-			logger.LogError("An error occured executing '{command}' from user '{user}' : \n{exception}", e.Command.QualifiedName, e.Context.User.Id, e.Exception);
+			_logger.LogError("An error occured executing '{command}' from user '{user}' : \n{exception}", e.Command.QualifiedName, e.Context.User.Id, e.Exception);
 		}		
 	}
 
@@ -269,7 +276,7 @@ public class CommandHandler
 
 	public Task OnCommandExecuted(CommandsNextExtension sender, CommandExecutionEventArgs e)
 	{
-		logger.LogDebug("Command '{command}' received from User '{user}'.", e.Command.QualifiedName, e.Context.User.Id);
+		_logger.LogDebug("Command '{command}' received from User '{user}'.", e.Command.QualifiedName, e.Context.User.Id);
 		return Task.CompletedTask;
 	}
 
