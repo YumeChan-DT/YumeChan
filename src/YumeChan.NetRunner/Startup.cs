@@ -1,4 +1,3 @@
-using System.Reflection;
 using AspNet.Security.OAuth.Discord;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
@@ -33,7 +32,8 @@ public class Startup
 	{
 		services.AddControllers(builder =>
 			{
-				// builder.Conventions.Add(new PluginApiRoutingConvention());
+				builder.ConfigurePluginNameRoutingToken();
+				builder.Conventions.Add(new PluginApiRoutingConvention());
 			}
 		);
 
@@ -104,12 +104,13 @@ public class Startup
 		{
 			endpoints.MapControllers();
 			endpoints.MapControllerRoute("api", "api/{controller}/{action}/{id?}");
-			endpoints.MapControllerRoute("api_plugins", "api/{plugin}/{controller}/{action}/{id?}");
+			endpoints.MapControllerRoute("api-plugins", "api/{plugin}/{controller}/{action}/{id?}");
 			endpoints.MapBlazorHub();
 			
-			endpoints.MapFallback("/api/{*path}", async context =>
+			endpoints.MapFallback("/api/{*path}", context =>
 			{
-				await context.Response.WriteAsync("404");
+				context.Response.StatusCode = StatusCodes.Status404NotFound;
+				return Task.CompletedTask;
 			});
 			
 			endpoints.MapFallbackToPage("/_Host");
