@@ -17,7 +17,8 @@ public class PluginNamespaceDocumentFilter : IDocumentFilter
 	/// <param name="context">The current operation filter context.</param>
 	public void Apply(OpenApiDocument swaggerDoc, DocumentFilterContext context)
 	{
-		foreach (KeyValuePair<string, OpenApiPathItem> route in swaggerDoc.Paths.Where(p => !p.Key.StartsWith($"/api/{swaggerDoc.Info.Title}/")))
+		foreach (KeyValuePair<string, OpenApiPathItem> route in swaggerDoc.Paths
+					.Where(p => !p.Key.StartsWith($"/api/{swaggerDoc.Info.Title}/")))
 		{
 			swaggerDoc.Paths.Remove(route.Key);
 		}

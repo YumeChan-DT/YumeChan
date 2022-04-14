@@ -15,31 +15,30 @@ public class PluginApiRoutingConvention : IControllerModelConvention
 	/// </summary>
 	public void Apply(ControllerModel controller)
 	{
+		// Get the plugin name from the controller assembly name.
+		// HACK: This is an unorthodox way of getting the plugin's InternalName, as it assumes the assembly name is the same as the plugin's InternalName.
 		string? assemblyName = controller.ControllerType.Assembly.GetName().Name;
 		
-		// Bypass the convention if :
-		//   - for some reason the assembly name is null.
-		//   - the controller is from the YumeChan.NetRunner or YumeChan.Core assemblies (or derivative namespaces).
-		//   - the controller does not have the ApiController attribute.
-		if (assemblyName is null 
-			|| assemblyName.StartsWith("YumeChan.NetRunner") 
-			|| assemblyName.StartsWith("YumeChan.Core")
-			|| !controller.ControllerType.IsDefined(typeof(ApiControllerAttribute)))
+		// If the assembly name is not found, return.
+		if (assemblyName is null)
 		{
 			return;
 		}
 
-		// Get the plugin name from the controller assembly name.
-		// HACK: This is an unorthodox way of getting the plugin's InternalName, as it assumes the assembly name is the same as the plugin's InternalName.
-		string? pluginName = controller.ControllerType.Assembly.GetName().Name;
-		
-		// Set the route templates.
-		controller.Selectors[0].AttributeRouteModel = new()
+		// Bypass the convention if :
+		//   - the controller is from the YumeChan.NetRunner or YumeChan.Core assemblies (or derivative namespaces).
+		//   - the controller does not have the ApiController attribute.
+		if (!assemblyName.StartsWith("YumeChan.NetRunner") && !assemblyName.StartsWith("YumeChan.Core") 
+			&& controller.ControllerType.IsDefined(typeof(ApiControllerAttribute)))
 		{
-			Template = $"/api/{pluginName}/[controller]"
-		};
-		
+			// Set the route templates.
+			controller.Selectors[0].AttributeRouteModel = new()
+			{
+				Template = $"/api/{assemblyName}/[controller]"
+			};
+		}
+
 		// Little bonus: Set the ApiExplorer settings (very useful for Swagger).
-		controller.ApiExplorer.GroupName = pluginName;
+		controller.ApiExplorer.GroupName = assemblyName;
 	}
 }

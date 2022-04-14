@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Builder;
+﻿using System.Reflection;
+using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.Extensions.DependencyInjection;
@@ -27,6 +28,9 @@ public static class ApiPluginDependencyExtensions
 
 	public static IServiceCollection AddApiPluginsSwagger(this IServiceCollection services, Action<SwaggerGenOptions>? swaggerOptions = null)
 	{
+		SwaggerGeneratorOptions swaggerGeneratorOptions = new();
+		services.AddSingleton(swaggerGeneratorOptions);
+		
 		SwaggerDocumentEnumerator swaggerDocsEnumerator = new() { Documents = { { "YumeChan.NetRunner", new() { Title = "YumeChan.NetRunner" } } } };
 		
 		services.AddSingleton(new SwaggerEndpointEnumerator { Endpoints = { new() { Name = "YumeChan.NetRunner", Url = "/swagger/YumeChan.NetRunner/swagger.json" } } });
@@ -34,6 +38,8 @@ public static class ApiPluginDependencyExtensions
 
 		return services.AddSwaggerGen(options =>
 			{
+				options.SwaggerGeneratorOptions = swaggerGeneratorOptions;
+				
 				options.SwaggerGeneratorOptions.SwaggerDocs = swaggerDocsEnumerator.Documents;
 
 				// Discord Authentication
@@ -75,6 +81,8 @@ public static class ApiPluginDependencyExtensions
 				swaggerOptions?.Invoke(options);
 
 				options.DocumentFilter<PluginNamespaceDocumentFilter>();
+
+				options.TryIncludeXmlCommentsFromAssembly(Assembly.GetEntryAssembly()!);
 			}
 		);
 	}
@@ -96,4 +104,18 @@ public static class ApiPluginDependencyExtensions
 
 	public static void ConfigurePluginNameRoutingToken(this MvcOptions options, string tokenName = "plugin")
 		=> options.Conventions.Add(new CustomRouteToken(tokenName, c => c.ControllerType.Namespace));
+
+
+	public static bool TryIncludeXmlCommentsFromAssembly(this SwaggerGenOptions options, Assembly assembly)
+	{
+		string filePath = assembly.Location.Replace(".dll", ".xml", StringComparison.OrdinalIgnoreCase);
+		
+		if (File.Exists(filePath))
+		{
+			options.IncludeXmlComments(filePath, true);
+			return true;
+		}
+
+		return false;
+	}
 }

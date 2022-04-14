@@ -1,8 +1,12 @@
 ﻿using System.Reflection;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ApplicationParts;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Options;
+using Swashbuckle.AspNetCore.SwaggerGen;
 using YumeChan.Core;
 using YumeChan.Core.Services.Plugins;
+using YumeChan.NetRunner.Plugins.Infrastructure;
 using YumeChan.NetRunner.Plugins.Infrastructure.Api;
 using YumeChan.NetRunner.Plugins.Infrastructure.Swagger;
 using YumeChan.PluginBase;
@@ -19,15 +23,21 @@ public class ApiPluginLoader : IHostedService
 	private readonly PluginLifetimeListener _lifetimeListener;
 	private readonly SwaggerEndpointEnumerator _swaggerEndpointEnumerator;
 	private readonly SwaggerDocumentEnumerator _swaggerDocumentEnumerator;
+	private readonly IOptions<SwaggerGenOptions> _swaggerGenOptions;
+	private readonly SwaggerGeneratorOptions _swaggerGeneratorOptions;
 
 	public ApiPluginLoader(ApplicationPartManager appPartManager, PluginActionDescriptorChangeProvider descriptorChangeProvider, PluginLifetimeListener lifetimeListener,
-		SwaggerEndpointEnumerator swaggerEndpointEnumerator, SwaggerDocumentEnumerator swaggerDocumentEnumerator)
+		SwaggerEndpointEnumerator swaggerEndpointEnumerator, SwaggerDocumentEnumerator swaggerDocumentEnumerator, IOptions<SwaggerGenOptions> swaggerGenOptions,
+		SwaggerGeneratorOptions swaggerGeneratorOptions)
 	{
 		_appPartManager = appPartManager;
 		_descriptorChangeProvider = descriptorChangeProvider;
 		_lifetimeListener = lifetimeListener;
 		_swaggerEndpointEnumerator = swaggerEndpointEnumerator;
 		_swaggerDocumentEnumerator = swaggerDocumentEnumerator;
+		_swaggerGenOptions = swaggerGenOptions;
+		_swaggerGeneratorOptions = swaggerGeneratorOptions;
+		_swaggerGenOptions.Value.SwaggerGeneratorOptions = swaggerGeneratorOptions;
 	}
 
 	/// <summary>
@@ -38,24 +48,33 @@ public class ApiPluginLoader : IHostedService
 	{
 		Type type = plugin.GetType();
 		Assembly assembly = type.Assembly;
-		_appPartManager.ApplicationParts.Add(new AssemblyPart(assembly));
 
-		// Notify the descriptor change provider that the plugin has been loaded.
-		_descriptorChangeProvider.HasChanged = true;
-		_descriptorChangeProvider.TokenSource.Cancel();
+		// First, let's make sure that our plugin's assembly actually defines any API controllers/endponts.
+		if (assembly.ExportedTypes.Any(t => t.IsAssignableTo(typeof(ControllerBase))))
+		{
+			_appPartManager.ApplicationParts.Add(new AssemblyPart(assembly));
 
-		// FIXME: Generate a new Swagger document for the plugin
-		_swaggerDocumentEnumerator.Documents.Add(plugin.AssemblyName, new()
-			{
-				Title = plugin.AssemblyName,
-				Description = plugin.DisplayName,
-				Version = plugin.Version
-			}
-		);
+			// Notify the descriptor change provider that the plugin has been loaded.
+			_descriptorChangeProvider.HasChanged = true;
+			_descriptorChangeProvider.TokenSource.Cancel();
 
+			// Generate a new Swagger document for the plugin
+			_swaggerDocumentEnumerator.Documents.Add(plugin.AssemblyName, new()
+				{
+					Title = plugin.AssemblyName,
+					Description = plugin.DisplayName,
+					Version = plugin.Version
+				}
+			);
 
-		// Add the document's URL to the Endpoint enumerator.
-		_swaggerEndpointEnumerator.Endpoints.Add(new() { Name = plugin.AssemblyName, Url = $"/swagger/{plugin.AssemblyName}/swagger.json" });
+			// Attach XML documentation from controllers to the Swagger document
+			_swaggerGenOptions.Value.TryIncludeXmlCommentsFromAssembly(assembly);
+			
+
+			// Add the document's URL to the Endpoint enumerator.
+			_swaggerEndpointEnumerator.Endpoints.Add(new() { Name = plugin.AssemblyName, Url = $"/swagger/{plugin.AssemblyName}/swagger.json" });
+		}
+		
 	}
 
 	/// <summary>

@@ -13,6 +13,11 @@
 		<UserSecretsId>b88ac92e-bd47-4a1a-af10-b5272f68479d</UserSecretsId>
 	</PropertyGroup>
 
+	<PropertyGroup>
+		<GenerateDocumentationFile>true</GenerateDocumentationFile>
+		<NoWarn>$(NoWarn);1591</NoWarn>
+	</PropertyGroup>
+	
 	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
 		<OutDir>$(SolutionDir)build</OutDir>
 	</PropertyGroup>
@@ -28,6 +33,14 @@
 		<EmbeddedResource Remove="Data\**" />
 		<None Remove="build\**" />
 		<None Remove="Data\**" />
+		<Compile Remove="Plugins\**" />
+		<EmbeddedResource Remove="Plugins\**" />
+		<None Remove="Plugins\**" />
+		<Content Remove="Plugins\**" />
+		<Compile Remove="Config\**" />
+		<EmbeddedResource Remove="Config\**" />
+		<None Remove="Config\**" />
+		<Content Remove="Config\**" />
 	</ItemGroup>
 
 	<ItemGroup>
@@ -63,5 +76,12 @@
 	  <Content Update="appsettings.Production.json">
 	    <CopyToOutputDirectory>Never</CopyToOutputDirectory>
 	  </Content>
+	</ItemGroup>
+
+	<ItemGroup>
+	  <_ContentIncludedByDefault Remove="Config\coreconfig.json" />
+	  <_ContentIncludedByDefault Remove="Config\plugins.json" />
+	  <_ContentIncludedByDefault Remove="Config\SocialGuard.YC\api.json" />
+	  <_ContentIncludedByDefault Remove="Config\YumeChan.DreamJockey\global-config.json" />
 	</ItemGroup>
 </Project>
