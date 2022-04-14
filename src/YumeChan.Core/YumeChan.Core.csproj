@@ -24,19 +24,19 @@
 
 	<ItemGroup>
 		<PackageReference Include="Castle.Core" Version="4.4.1" />
-		<PackageReference Include="DSharpPlus" Version="4.2.0-nightly-01107" />
-		<PackageReference Include="DSharpPlus.CommandsNext" Version="4.2.0-nightly-01107" />
-		<PackageReference Include="DSharpPlus.Interactivity" Version="4.2.0-nightly-01107" />
-		<PackageReference Include="DSharpPlus.Lavalink" Version="4.2.0-nightly-01107" />
-		<PackageReference Include="DSharpPlus.SlashCommands" Version="4.2.0-nightly-01107" />
-		<PackageReference Include="Microsoft.EntityFrameworkCore" Version="6.0.3" />
+		<PackageReference Include="DSharpPlus" Version="4.2.0-nightly-01111" />
+		<PackageReference Include="DSharpPlus.CommandsNext" Version="4.2.0-nightly-01111" />
+		<PackageReference Include="DSharpPlus.Interactivity" Version="4.2.0-nightly-01111" />
+		<PackageReference Include="DSharpPlus.Lavalink" Version="4.2.0-nightly-01111" />
+		<PackageReference Include="DSharpPlus.SlashCommands" Version="4.2.0-nightly-01111" />
+		<PackageReference Include="Microsoft.EntityFrameworkCore" Version="6.0.*" />
 		<PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="6.0.0" />
 		<PackageReference Include="Microsoft.Extensions.DependencyModel" Version="6.0.0" />
 		<PackageReference Include="Microsoft.Extensions.FileProviders.Physical" Version="6.0.0" />
 		<PackageReference Include="Microsoft.Extensions.Http" Version="6.0.0" />
 		<PackageReference Include="Microsoft.Extensions.Logging" Version="6.0.0" />
 		<PackageReference Include="MongoDB.Driver" Version="2.15.0" />
-		<PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="6.0.3" />
+		<PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="6.0.*" />
 		<PackageReference Include="NuGet.Configuration" Version="6.1.0" />
 		<PackageReference Include="NuGet.Protocol" Version="6.1.0" />
 		<PackageReference Include="NuGet.Resolver" Version="6.1.0" />

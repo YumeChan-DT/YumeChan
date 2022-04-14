@@ -188,8 +188,8 @@ internal class JsonWritableConfig : IWritableConfiguration
 			JsonArray value => value.Deserialize(returnType, _serializerOptions),
 			JsonObject value => value.Deserialize(returnType, _serializerOptions),
 			JsonWritableConfig value => value,
-			null                     => null,
-			_                        => throw new JsonException($"Cannot cast value on key {path} to type {returnType.FullName}.")
+			null => null,
+			_ => throw new JsonException($"Cannot cast value on key {path} to type {returnType.FullName}.")
 		};
 	}
 

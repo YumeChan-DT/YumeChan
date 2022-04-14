@@ -60,6 +60,8 @@ namespace YumeChan.Core
 				), FactoryLifetime.Singleton
 			)
 			
+			.RegisterInstance(PluginLifetimeListener.Instance)
+			
 			.RegisterSingleton<CommandHandler>()
 			.RegisterSingleton<LavalinkHandler>()
 			.RegisterSingleton<NugetPluginsFetcher>()
