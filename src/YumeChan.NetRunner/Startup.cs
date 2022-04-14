@@ -10,7 +10,10 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Microsoft.OpenApi.Models;
 using YumeChan.NetRunner.Infrastructure.Blazor;
+using YumeChan.NetRunner.Plugins.Infrastructure;
+using YumeChan.NetRunner.Plugins.Infrastructure.Api;
 using YumeChan.NetRunner.Services.Authentication;
 
 namespace YumeChan.NetRunner;
@@ -28,6 +31,20 @@ public class Startup
 	// For more information on how to configure your application, visit https://go.microsoft.com/fwlink/?LinkID=398940
 	public void ConfigureServices(IServiceCollection services)
 	{
+		services.AddControllers(builder =>
+			{
+				builder.ConfigurePluginNameRoutingToken();
+				builder.Conventions.Add(new PluginApiRoutingConvention());
+			}
+		);
+
+		services.AddApiPluginSupport();
+		services.AddApiPluginsSwagger();
+
+		services.AddRazorPages();
+		services.AddServerSideBlazor();
+		services.AddHttpContextAccessor();
+
 		services.AddAuthentication(options =>
 		{
 			options.DefaultScheme = CookieAuthenticationDefaults.AuthenticationScheme;
@@ -49,14 +66,12 @@ public class Startup
 			options.CorrelationCookie.SameSite = SameSiteMode.Lax;
 		});
 
-		services.AddRazorPages();
-		services.AddServerSideBlazor();
-		services.AddHttpContextAccessor();
-
 		services.AddLogging(x =>
 		{
 			x.ClearProviders();
 		});
+
+		
 
 		services.AddSingleton<IComponentActivator, ComponentActivator>();
 		services.AddSingleton(YumeCore.Instance);
@@ -82,8 +97,12 @@ public class Startup
 			app.UseForwardedHeaders(new() { ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto });
 		}
 
-		app.UseHttpsRedirection();
+		
 		app.UseStaticFiles();
+
+		app.UseApiPluginsSwagger();
+
+		app.UseHttpsRedirection();
 		app.UseRouting();
 
 		app.UseAuthentication();
@@ -93,6 +112,13 @@ public class Startup
 		{
 			endpoints.MapControllers();
 			endpoints.MapBlazorHub();
+			
+			endpoints.MapFallback("/api/{*path}", context =>
+			{
+				context.Response.StatusCode = StatusCodes.Status404NotFound;
+				return Task.CompletedTask;
+			});
+			
 			endpoints.MapFallbackToPage("/_Host");
 		});
 	}
