@@ -172,7 +172,7 @@ public class NestedPluginRouter : IComponent, IHandleAfterRender, IDisposable
         _routeTableLastBuiltForRouteKey = default;
     }
 
-    internal virtual void Refresh(bool isNavigationIntercepted, string routePath)
+    internal virtual void Refresh(bool isNavigationIntercepted, string? routePath)
     {
         // If an `OnNavigateAsync` task is currently in progress, then wait
         // for it to complete before rendering. Note: because _previousOnNavigateTask
@@ -180,7 +180,7 @@ public class NestedPluginRouter : IComponent, IHandleAfterRender, IDisposable
         // allow first-render to complete successfully.
         if (_previousOnNavigateTask.Status != TaskStatus.RanToCompletion)
         {
-            if (Navigating != null)
+            if (Navigating is not null)
             {
                 _renderHandle.Render(Navigating);
             }
@@ -189,7 +189,7 @@ public class NestedPluginRouter : IComponent, IHandleAfterRender, IDisposable
 
         RouteContext? context = null;
         
-        if (Plugin is not null)
+        if (Plugin is not null && routePath is not null)
         {
             RefreshRouteTable();
         

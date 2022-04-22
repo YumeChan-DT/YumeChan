@@ -1,5 +1,4 @@
 ﻿@using YumeChan.NetRunner.Plugins.Infrastructure.Blazor.Router
-@using YumeChan.Core.Services.Plugins
 
 @inject CommandHandler CommandHandler;
 
@@ -8,16 +7,21 @@
 
 <NestedPluginRouter Plugin="CommandHandler.Plugins.FirstOrDefault(p => p.AssemblyName == PluginName)" RoutePath=@PathSlug>
     <Found Context="routeData">
-        <base href=@($"/p/{PluginName}/") />
-        
-        <CascadingValue Name="baseUri" Value=@($"/p/{PluginName}")>
-            <AuthorizeRouteView RouteData="routeData" />
-        </CascadingValue>
+        <base href="/p/@PluginName/" />
+        <AuthorizeRouteView RouteData="routeData" />
     </Found>
     
     <NotFound>
         <CascadingAuthenticationState>
-            <p>Sorry, there's nothing at this address.</p>
+            @if (PathSlug is null)
+            {
+                @* This means we've hit the root of the plugin, yet no homepage for the plugin exists. *@
+                <h5>Hmm... Seems like @PluginName has no plugin homepage.</h5>
+            }
+            else
+            {
+                <p>Sorry, there's nothing at this address.</p>
+            }
         </CascadingAuthenticationState>
     </NotFound>
 </NestedPluginRouter>
