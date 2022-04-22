@@ -13,12 +13,10 @@
 		<RepositoryType>Git</RepositoryType>
 	</PropertyGroup>
 
-	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+	<PropertyGroup>
 		<OutDir>$(SolutionDir)build</OutDir>
 	</PropertyGroup>
-	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
-		<OutDir>$(SolutionDir)build</OutDir>
-	</PropertyGroup>
+	
 	<ItemGroup>
 	  <Compile Remove="build\**" />
 	  <EmbeddedResource Remove="build\**" />

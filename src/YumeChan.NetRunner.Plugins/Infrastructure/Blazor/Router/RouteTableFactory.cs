@@ -50,13 +50,7 @@ internal static class RouteTableFactory
 
         static void GetRouteableComponents(List<Type> routeableComponents, Assembly assembly)
         {
-            foreach (Type? type in assembly.ExportedTypes)
-            {
-                if (typeof(IComponent).IsAssignableFrom(type) && type.IsDefined(typeof(RouteAttribute)))
-                {
-                    routeableComponents.Add(type);
-                }
-            }
+            routeableComponents.AddRange(assembly.ExportedTypes.Where(type => typeof(IComponent).IsAssignableFrom(type) && type.IsDefined(typeof(RouteAttribute))));
         }
     }
 

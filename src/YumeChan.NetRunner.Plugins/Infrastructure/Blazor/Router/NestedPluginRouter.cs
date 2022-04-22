@@ -8,13 +8,14 @@ using System.Runtime.ExceptionServices;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Routing;
 using Microsoft.Extensions.Logging;
+using YumeChan.PluginBase;
 
 namespace YumeChan.NetRunner.Plugins.Infrastructure.Blazor.Router;
 
 /// <summary>
 /// A component that supplies route data corresponding to the current navigation state.
 /// </summary>
-public class Router : IComponent, IHandleAfterRender, IDisposable
+public class NestedPluginRouter : IComponent, IHandleAfterRender, IDisposable
 {
     private static readonly char[] _queryOrHashStartChar = { '?', '#' };
     // Dictionary is intentionally used instead of ReadOnlyDictionary to reduce Blazor size
@@ -25,7 +26,7 @@ public class Router : IComponent, IHandleAfterRender, IDisposable
     private string _baseUri;
     private string _locationAbsolute;
     private bool _navigationInterceptionEnabled;
-    private ILogger<Router> _logger;
+    private ILogger<NestedPluginRouter> _logger;
 
     private CancellationTokenSource _onNavigateCts;
 
@@ -45,7 +46,6 @@ public class Router : IComponent, IHandleAfterRender, IDisposable
     /// Gets or sets the assembly that should be searched for components matching the URI.
     /// </summary>
     [Parameter]
-    [EditorRequired]
     public Assembly AppAssembly { get; set; }
 
     /// <summary>
@@ -55,17 +55,20 @@ public class Router : IComponent, IHandleAfterRender, IDisposable
     [Parameter] public IEnumerable<Assembly> AdditionalAssemblies { get; set; }
 
     /// <summary>
+    /// Assembly of the plugin to route to.
+    /// </summary>
+    [Parameter] public IPlugin? Plugin { get; set; }
+    
+    /// <summary>
     /// Gets or sets the content to display when no match is found for the requested route.
     /// </summary>
     [Parameter]
-    [EditorRequired]
     public RenderFragment NotFound { get; set; }
 
     /// <summary>
     /// Gets or sets the content to display when a match is found for the requested route.
     /// </summary>
     [Parameter]
-    [EditorRequired]
     public RenderFragment<RouteData> Found { get; set; }
 
     /// <summary>
@@ -85,12 +88,17 @@ public class Router : IComponent, IHandleAfterRender, IDisposable
     /// </summary>
     [Parameter] public bool PreferExactMatches { get; set; }
 
+    /// <summary>
+    /// Path to route, relative to the plugin's base URI.
+    /// </summary>
+    [Parameter] public string RoutePath { get; set; }
+    
     private RouteTable Routes { get; set; }
 
     /// <inheritdoc />
     public void Attach(RenderHandle renderHandle)
     {
-        _logger = LoggerFactory.CreateLogger<Router>();
+        _logger = LoggerFactory.CreateLogger<NestedPluginRouter>();
         _renderHandle = renderHandle;
         _baseUri = NavigationManager.BaseUri;
         _locationAbsolute = NavigationManager.Uri;
@@ -101,11 +109,6 @@ public class Router : IComponent, IHandleAfterRender, IDisposable
     public async Task SetParametersAsync(ParameterView parameters)
     {
         parameters.SetParameterProperties(this);
-
-        if (AppAssembly == null)
-        {
-            throw new InvalidOperationException($"The {nameof(Router)} component requires a value for the parameter {nameof(AppAssembly)}.");
-        }
 
         // Found content is mandatory, because even though we could use something like <RouteView ...> as a
         // reasonable default, if it's not declared explicitly in the template then people will have no way
@@ -125,10 +128,10 @@ public class Router : IComponent, IHandleAfterRender, IDisposable
         if (!_onNavigateCalled)
         {
             _onNavigateCalled = true;
-            await RunOnNavigateAsync(NavigationManager.ToBaseRelativePath(_locationAbsolute), isNavigationIntercepted: false);
+            await RunOnNavigateAsync(RoutePath, isNavigationIntercepted: false);
         }
 
-        Refresh(isNavigationIntercepted: false);
+        Refresh(isNavigationIntercepted: false, RoutePath);
     }
 
     /// <inheritdoc />
@@ -147,12 +150,19 @@ public class Router : IComponent, IHandleAfterRender, IDisposable
 
     private void RefreshRouteTable()
     {
-        RouteKey routeKey = new(AppAssembly, AdditionalAssemblies);
-
-        if (!routeKey.Equals(_routeTableLastBuiltForRouteKey))
+        if (Plugin is not null)
         {
-            _routeTableLastBuiltForRouteKey = routeKey;
-            Routes = RouteTableFactory.Create(routeKey);
+            RouteKey routeKey = new(Plugin.GetType().Assembly, Enumerable.Empty<Assembly>());
+
+            if (!routeKey.Equals(_routeTableLastBuiltForRouteKey))
+            {
+                _routeTableLastBuiltForRouteKey = routeKey;
+                Routes = RouteTableFactory.Create(routeKey);
+            }
+        }
+        else
+        {
+            Routes = new(Array.Empty<RouteEntry>());
         }
     }
 
@@ -162,7 +172,7 @@ public class Router : IComponent, IHandleAfterRender, IDisposable
         _routeTableLastBuiltForRouteKey = default;
     }
 
-    internal virtual void Refresh(bool isNavigationIntercepted)
+    internal virtual void Refresh(bool isNavigationIntercepted, string routePath)
     {
         // If an `OnNavigateAsync` task is currently in progress, then wait
         // for it to complete before rendering. Note: because _previousOnNavigateTask
@@ -177,21 +187,25 @@ public class Router : IComponent, IHandleAfterRender, IDisposable
             return;
         }
 
-        RefreshRouteTable();
+        RouteContext? context = null;
+        
+        if (Plugin is not null)
+        {
+            RefreshRouteTable();
+        
+            routePath = StringUntilAny(routePath, _queryOrHashStartChar);
+            context = new(routePath);
+            Routes.Route(context);
+        }
 
-        string? locationPath = NavigationManager.ToBaseRelativePath(_locationAbsolute);
-        locationPath = StringUntilAny(locationPath, _queryOrHashStartChar);
-        RouteContext? context = new(locationPath);
-        Routes.Route(context);
-
-        if (context.Handler != null)
+        if (context is { Handler: not null })
         {
             if (!typeof(IComponent).IsAssignableFrom(context.Handler))
             {
                 throw new InvalidOperationException($"The type {context.Handler.FullName} does not implement {typeof(IComponent).FullName}.");
             }
 
-            Log.NavigatingToComponent(_logger, context.Handler, locationPath, _baseUri);
+            Log.NavigatingToComponent(_logger, context.Handler, routePath, _baseUri);
 
             RouteData? routeData = new(
                 context.Handler,
@@ -202,7 +216,7 @@ public class Router : IComponent, IHandleAfterRender, IDisposable
         {
             if (!isNavigationIntercepted)
             {
-                Log.DisplayingNotFound(_logger, locationPath, _baseUri);
+                Log.DisplayingNotFound(_logger, routePath, _baseUri);
 
                 // We did not find a Component that matches the route.
                 // Only show the NotFound content if the application developer programatically got us here i.e we did not
@@ -211,7 +225,7 @@ public class Router : IComponent, IHandleAfterRender, IDisposable
             }
             else
             {
-                Log.NavigatingToExternalUri(_logger, _locationAbsolute, locationPath, _baseUri);
+                Log.NavigatingToExternalUri(_logger, _locationAbsolute, routePath, _baseUri);
                 NavigationManager.NavigateTo(_locationAbsolute, forceLoad: true);
             }
         }
@@ -223,6 +237,7 @@ public class Router : IComponent, IHandleAfterRender, IDisposable
         // actually cancel and can cause unintended Object Disposed Exceptions.
         // This effectivelly cancels the previously running task and completes it.
         _onNavigateCts?.Cancel();
+        
         // Then make sure that the task has been completely cancelled or completed
         // before starting the next one. This avoid race conditions where the cancellation
         // for the previous task was set but not fully completed by the time we get to this
@@ -234,7 +249,7 @@ public class Router : IComponent, IHandleAfterRender, IDisposable
 
         if (!OnNavigateAsync.HasDelegate)
         {
-            Refresh(isNavigationIntercepted);
+            Refresh(isNavigationIntercepted, path);
         }
 
         _onNavigateCts = new();
@@ -250,18 +265,18 @@ public class Router : IComponent, IHandleAfterRender, IDisposable
             Task? task = await Task.WhenAny(OnNavigateAsync.InvokeAsync(navigateContext), cancellationTcs.Task);
             await task;
             tcs.SetResult();
-            Refresh(isNavigationIntercepted);
+            Refresh(isNavigationIntercepted, path);
         }
         catch (Exception e)
         {
-            _renderHandle.Render(builder => ExceptionDispatchInfo.Throw(e));
+            _renderHandle.Render(_ => ExceptionDispatchInfo.Throw(e));
         }
     }
 
     private void OnLocationChanged(object sender, LocationChangedEventArgs args)
     {
         _locationAbsolute = args.Location;
-        if (_renderHandle.IsInitialized && Routes != null)
+        if (_renderHandle.IsInitialized)
         {
             _ = RunOnNavigateAsync(NavigationManager.ToBaseRelativePath(_locationAbsolute), args.IsNavigationIntercepted).Preserve();
         }

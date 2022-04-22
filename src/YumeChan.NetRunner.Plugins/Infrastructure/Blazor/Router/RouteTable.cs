@@ -14,10 +14,11 @@ internal class RouteTable
 
     public void Route(RouteContext routeContext)
     {
-        for (int i = 0; i < Routes.Length; i++)
+        foreach (RouteEntry entry in Routes)
         {
-            Routes[i].Match(routeContext);
-            if (routeContext.Handler != null)
+            entry.Match(routeContext);
+            
+            if (routeContext.Handler is not null)
             {
                 return;
             }

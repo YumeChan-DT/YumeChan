@@ -1,0 +1,26 @@
+﻿@using YumeChan.NetRunner.Plugins.Infrastructure.Blazor.Router
+@using YumeChan.Core.Services.Plugins
+
+@inject CommandHandler CommandHandler;
+
+@page "/plugin/{PluginName}/{*PathSlug}"
+@page "/p/{PluginName}/{*PathSlug}"
+
+<h3>PluginRouter</h3>
+
+<NestedPluginRouter Plugin="CommandHandler.Plugins.FirstOrDefault(p => p.AssemblyName == PluginName)" RoutePath=@PathSlug>
+    <Found Context="routeData">
+        <AuthorizeRouteView RouteData="routeData" />
+    </Found>
+    
+    <NotFound>
+        <CascadingAuthenticationState>
+            <p>Sorry, there's nothing at this address.</p>
+        </CascadingAuthenticationState>
+    </NotFound>
+</NestedPluginRouter>
+
+@code {
+	[Parameter] public string PluginName { get; set; }
+	[Parameter] public string PathSlug { get; set; }
+}
