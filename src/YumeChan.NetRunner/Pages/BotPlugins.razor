@@ -1,10 +1,12 @@
 ﻿@page "/p"
 @page "/plugins"
 
-@inject YumeCore BotService
-@attribute [Authorize(Roles = UserRoles.Admin)]
-
 @using YumeChan.PluginBase;
+
+@inject AuthenticationStateProvider AuthStateProvider;
+@inject YumeCore BotService
+
+
 
 <h1>Plugins</h1>
 <br />
@@ -22,7 +24,7 @@
 	</thead>
 
 	<tbody>
-		@foreach (IPlugin pluginManifest in BotService.CommandHandler.Plugins)
+		@foreach (IPlugin pluginManifest in BotService.CommandHandler.Plugins.Where(p => _isAdmin || !p.StealthMode))
 		{
 			<tr>
 				<td><a href="/p/@pluginManifest.AssemblyName/">@pluginManifest.AssemblyName</a></td>
@@ -33,3 +35,15 @@
 		}
 	</tbody>
 </table>
+
+@code {
+
+	private bool _isAdmin;
+
+	protected override async Task OnInitializedAsync()
+	{
+		await base.OnInitializedAsync();
+		_isAdmin = (await AuthStateProvider.GetAuthenticationStateAsync()).User.IsInRole(UserRoles.Admin);
+	}
+
+}
