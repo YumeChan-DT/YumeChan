@@ -3,8 +3,11 @@
 
 @using YumeChan.Core;
 @using System.Reflection;
+@using YumeChan.Core.Services.Plugins
+@using YumeChan.PluginBase
 
 @inject YumeCore YumeCore
+@inject PluginsLoader PluginsLoader
 
 <h1>Bot Controls</h1>
 
@@ -44,7 +47,7 @@
 				</div>
 
 				<div class="p-2 bd-highlight">
-					<p><b>Loaded Plugins :</b> @YumeCore.CommandHandler.Plugins.Count</p>
+					<p><b>Loaded Plugins :</b> @PluginsLoader.PluginManifests.Count</p>
 				</div>
 			</div>
 		</div>

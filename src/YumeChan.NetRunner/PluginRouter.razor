@@ -1,12 +1,13 @@
 ﻿@using YumeChan.NetRunner.Plugins.Infrastructure.Blazor.Router
 @using YumeChan.Core.Services.Plugins
+@using YumeChan.PluginBase
 
 @inject PluginsLoader PluginsLoader;
 
 @page "/plugin/{PluginName}/{*PathSlug}"
 @page "/p/{PluginName}/{*PathSlug}"
 
-<NestedPluginRouter Plugin="PluginsLoader.PluginManifests[PluginName]" RoutePath=@PathSlug>
+<NestedPluginRouter Plugin="_plugin" RoutePath=@PathSlug>
     <Found Context="routeData">
         <base href="/p/@PluginName/" />
         <AuthorizeRouteView RouteData="routeData" />
@@ -30,4 +31,13 @@
 @code {
 	[Parameter] public string PluginName { get; set; }
 	[Parameter] public string PathSlug { get; set; }
+
+    private IPlugin _plugin;
+    
+    protected override void OnParametersSet()
+    {
+        base.OnParametersSet();
+        PluginsLoader.PluginManifests.TryGetValue(PluginName, out _plugin);
+    }
+
 }

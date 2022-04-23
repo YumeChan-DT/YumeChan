@@ -37,8 +37,6 @@ public class CommandHandler
 	public InteractivityConfiguration InteractivityConfiguration { get; internal set; }
 	public SlashCommandsConfiguration SlashCommandsConfiguration { get; internal set; }
 
-	public List<IPlugin> Plugins { get; private set; }
-
 	internal ICoreProperties Config { get; set; }
 
 	private readonly DiscordClient _client;
@@ -51,7 +49,7 @@ public class CommandHandler
 
 
 	public CommandHandler(DiscordClient client, ILogger<CommandHandler> logger, IServiceProvider services, IUnityContainer container, NugetPluginsFetcher pluginsFetcher,
-		PluginLifetimeListener pluginLifetimeListener)
+		PluginLifetimeListener pluginLifetimeListener, PluginsLoader pluginsLoader)
 	{
 		_client = client;
 		_services = services;
@@ -60,7 +58,7 @@ public class CommandHandler
 		_pluginLifetimeListener = pluginLifetimeListener;
 		_logger = logger;
 
-		_pluginsLoader = new(string.Empty);
+		_pluginsLoader = pluginsLoader;
 	}
 
 
@@ -123,8 +121,6 @@ public class CommandHandler
 		_logger.LogInformation("Using PluginBase v{Version}.", typeof(IPlugin).Assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion);
 		_logger.LogInformation("Current Plugins directory: {PluginsDirectory}", _pluginsLoader.PluginsLoadDirectory);
 
-		Plugins = new() { new Modules.InternalPlugin() }; // Add YumeCore internal commands
-
 		await _pluginsFetcher.FetchPluginsAsync();
 		_pluginsLoader.ScanDirectoryForPluginFiles();
 		_pluginsLoader.LoadPluginAssemblies();
@@ -134,19 +130,17 @@ public class CommandHandler
 			_container.AddServices(handler.ConfigureServices(new ServiceCollection()));
 		}
 
-		List<IPlugin> plugins = _pluginsLoader.LoadPluginManifests().ToList();
+		_pluginsLoader.LoadPluginManifests();
+		
+		// Add YumeCore internal commands
+		_pluginsLoader.ImportPlugin(new Modules.InternalPlugin());
 
 		// Scan for NetRunner plugins when YumeCore was loaded from a ConsoleRunner, and if DisallowNetRunnerPlugins is set to true in the config.
 		if (Assembly.GetEntryAssembly()?.GetName().Name == "YumeChan.ConsoleRunner" && YumeCore.Instance.CoreProperties.DisallowNetRunnerPlugins is true
-			&& plugins.Any(p => p.ShouldUseNetRunner))
+			&& _pluginsLoader.PluginManifests.Values.Any(p => p.ShouldUseNetRunner))
 		{
 			throw new NotSupportedException("Attempted to load NetRunner-only plugins on a ConsoleRunner. \nIf this was intended, set DisallowNetRunnerPlugins to false in the YumeCore config.");
 		}
-			
-		Plugins.AddRange(
-			from IPlugin plugin in plugins
-			where !Plugins.Exists(p => p?.AssemblyName == plugin.AssemblyName)
-			select plugin);
 
 		ulong? slashCommandsGuild = null; // Used for Development only
 #if DEBUG
@@ -160,7 +154,7 @@ public class CommandHandler
 			}
 */
 
-		foreach (IPlugin plugin in Plugins)
+		foreach (IPlugin plugin in _pluginsLoader.PluginManifests.Values)
 		{
 			try
 			{
@@ -180,7 +174,7 @@ public class CommandHandler
 				{
 					await plugin.UnloadAsync();
 				}
-				catch {	}
+				catch { /* Ignore any errors. */ }
 
 #if DEBUG
 				throw;
@@ -199,10 +193,10 @@ public class CommandHandler
 	{
 		Commands.UnregisterCommands(Commands.RegisteredCommands.Values.ToArray());
 
-		foreach (IPlugin plugin in new List<IPlugin>(Plugins.Where(p => p is not Modules.InternalPlugin)))
+		foreach (IPlugin plugin in new List<IPlugin>(_pluginsLoader.PluginManifests.Values.Where(p => p is not Modules.InternalPlugin)))
 		{
 			await plugin.UnloadAsync();
-			Plugins.Remove(plugin);
+			_pluginsLoader.PluginManifestsInternal.Remove(plugin.AssemblyName);
 
 			_logger.LogInformation("Removed Plugin '{Plugin}'.", plugin.AssemblyName);
 			

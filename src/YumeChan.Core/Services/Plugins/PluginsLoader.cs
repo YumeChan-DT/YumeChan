@@ -114,6 +114,15 @@ public sealed class PluginsLoader
 		}
 	}
 
+	internal void ImportPlugin(IPlugin plugin, Assembly? assembly = null)
+	{
+		// Add it to the list.
+		PluginManifestsInternal.Add(plugin.AssemblyName, plugin);
+						
+		// Also add the assembly to the list of plugin assemblies.
+		_pluginAssemblies.Add(plugin.AssemblyName, assembly ?? plugin.GetType().Assembly);
+	}
+	
 	internal IEnumerable<IPlugin> LoadPluginManifests()
 	{
 		PluginManifestsInternal.Clear();
@@ -130,11 +139,8 @@ public sealed class PluginsLoader
 						// Moment of truth...
 						IPlugin plugin = InstantiateManifest(t)!;
 						
-						// It's a plugin! Add it to the list.
-						PluginManifestsInternal.Add(plugin.AssemblyName, plugin);
-						
-						// Also add the assembly to the list of plugin assemblies.
-						_pluginAssemblies.Add(plugin.AssemblyName, a);
+						// It works! Import it.
+						ImportPlugin(plugin, a);
 					}
 					catch (Exception e)
 					{

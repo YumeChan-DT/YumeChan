@@ -2,15 +2,16 @@
 @page "/plugins"
 
 @using YumeChan.PluginBase;
+@using YumeChan.Core.Services.Plugins
 
 @inject AuthenticationStateProvider AuthStateProvider;
-@inject YumeCore BotService
+@inject PluginsLoader PluginsLoader;
 
 
 
 <h1>Plugins</h1>
 <br />
-<h3>Currently Loaded : @BotService.CommandHandler.Plugins.Count Plugins</h3>
+<h3>Currently Loaded : @PluginsLoader.PluginManifests.Count Plugins</h3>
 <br />
 
 <table class="table table-hover">
@@ -24,7 +25,7 @@
 	</thead>
 
 	<tbody>
-		@foreach (IPlugin pluginManifest in BotService.CommandHandler.Plugins.Where(p => _isAdmin || !p.StealthMode))
+		@foreach (IPlugin pluginManifest in PluginsLoader.PluginManifests.Values.Where(p => _isAdmin || !p.StealthMode))
 		{
 			<tr>
 				<td><a href="/p/@pluginManifest.AssemblyName/">@pluginManifest.AssemblyName</a></td>

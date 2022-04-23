@@ -25,10 +25,11 @@ public class ApiPluginLoader : IHostedService
 	private readonly SwaggerDocumentEnumerator _swaggerDocumentEnumerator;
 	private readonly IOptions<SwaggerGenOptions> _swaggerGenOptions;
 	private readonly SwaggerGeneratorOptions _swaggerGeneratorOptions;
+	private readonly PluginsLoader _pluginsLoader;
 
 	public ApiPluginLoader(ApplicationPartManager appPartManager, PluginActionDescriptorChangeProvider descriptorChangeProvider, PluginLifetimeListener lifetimeListener,
 		SwaggerEndpointEnumerator swaggerEndpointEnumerator, SwaggerDocumentEnumerator swaggerDocumentEnumerator, IOptions<SwaggerGenOptions> swaggerGenOptions,
-		SwaggerGeneratorOptions swaggerGeneratorOptions)
+		SwaggerGeneratorOptions swaggerGeneratorOptions, PluginsLoader pluginsLoader)
 	{
 		_appPartManager = appPartManager;
 		_descriptorChangeProvider = descriptorChangeProvider;
@@ -37,6 +38,7 @@ public class ApiPluginLoader : IHostedService
 		_swaggerDocumentEnumerator = swaggerDocumentEnumerator;
 		_swaggerGenOptions = swaggerGenOptions;
 		_swaggerGeneratorOptions = swaggerGeneratorOptions;
+		_pluginsLoader = pluginsLoader;
 		_swaggerGenOptions.Value.SwaggerGeneratorOptions = swaggerGeneratorOptions;
 	}
 
@@ -93,7 +95,7 @@ public class ApiPluginLoader : IHostedService
 	public async Task StartAsync(CancellationToken cancellationToken)
 	{
 		// Start by catching up on previously loaded plugins
-		foreach (IPlugin plugin in YumeCore.Instance.CommandHandler.Plugins)
+		foreach (IPlugin plugin in _pluginsLoader.PluginManifests.Values)
 		{
 			LoadApiPlugin(plugin);
 		}

@@ -7,6 +7,7 @@ using DSharpPlus;
 using DSharpPlus.Entities;
 using DSharpPlus.SlashCommands;
 using DSharpPlus.SlashCommands.Attributes;
+using YumeChan.Core.Services.Plugins;
 using YumeChan.PluginBase;
 using static YumeChan.Core.YumeCore;
 
@@ -20,6 +21,13 @@ namespace YumeChan.Core.Modules;
 [SlashCommandGroup("status", "Displays YumeCore Status")]
 public class StatusModule : ApplicationCommandModule, ICoreModule
 {
+	private readonly PluginsLoader _pluginsLoader;
+
+	public StatusModule(PluginsLoader pluginsLoader)
+	{
+		_pluginsLoader = pluginsLoader;
+	}
+	
 	internal const string MissingVersionSubstitute = "Unknown";
 
 	[SlashCommand("core", "Gets the status of current YumeCore.")]
@@ -29,7 +37,7 @@ public class StatusModule : ApplicationCommandModule, ICoreModule
 			.WithTitle(Instance.CoreProperties.AppDisplayName)
 			.WithDescription($"Status : {Instance.CoreState}")
 			.AddField("Core", $"Version : {CoreVersion ?? MissingVersionSubstitute}", true)
-			.AddField("Loaded Plugins", $"Count : {(Instance.CommandHandler.Plugins is null ? "None" : Instance.CommandHandler.Plugins.Count)}", true);
+			.AddField("Loaded Plugins", $"Count : {_pluginsLoader.PluginManifests.Count}", true);
 #if DEBUG
 		embed.AddField("Debug", "Debug Build Active.");
 #endif
@@ -43,9 +51,9 @@ public class StatusModule : ApplicationCommandModule, ICoreModule
 	{
 		DiscordEmbedBuilder embed = new DiscordEmbedBuilder()
 			.WithTitle("Plugins")
-			.WithDescription($"Currently Loaded : **{Instance.CommandHandler.Plugins.Count}** Plugins.");
+			.WithDescription($"Currently Loaded : **{_pluginsLoader.PluginManifests.Count}** Plugins.");
 
-		foreach (IPlugin pluginManifest in Instance.CommandHandler.Plugins)
+		foreach (IPlugin pluginManifest in _pluginsLoader.PluginManifests.Values)
 		{
 			embed.AddField(pluginManifest.DisplayName,
 				$"({pluginManifest.AssemblyName})\n" +
