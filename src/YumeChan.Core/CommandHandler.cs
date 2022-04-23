@@ -37,7 +37,7 @@ public class CommandHandler
 	public InteractivityConfiguration InteractivityConfiguration { get; internal set; }
 	public SlashCommandsConfiguration SlashCommandsConfiguration { get; internal set; }
 
-	public List<IPlugin> Plugins { get; internal set; }
+	public List<IPlugin> Plugins { get; private set; }
 
 	internal ICoreProperties Config { get; set; }
 
@@ -47,7 +47,7 @@ public class CommandHandler
 	private readonly NugetPluginsFetcher _pluginsFetcher;
 	private readonly PluginLifetimeListener _pluginLifetimeListener;
 	private readonly ILogger _logger;
-	private readonly PluginsLoader _externalModulesLoader;
+	private readonly PluginsLoader _pluginsLoader;
 
 
 	public CommandHandler(DiscordClient client, ILogger<CommandHandler> logger, IServiceProvider services, IUnityContainer container, NugetPluginsFetcher pluginsFetcher,
@@ -60,7 +60,7 @@ public class CommandHandler
 		_pluginLifetimeListener = pluginLifetimeListener;
 		_logger = logger;
 
-		_externalModulesLoader = new(string.Empty);
+		_pluginsLoader = new(string.Empty);
 	}
 
 
@@ -101,7 +101,7 @@ public class CommandHandler
 
 	private Task OnSlashCommandErroredAsync(SlashCommandsExtension _, SlashCommandErrorEventArgs e)
 	{
-		_logger.LogError(e.Exception, "An error occured executing SlashCommand {cmd} :", e.Context.CommandName);
+		_logger.LogError(e.Exception, "An error occured executing SlashCommand {Command} :", e.Context.CommandName);
 
 #if DEBUG
 		throw e.Exception;
@@ -121,20 +121,20 @@ public class CommandHandler
 	public async Task RegisterCommandsAsync()
 	{
 		_logger.LogInformation("Using PluginBase v{Version}.", typeof(IPlugin).Assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion);
-		_logger.LogInformation("Current Plugins directory: {PluginsDirectory}", _externalModulesLoader.PluginsLoadDirectory);
+		_logger.LogInformation("Current Plugins directory: {PluginsDirectory}", _pluginsLoader.PluginsLoadDirectory);
 
 		Plugins = new() { new Modules.InternalPlugin() }; // Add YumeCore internal commands
 
 		await _pluginsFetcher.FetchPluginsAsync();
-		_externalModulesLoader.ScanDirectoryForPluginFiles();
-		_externalModulesLoader.LoadPluginAssemblies();
+		_pluginsLoader.ScanDirectoryForPluginFiles();
+		_pluginsLoader.LoadPluginAssemblies();
 
-		foreach (DependencyInjectionHandler handler in _externalModulesLoader.LoadDependencyInjectionHandlers())
+		foreach (DependencyInjectionHandler handler in _pluginsLoader.LoadDependencyInjectionHandlers())
 		{
 			_container.AddServices(handler.ConfigureServices(new ServiceCollection()));
 		}
 
-		List<IPlugin> plugins = _externalModulesLoader.LoadPluginManifests().ToList();
+		List<IPlugin> plugins = _pluginsLoader.LoadPluginManifests().ToList();
 
 		// Scan for NetRunner plugins when YumeCore was loaded from a ConsoleRunner, and if DisallowNetRunnerPlugins is set to true in the config.
 		if (Assembly.GetEntryAssembly()?.GetName().Name == "YumeChan.ConsoleRunner" && YumeCore.Instance.CoreProperties.DisallowNetRunnerPlugins is true
@@ -276,7 +276,7 @@ public class CommandHandler
 
 	public Task OnCommandExecuted(CommandsNextExtension sender, CommandExecutionEventArgs e)
 	{
-		_logger.LogDebug("Command '{command}' received from User '{user}'.", e.Command.QualifiedName, e.Context.User.Id);
+		_logger.LogInformation("Command '{Command}' received from User '{User}'.", e.Command.QualifiedName, e.Context.User.Id);
 		return Task.CompletedTask;
 	}
 

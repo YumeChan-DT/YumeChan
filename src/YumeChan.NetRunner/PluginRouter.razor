@@ -1,11 +1,12 @@
 ﻿@using YumeChan.NetRunner.Plugins.Infrastructure.Blazor.Router
+@using YumeChan.Core.Services.Plugins
 
-@inject CommandHandler CommandHandler;
+@inject PluginsLoader PluginsLoader;
 
 @page "/plugin/{PluginName}/{*PathSlug}"
 @page "/p/{PluginName}/{*PathSlug}"
 
-<NestedPluginRouter Plugin="CommandHandler.Plugins.FirstOrDefault(p => p.AssemblyName == PluginName)" RoutePath=@PathSlug>
+<NestedPluginRouter Plugin="PluginsLoader.PluginManifests[PluginName]" RoutePath=@PathSlug>
     <Found Context="routeData">
         <base href="/p/@PluginName/" />
         <AuthorizeRouteView RouteData="routeData" />

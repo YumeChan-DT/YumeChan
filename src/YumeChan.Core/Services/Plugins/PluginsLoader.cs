@@ -7,54 +7,71 @@ using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Runtime.Loader;
 using System.Security;
+using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using Unity;
 using YumeChan.PluginBase;
 
 namespace YumeChan.Core.Services.Plugins;
 
-internal class PluginsLoader
-{
-	internal protected List<Assembly> PluginAssemblies { get; set; }
-	internal protected List<FileInfo> PluginFiles { get; set; }
-	public List<IPlugin> PluginManifests { get; set; }
+#nullable enable
 
-	public DirectoryInfo PluginsLoadDirectory { get; set; }
+public sealed class PluginsLoader
+{
+	public IReadOnlyDictionary<string, Assembly> PluginAssemblies => _pluginAssemblies;
+	public IReadOnlyDictionary<string, IPlugin> PluginManifests => PluginManifestsInternal;
+
+	public DirectoryInfo PluginsLoadDirectory { get; internal set; }
 	internal string PluginsLoadDiscriminator { get; set; } = string.Empty;
 
-	public PluginsLoader(string pluginsLoadDirectoryPath)
+	internal readonly Dictionary<string, IPlugin> PluginManifestsInternal = new();
+	private readonly Dictionary<string, Assembly> _pluginAssemblies = new();
+
+	private readonly List<Assembly> _loadAssemblies = new();
+	private readonly List<FileInfo> _pluginFiles = new();
+	
+	private const string PluginsLocationEnvVarName = "YumeChan_PluginsLocation";
+	
+	
+	public PluginsLoader(string? pluginsLoadDirectoryPath)
 	{
 		PluginsLoadDirectory = string.IsNullOrEmpty(pluginsLoadDirectoryPath)
 			? SetDefaultPluginsDirectoryEnvironmentVariable()
 			: Directory.Exists(pluginsLoadDirectoryPath)
-				? new DirectoryInfo(pluginsLoadDirectoryPath)
+				? new(pluginsLoadDirectoryPath)
 				: Directory.CreateDirectory(pluginsLoadDirectoryPath);
 	}
 
-	protected virtual DirectoryInfo SetDefaultPluginsDirectoryEnvironmentVariable()
+	private DirectoryInfo SetDefaultPluginsDirectoryEnvironmentVariable()
 	{
 		FileInfo file = new(Assembly.GetExecutingAssembly().Location);
-		PluginsLoadDirectory = Directory.CreateDirectory(Path.Join(file.DirectoryName, "Plugins"));
+		PluginsLoadDirectory = Directory.CreateDirectory(Path.Join(file.DirectoryName, "plugins"));
+		Task.Run(() => SetPluginsDirectoryEnvironmentVariables(value: PluginsLoadDirectory.FullName));
+		return PluginsLoadDirectory;
+	}
 
+	private static void SetPluginsDirectoryEnvironmentVariables(string varName = PluginsLocationEnvVarName, string value = null)
+	{
 		try
 		{
-			Environment.SetEnvironmentVariable("YumeChan.PluginsLocation", PluginsLoadDirectory.FullName);
+			Environment.SetEnvironmentVariable(varName, value);
+			
 			if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
 			{
-				Environment.SetEnvironmentVariable("YumeChan.PluginsLocation", PluginsLoadDirectory.FullName, EnvironmentVariableTarget.User);
+				Environment.SetEnvironmentVariable(varName, value, EnvironmentVariableTarget.User);
 			}
 		}
 		catch (SecurityException e)
 		{
-			YumeCore.Instance.Logger.Log(LogLevel.Warning, e, "Failed to write Environment Variable \"YumeChan.PluginsLocation\".");
+			YumeCore.Instance.Logger.LogWarning(e, "Failed to write Environment Variable {VariableName}.", varName);
 		}
-		return PluginsLoadDirectory;
 	}
 
-	public virtual List<FileInfo> ScanDirectoryForPluginFiles()
+	internal void ScanDirectoryForPluginFiles()
 	{
-		List<FileInfo> files = new(PluginsLoadDirectory.GetFiles($"*{PluginsLoadDiscriminator}*.dll"));
-
+		_pluginFiles.Clear();
+		_pluginFiles.AddRange(PluginsLoadDirectory.GetFiles($"*{PluginsLoadDiscriminator}*.dll"));
+		
 		IEnumerable<DirectoryInfo> directories = PluginsLoadDirectory.GetDirectories("*", SearchOption.AllDirectories);
 
 #if DEBUG
@@ -63,18 +80,16 @@ internal class PluginsLoader
 
 		foreach (DirectoryInfo dir in directories)
 		{
-			files.AddRange(dir.GetFiles("*.dll"));
+			_pluginFiles.AddRange(dir.GetFiles("*.dll"));
 		}
-
-		return PluginFiles = files;
 	}
 
-	public virtual void LoadPluginAssemblies()
+	internal void LoadPluginAssemblies()
 	{
-		PluginAssemblies ??= new();
+		_loadAssemblies.Clear();
 
 		// Try to load the assemblies from the file system, warn in console if unsuccessful.
-		foreach (FileInfo file in PluginFiles.DistinctBy(f => f.Name).Where(f => f is not null && f.Name != Path.GetFileName(typeof(IPlugin).Assembly.Location)))
+		foreach (FileInfo file in _pluginFiles.DistinctBy(f => f.Name).Where(f => f.Name != Path.GetFileName(typeof(IPlugin).Assembly.Location)))
 		{
 			try
 			{
@@ -83,11 +98,11 @@ internal class PluginsLoader
 				// Check if the assembly loads its types properly.
 				if (a.GetTypes().Any())
 				{
-					PluginAssemblies.Add(a);
+					_loadAssemblies.Add(a);
 				}
 			}
 			// Catch any assemblies with dependency issues, or broken types.
-			catch (ReflectionTypeLoadException e) when (e.LoaderExceptions.Any(x => x.GetType() == typeof(FileNotFoundException)))
+			catch (ReflectionTypeLoadException e) when (e.LoaderExceptions.Any(x => x?.GetType() == typeof(FileNotFoundException)))
 			{
 				YumeCore.Instance.Logger.LogDebug("Assembly {FileName} is not suitable for loading, skipping it.", file.Name);
 			}
@@ -99,11 +114,11 @@ internal class PluginsLoader
 		}
 	}
 
-	public virtual IEnumerable<IPlugin> LoadPluginManifests()
+	internal IEnumerable<IPlugin> LoadPluginManifests()
 	{
-		List<IPlugin> plugins = new();
-
-		foreach (Assembly a in PluginAssemblies)
+		PluginManifestsInternal.Clear();
+		
+		foreach (Assembly a in _loadAssemblies)
 		{
 			try
 			{
@@ -112,28 +127,35 @@ internal class PluginsLoader
 				{
 					try
 					{
-						plugins.Add(InstantiateManifest(t));
+						// Moment of truth...
+						IPlugin plugin = InstantiateManifest(t)!;
+						
+						// It's a plugin! Add it to the list.
+						PluginManifestsInternal.Add(plugin.AssemblyName, plugin);
+						
+						// Also add the assembly to the list of plugin assemblies.
+						_pluginAssemblies.Add(plugin.AssemblyName, a);
 					}
 					catch (Exception e)
 					{
-						YumeCore.Instance.Logger.LogError(e,"Failed to instantiate plugin \"{PluginName}\".", t?.Name);
+						YumeCore.Instance.Logger.LogError(e,"Failed to instantiate plugin {PluginName}.", t?.Name);
 					}
 				}
 			}
 			catch (Exception e)
 			{
-				YumeCore.Instance.Logger.LogError(e,"Failed to load plugin manifests from assembly \"{AssemblyFullName}\".", a?.FullName);
+				YumeCore.Instance.Logger.LogError(e,"Failed to load plugin manifests from assembly {AssemblyFullName}.", a?.FullName);
 			}
 		}
 
-		return plugins;
+		return PluginManifestsInternal.Values;
 	}
 
-	public virtual IEnumerable<DependencyInjectionHandler> LoadDependencyInjectionHandlers()
+	internal IEnumerable<DependencyInjectionHandler> LoadDependencyInjectionHandlers()
 	{
 		List<DependencyInjectionHandler> handlers = new();
 
-		foreach (Assembly a in PluginAssemblies)
+		foreach (Assembly a in _loadAssemblies)
 		{
 			try
 			{
@@ -142,23 +164,23 @@ internal class PluginsLoader
 				{
 					try
 					{
-						handlers.Add(InstantiateInjectionRegistry(type));
+						handlers.Add(InstantiateInjectionRegistry(type)!);
 					}
 					catch (Exception e)
 					{
-						YumeCore.Instance.Logger.LogError(e, "Failed to instantiate dependency injection handler \"{TypeName}\".", type?.Name);
+						YumeCore.Instance.Logger.LogError(e, "Failed to instantiate dependency injection handler {TypeName}.", type.Name);
 					}
 				}
 			}
 			catch (Exception e)
 			{
-				YumeCore.Instance.Logger.LogError(e, "Failed to load dependency injection handler types from assembly \"{AssemblyFullName}\".", a?.FullName);
+				YumeCore.Instance.Logger.LogError(e, "Failed to load dependency injection handler types from assembly {AssemblyFullName}.", a.FullName);
 			}
 		}
 		
 		return handlers;
 	}
 
-	internal static IPlugin InstantiateManifest(Type type) => YumeCore.Instance.Services.Resolve(type) as IPlugin;
-	internal static DependencyInjectionHandler InstantiateInjectionRegistry(Type type) => YumeCore.Instance.Services.Resolve(type) as DependencyInjectionHandler;
+	private static IPlugin? InstantiateManifest(Type type) => YumeCore.Instance.Services.Resolve(type) as IPlugin;
+	private static DependencyInjectionHandler? InstantiateInjectionRegistry(Type type) => YumeCore.Instance.Services.Resolve(type) as DependencyInjectionHandler;
 }

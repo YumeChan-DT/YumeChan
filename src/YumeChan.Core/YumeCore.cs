@@ -49,19 +49,20 @@ namespace YumeChan.Core
 		}
 
 		public IUnityContainer ConfigureContainer(IUnityContainer container) => container
-			.RegisterFactory<DiscordClient>(unityContainer => new DiscordClient(new()
-					{
-						Intents = DiscordIntents.All,
-						TokenType = TokenType.Bot,
-						Token = GetBotToken(),
-						LoggerFactory = unityContainer.Resolve<ILoggerFactory>(),
-						MinimumLogLevel = LogLevel.Information
-					}
-				), FactoryLifetime.Singleton
+			.RegisterFactory<DiscordClient>(uc => new DiscordClient(new()
+				{
+					Intents = DiscordIntents.All,
+					TokenType = TokenType.Bot,
+					Token = GetBotToken(),
+					LoggerFactory = uc.Resolve<ILoggerFactory>(),
+					MinimumLogLevel = LogLevel.Information
+				}),
+				FactoryLifetime.Singleton
 			)
 			
-			.RegisterInstance(PluginLifetimeListener.Instance)
+			.RegisterFactory<PluginsLoader>(uc => new PluginsLoader(uc.Resolve<ICoreProperties>().Path_Plugins), FactoryLifetime.Singleton)
 			
+			.RegisterInstance(PluginLifetimeListener.Instance)
 			.RegisterSingleton<CommandHandler>()
 			.RegisterSingleton<LavalinkHandler>()
 			.RegisterSingleton<NugetPluginsFetcher>()
@@ -69,14 +70,13 @@ namespace YumeChan.Core
 			.RegisterSingleton(typeof(IInterfaceConfigProvider<>), typeof(InterfaceConfigProvider<>))
 			.RegisterSingleton(typeof(IJsonConfigProvider<>), typeof(JsonConfigProvider<>))
 			
-			.RegisterFactory<ICoreProperties>(unityContainer =>
-					unityContainer.Resolve<InterfaceConfigProvider<ICoreProperties>>().InitConfig("coreconfig.json", true).InitDefaults(),
-				FactoryLifetime.Singleton
-			)
-			.RegisterFactory<IPluginLoaderProperties>(unityContainer =>
-					unityContainer.Resolve<InterfaceConfigProvider<IPluginLoaderProperties>>().InitConfig("plugins.json", true).InitDefaults(),
-				FactoryLifetime.Singleton
-			)
+			.RegisterFactory<ICoreProperties>(
+				uc => uc.Resolve<InterfaceConfigProvider<ICoreProperties>>().InitConfig("coreconfig.json", true).InitDefaults(),
+				FactoryLifetime.Singleton)
+			
+			.RegisterFactory<IPluginLoaderProperties>(
+				uc => uc.Resolve<InterfaceConfigProvider<IPluginLoaderProperties>>().InitConfig("plugins.json", true).InitDefaults(),
+				FactoryLifetime.Singleton)
 
 			.AddServices(new ServiceCollection()
 				.AddHttpClient()

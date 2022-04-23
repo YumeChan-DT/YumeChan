@@ -6,7 +6,7 @@ namespace YumeChan.Core.Services.Plugins;
 /// <summary>
 /// Provides events to process calls to the Runners when implementing custom logic for YumeChan Plugins.
 /// </summary>
-public class PluginLifetimeListener
+public sealed class PluginLifetimeListener
 {
 	/// <summary>
 	/// Singleton instance of the PluginLifetimeListener.

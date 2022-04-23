@@ -30,7 +30,7 @@ namespace YumeChan.Core.Services.Plugins;
 /// <summary>
 /// Provides a plugins loader for NuGet package-based plugins.
 /// </summary>
-public class NugetPluginsFetcher : IDisposable
+public sealed class NugetPluginsFetcher : IDisposable
 {
 	private readonly SourceRepositoryProvider _sourceRepositoryProvider;
 	private readonly SourceCacheContext _sourceCacheContext;
@@ -67,7 +67,6 @@ public class NugetPluginsFetcher : IDisposable
 					if (pluginPackageIdentity is null)
 					{
 						_logger.LogWarning("Plugin {PluginKey} is not found in the NuGet repository.", plugin.Key);
-
 						return;
 					}
 
@@ -122,6 +121,7 @@ public class NugetPluginsFetcher : IDisposable
 
 			if (selectedVersion is not null)
 			{
+				_logger.LogDebug("Identified package {PackageName} v{PackageVersion} from NuGet.", packageName, selectedVersion);
 				return new(packageName, selectedVersion);
 			}
 		}
