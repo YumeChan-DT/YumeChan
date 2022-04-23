@@ -1,4 +1,7 @@
-﻿<nav class="navbar fixed-top navbar-expand-md navbar-toggleable-md navbar-dark bg-dark-acrylic box-shadow mb-5 px-3">
+﻿@using DSharpPlus
+@inject DiscordClient DiscordClient
+
+<nav class="navbar fixed-top navbar-expand-md navbar-toggleable-md navbar-dark bg-dark-acrylic box-shadow mb-5 px-3">
 	<div class="container-fluid ps-0">
 		<div class="align-content-center ms-2">
 			<NavLink class="navbar-brand" href="" Match="NavLinkMatch.All">
@@ -15,16 +18,18 @@
 		<div id="navbarNavContent" class="navbar-collapse collapse">
 			<ul class="navbar-nav flex-grow-1">
 				<li class="nav-item"><NavLink class="nav-link text-light" href="/">Home</NavLink></li>
+				<li class="nav-item"><NavLink class="nav-link text-light" href="/plugins">Plugins</NavLink></li>
 
 				<AuthorizeView Roles=@UserRoles.Admin>
 					<li class="nav-item"><NavLink class="nav-link text-light" href="/bot/controls">Controls</NavLink></li>
-					<li class="nav-item"><NavLink class="nav-link text-light" href="/plugins">Plugins</NavLink></li>
 					<li class="nav-item"><NavLink class="nav-link text-light" href="/servers">Servers</NavLink></li>
 				</AuthorizeView>
 			</ul>
 
 			<ul class="navbar-nav flex-grow-0">
 				<LoginDisplay />
+				
+				<li class="nav-item ms-lg-3"><a class="btn btn-primary" href=@BotInviteUri>Invite Bot</a></li>
 			</ul>
 		</div>
 	</div>
@@ -33,4 +38,19 @@
 
 @code {
 	[Parameter] public string CurrentUri { get; set; }
+	
+	public string BotInviteUri { get; set; }
+
+	protected override void OnInitialized()
+	{
+		base.OnInitialized();
+		
+		/* Current DSP limitations prevents us from programmatically getting the invite link via DiscordApplication.GenerateBotOAuth().
+		 * Currently the only workaround is gonna be to hardcode it...
+		 * 
+		 * See: https://github.com/DSharpPlus/DSharpPlus/issues/1292
+		 */
+		BotInviteUri = $"https://discord.com/api/oauth2/authorize?client_id={DiscordClient.CurrentApplication.Id}&permissions=8&scope=bot%20applications.commands";
+	}
+
 }
