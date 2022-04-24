@@ -116,11 +116,11 @@ public sealed class PluginsLoader
 
 	internal void ImportPlugin(IPlugin plugin, Assembly? assembly = null)
 	{
-		// Add it to the list.
-		PluginManifestsInternal.Add(plugin.AssemblyName, plugin);
+		// Try add the plugin to the list of loaded plugins.
+		PluginManifestsInternal.TryAdd(plugin.AssemblyName, plugin);
 						
-		// Also add the assembly to the list of plugin assemblies.
-		_pluginAssemblies.Add(plugin.AssemblyName, assembly ?? plugin.GetType().Assembly);
+		// Also try add the assembly to the list of plugin assemblies.
+		_pluginAssemblies.TryAdd(plugin.AssemblyName, assembly ?? plugin.GetType().Assembly);
 	}
 	
 	internal IEnumerable<IPlugin> LoadPluginManifests()

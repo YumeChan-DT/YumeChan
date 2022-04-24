@@ -85,11 +85,17 @@ public class ApiPluginLoader : IHostedService
 	/// <param name="plugin">The plugin to unload assembly for.</param>
 	public virtual void UnloadApiPlugin(IPlugin plugin)
 	{
-		_appPartManager.ApplicationParts.Remove(_appPartManager.ApplicationParts.First(part => part.Name == plugin.AssemblyName));
+		if (_appPartManager.ApplicationParts.FirstOrDefault(part => part.Name == plugin.AssemblyName) is { } applicationPart)
+		{
+			// Found a matching Application Part, remove it.
+			_appPartManager.ApplicationParts.Remove(applicationPart);
 
-		// Notify the descriptor change provider that the plugin has been unloaded.
-		_descriptorChangeProvider.HasChanged = true;
-		_descriptorChangeProvider.TokenSource.Cancel();
+			// Notify the descriptor change provider that the plugin has been unloaded.
+			_descriptorChangeProvider.HasChanged = true;
+			_descriptorChangeProvider.TokenSource.Cancel();
+		}
+		
+
 	}
 
 	public async Task StartAsync(CancellationToken cancellationToken)

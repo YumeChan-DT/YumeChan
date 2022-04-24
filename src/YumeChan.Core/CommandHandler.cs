@@ -47,7 +47,16 @@ public class CommandHandler
 	private readonly ILogger _logger;
 	private readonly PluginsLoader _pluginsLoader;
 
+	private static readonly ulong? _slashCommandsGuild = null; // Used for Development only
 
+	static CommandHandler()
+	{
+#if DEBUG
+		_slashCommandsGuild = 584445871413002242;
+#endif
+	}
+
+	
 	public CommandHandler(DiscordClient client, ILogger<CommandHandler> logger, IServiceProvider services, IUnityContainer container, NugetPluginsFetcher pluginsFetcher,
 		PluginLifetimeListener pluginLifetimeListener, PluginsLoader pluginsLoader)
 	{
@@ -135,6 +144,7 @@ public class CommandHandler
 		// Add YumeCore internal commands
 		_pluginsLoader.ImportPlugin(new Modules.InternalPlugin());
 
+		// FIXME: Use the new IRunnerContext interface
 		// Scan for NetRunner plugins when YumeCore was loaded from a ConsoleRunner, and if DisallowNetRunnerPlugins is set to true in the config.
 		if (Assembly.GetEntryAssembly()?.GetName().Name == "YumeChan.ConsoleRunner" && YumeCore.Instance.CoreProperties.DisallowNetRunnerPlugins is true
 			&& _pluginsLoader.PluginManifests.Values.Any(p => p.ShouldUseNetRunner))
@@ -142,29 +152,11 @@ public class CommandHandler
 			throw new NotSupportedException("Attempted to load NetRunner-only plugins on a ConsoleRunner. \nIf this was intended, set DisallowNetRunnerPlugins to false in the YumeCore config.");
 		}
 
-		ulong? slashCommandsGuild = null; // Used for Development only
-#if DEBUG
-		slashCommandsGuild = 584445871413002242;
-#endif
-
-/*
-			if (SlashCommands.Client.GatewayInfo is not null)
-			{
-				await SlashCommands.Client.BulkOverwriteGlobalApplicationCommandsAsync(Array.Empty<DiscordApplicationCommand>());
-			}
-*/
-
 		foreach (IPlugin plugin in _pluginsLoader.PluginManifests.Values)
 		{
 			try
 			{
-				await plugin.LoadAsync();
-				Commands.RegisterCommands(plugin.GetType().Assembly);
-
-				SlashCommands.RegisterCommands(plugin.GetType().Assembly, slashCommandsGuild);
-				_logger.LogInformation("Loaded Plugin '{Plugin}'.", plugin.AssemblyName);
-				
-				_pluginLifetimeListener.NotifyPluginLoaded(plugin);
+				await LoadPluginAsync(plugin, _slashCommandsGuild);
 			}
 			catch (Exception e)
 			{
@@ -192,18 +184,49 @@ public class CommandHandler
 	public async Task ReleaseCommandsAsync()
 	{
 		Commands.UnregisterCommands(Commands.RegisteredCommands.Values.ToArray());
-
-		foreach (IPlugin plugin in new List<IPlugin>(_pluginsLoader.PluginManifests.Values.Where(p => p is not Modules.InternalPlugin)))
+		
+/*
+		FIXME: Faulty unloading of SlashCommands
+ 
+		if (_slashCommandsGuild is not null)
 		{
-			await plugin.UnloadAsync();
-			_pluginsLoader.PluginManifestsInternal.Remove(plugin.AssemblyName);
+			await _client.BulkOverwriteGuildApplicationCommandsAsync(_slashCommandsGuild.Value, Array.Empty<DiscordApplicationCommand>());
+		}
+*/		
+		
+		foreach (IPlugin plugin in _pluginsLoader.PluginManifestsInternal.Values.Where(p => p is not Modules.InternalPlugin).ToImmutableArray())
+		{
+			try
+			{
+				await plugin.UnloadAsync();
+				_pluginsLoader.PluginManifestsInternal.Remove(plugin.AssemblyName);
 
-			_logger.LogInformation("Removed Plugin '{Plugin}'.", plugin.AssemblyName);
+				_logger.LogInformation("Removed Plugin '{Plugin}'.", plugin.AssemblyName);
 			
-			_pluginLifetimeListener.NotifyPluginUnloaded(plugin);
+				_pluginLifetimeListener.NotifyPluginUnloaded(plugin);
+			}
+			catch (Exception e)
+			{
+				_logger.LogError(e, "An error occured while unloading plugin {PluginName}", plugin.AssemblyName);
+				
+#if DEBUG
+				throw;
+#endif
+			}
 		}
 	}
 
+	private async Task LoadPluginAsync(IPlugin plugin, ulong? slashCommandsGuild)
+	{
+		await plugin.LoadAsync();
+		Commands.RegisterCommands(plugin.GetType().Assembly);
+
+		SlashCommands.RegisterCommands(plugin.GetType().Assembly, slashCommandsGuild);
+		_logger.LogInformation("Loaded Plugin '{Plugin}'.", plugin.AssemblyName);
+				
+		_pluginLifetimeListener.NotifyPluginLoaded(plugin);
+	}
+	
 	internal async Task OnCommandErroredAsync(CommandsNextExtension _, CommandErrorEventArgs e)
 	{
 		if (e.Exception is ChecksFailedException cf)
@@ -245,7 +268,7 @@ public class CommandHandler
 #endif
 
 			await e.Context.RespondAsync(response);
-			_logger.LogError("An error occured executing '{command}' from user '{user}' : \n{exception}", e.Command.QualifiedName, e.Context.User.Id, e.Exception);
+			_logger.LogError("An error occured executing '{Command}' from user '{User}' : \n{Exception}", e.Command.QualifiedName, e.Context.User.Id, e.Exception);
 		}		
 	}
 
