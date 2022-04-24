@@ -25,7 +25,7 @@
 				</div>
 
 				@{ (string textClass, string message) statusAlert = DisplayStatusAlert(); }
-				<div class="p-2 bd-highlight"><p class=@(statusAlert.textClass)>@(statusAlert.message)</p></div>
+				<div class="p-2 bd-highlight"><p class=@statusAlert.textClass>@statusAlert.message</p></div>
 			</div>
 		</div>
 
@@ -42,8 +42,8 @@
 		<div class="card-body">
 			<div class="d-flex justify-content-between">
 				<div class="p-2 bd-highlight">
-					<p><b>@typeof(PluginBase.IPlugin).Assembly.GetName().Name</b></p>
-					<p><b>Version :</b> @(typeof(PluginBase.IPlugin).Assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion)</p>
+					<p><b>@typeof(IPlugin).Assembly.GetName().Name</b></p>
+					<p><b>Version :</b> @(typeof(IPlugin).Assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion)</p>
 				</div>
 
 				<div class="p-2 bd-highlight">

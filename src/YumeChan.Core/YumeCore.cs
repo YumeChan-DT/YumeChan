@@ -24,8 +24,8 @@ namespace YumeChan.Core
 
 	public sealed class YumeCore
 	{
-		public static YumeCore Instance => instance ??= new();
-		private static YumeCore instance;
+		public static YumeCore Instance => _instance ??= new();
+		private static YumeCore _instance;
 
 		public YumeCoreState CoreState { get; private set; }
 		public static string CoreVersion { get; } = typeof(YumeCore).Assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion;

@@ -2,12 +2,12 @@
 
 	<PropertyGroup>
 		<TargetFramework>net6.0</TargetFramework>
-		<Version>2.4</Version>
+		<Version>3.0</Version>
 		<Authors>Sakura Akeno Isayeki</Authors>
 		<Company>Nodsoft Systems</Company>
 		<Product>Yume-Chan</Product>
 		<Copyright>GNU GPLv3</Copyright>
-		<NeutralLanguage>Anglais</NeutralLanguage>
+		<NeutralLanguage>en</NeutralLanguage>
 		<RepositoryUrl>https://github.com/YumeChan-DT/YumeChan</RepositoryUrl>
 		<RepositoryType>Git</RepositoryType>
 		<UserSecretsId>b88ac92e-bd47-4a1a-af10-b5272f68479d</UserSecretsId>
