@@ -1,33 +1,50 @@
-﻿@page "/bot/plugins"
-@inject YumeChan.Core.YumeCore BotService
-@attribute [Authorize(Roles = UserRoles.Admin)]
+﻿@page "/p"
+@page "/plugins"
 
 @using YumeChan.PluginBase;
+@using YumeChan.Core.Services.Plugins
+
+@inject AuthenticationStateProvider AuthStateProvider;
+@inject PluginsLoader PluginsLoader;
+
+
 
 <h1>Plugins</h1>
 <br />
-<h3>Currently Loaded : @BotService.CommandHandler.Plugins.Count Plugins</h3>
+<h3>Currently Loaded : @PluginsLoader.PluginManifests.Count Plugins</h3>
 <br />
 
-<table class="table">
-    <thead>
-        <tr>
-            <th>Assembly</th>
-            <th>Plugin Name</th>
-            <th>Version</th>
-            <th>Active</th>
-        </tr>
-    </thead>
+<table class="table table-hover">
+	<thead>
+		<tr>
+			<th>Assembly</th>
+			<th>Plugin Name</th>
+			<th>Version</th>
+			<th>Active</th>
+		</tr>
+	</thead>
 
-    <tbody>
-        @foreach (IPlugin pluginManifest in BotService.CommandHandler.Plugins)
-        {
-            <tr>
-                <td>@pluginManifest.AssemblyName</td>
-                <td>@pluginManifest.DisplayName</td>
-                <td>@pluginManifest.Version</td>
-                <td>@(pluginManifest.Loaded ? "Yes" : "No")</td>
-            </tr>
-        }
-    </tbody>
+	<tbody>
+		@foreach (IPlugin pluginManifest in PluginsLoader.PluginManifests.Values.Where(p => _isAdmin || !p.StealthMode))
+		{
+			<tr>
+				<td><a href="/p/@pluginManifest.AssemblyName/">@pluginManifest.AssemblyName</a></td>
+				<td>@pluginManifest.DisplayName</td>
+				<td>@pluginManifest.Version</td>
+				<td>@(pluginManifest.Loaded ? "Yes" : "No")</td>
+			</tr>
+		}
+	</tbody>
 </table>
+
+@code {
+
+	private bool _isAdmin;
+
+	protected override async Task OnInitializedAsync()
+	{
+		await base.OnInitializedAsync();
+		_isAdmin = (await AuthStateProvider.GetAuthenticationStateAsync()).User.IsInRole(UserRoles.Admin);
+	}
+
+}

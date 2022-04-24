@@ -1,7 +1,9 @@
 ﻿using System;
+using System.Runtime.CompilerServices;
 using Castle.DynamicProxy;
 using YumeChan.Core.Infrastructure.Dynamic.Config;
 
+[assembly: InternalsVisibleTo("DynamicProxyGenAssembly2")]
 namespace YumeChan.Core.Services.Config;
 
 /// <summary>

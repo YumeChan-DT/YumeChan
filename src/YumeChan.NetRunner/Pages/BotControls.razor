@@ -3,8 +3,11 @@
 
 @using YumeChan.Core;
 @using System.Reflection;
+@using YumeChan.Core.Services.Plugins
+@using YumeChan.PluginBase
 
 @inject YumeCore YumeCore
+@inject PluginsLoader PluginsLoader
 
 <h1>Bot Controls</h1>
 
@@ -22,7 +25,7 @@
 				</div>
 
 				@{ (string textClass, string message) statusAlert = DisplayStatusAlert(); }
-				<div class="p-2 bd-highlight"><p class=@(statusAlert.textClass)>@(statusAlert.message)</p></div>
+				<div class="p-2 bd-highlight"><p class=@statusAlert.textClass>@statusAlert.message</p></div>
 			</div>
 		</div>
 
@@ -39,12 +42,12 @@
 		<div class="card-body">
 			<div class="d-flex justify-content-between">
 				<div class="p-2 bd-highlight">
-					<p><b>@typeof(PluginBase.IPlugin).Assembly.GetName().Name</b></p>
-					<p><b>Version :</b> @(typeof(PluginBase.IPlugin).Assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion)</p>
+					<p><b>@typeof(IPlugin).Assembly.GetName().Name</b></p>
+					<p><b>Version :</b> @(typeof(IPlugin).Assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion)</p>
 				</div>
 
 				<div class="p-2 bd-highlight">
-					<p><b>Loaded Plugins :</b> @YumeCore.CommandHandler.Plugins.Count</p>
+					<p><b>Loaded Plugins :</b> @PluginsLoader.PluginManifests.Count</p>
 				</div>
 			</div>
 		</div>

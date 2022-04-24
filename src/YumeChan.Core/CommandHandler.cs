@@ -10,6 +10,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
@@ -22,259 +23,296 @@ using YumeChan.PluginBase;
 using YumeChan.PluginBase.Infrastructure;
 using DSharpPlus.SlashCommands.EventArgs;
 using DSharpPlus.Entities;
+using YumeChan.Core.Services.Plugins;
 
-namespace YumeChan.Core
+namespace YumeChan.Core;
+
+public class CommandHandler
 {
-	public class CommandHandler
+	public CommandsNextExtension Commands { get; internal set; }
+	public InteractivityExtension Interactivity { get; internal set; }
+	public SlashCommandsExtension SlashCommands { get; internal set; }
+
+	public CommandsNextConfiguration CommandsConfiguration { get; internal set; }
+	public InteractivityConfiguration InteractivityConfiguration { get; internal set; }
+	public SlashCommandsConfiguration SlashCommandsConfiguration { get; internal set; }
+
+	internal ICoreProperties Config { get; set; }
+
+	private readonly DiscordClient _client;
+	private readonly IServiceProvider _services;
+	private readonly IUnityContainer _container;
+	private readonly NugetPluginsFetcher _pluginsFetcher;
+	private readonly PluginLifetimeListener _pluginLifetimeListener;
+	private readonly ILogger _logger;
+	private readonly PluginsLoader _pluginsLoader;
+
+	private static readonly ulong? _slashCommandsGuild = null; // Used for Development only
+
+	static CommandHandler()
 	{
-		public CommandsNextExtension Commands { get; internal set; }
-		public InteractivityExtension Interactivity { get; internal set; }
-		public SlashCommandsExtension SlashCommands { get; internal set; }
+#if DEBUG
+		_slashCommandsGuild = 584445871413002242;
+#endif
+	}
 
-		public CommandsNextConfiguration CommandsConfiguration { get; internal set; }
-		public InteractivityConfiguration InteractivityConfiguration { get; internal set; }
-		public SlashCommandsConfiguration SlashCommandsConfiguration { get; internal set; }
+	
+	public CommandHandler(DiscordClient client, ILogger<CommandHandler> logger, IServiceProvider services, IUnityContainer container, NugetPluginsFetcher pluginsFetcher,
+		PluginLifetimeListener pluginLifetimeListener, PluginsLoader pluginsLoader)
+	{
+		_client = client;
+		_services = services;
+		_container = container;
+		_pluginsFetcher = pluginsFetcher;
+		_pluginLifetimeListener = pluginLifetimeListener;
+		_logger = logger;
 
-		public List<IPlugin> Plugins { get; internal set; }
-
-		internal ICoreProperties Config { get; set; }
-
-		private readonly DiscordClient client;
-		private readonly IServiceProvider services;
-		private readonly IUnityContainer container;
-		private readonly ILogger logger;
-		private readonly PluginsLoader externalModulesLoader;
+		_pluginsLoader = pluginsLoader;
+	}
 
 
-		public CommandHandler(DiscordClient client, ILogger<CommandHandler> logger, IServiceProvider services, IUnityContainer container)
+	public async Task InstallCommandsAsync()
+	{
+		CommandsConfiguration ??= new()
 		{
-			this.client = client;
-			this.services = services;
-			this.container = container;
-			this.logger = logger;
+			Services = _services,
+			StringPrefixes = new[] { Config.CommandPrefix }
+		};
 
-			externalModulesLoader = new(string.Empty);
-		}
-
-
-		public async Task InstallCommandsAsync()
+		InteractivityConfiguration ??= new()
 		{
-			CommandsConfiguration ??= new()
-			{
-				Services = services,
-				StringPrefixes = new[] { Config.CommandPrefix }
-			};
+			PaginationBehaviour = PaginationBehaviour.Ignore
+		};
 
-			InteractivityConfiguration ??= new()
-			{
-				PaginationBehaviour = PaginationBehaviour.Ignore
-			};
+		SlashCommandsConfiguration ??= new()
+		{
+			Services = _services
+		};
 
-			SlashCommandsConfiguration ??= new()
-			{
-				Services = services
-			};
+		Commands = _client.UseCommandsNext(CommandsConfiguration);
+		Interactivity = _client.UseInteractivity(InteractivityConfiguration);
+		SlashCommands = _client.UseSlashCommands(SlashCommandsConfiguration);
 
-			Commands = client.UseCommandsNext(CommandsConfiguration);
-			Interactivity = client.UseInteractivity(InteractivityConfiguration);
-			SlashCommands = client.UseSlashCommands(SlashCommandsConfiguration);
+		Commands.CommandErrored += OnCommandErroredAsync;
+		Commands.CommandExecuted += OnCommandExecuted;
 
-			Commands.CommandErrored += OnCommandErroredAsync;
-			Commands.CommandExecuted += OnCommandExecuted;
-
-			SlashCommands.SlashCommandErrored += OnSlashCommandErroredAsync;
+		SlashCommands.SlashCommandErrored += OnSlashCommandErroredAsync;
 
 //			Commands.CommandExecuted += OnCommandExecutedAsync; // Hook execution event
 //			client.MessageReceived += HandleCommandAsync; // Hook command handler
 
-			await RegisterCommandsAsync();
+		await RegisterCommandsAsync();
 
-			Commands.SetHelpFormatter<HelpCommandFormatter>();
-		}
+		Commands.SetHelpFormatter<HelpCommandFormatter>();
+	}
 
-		private Task OnSlashCommandErroredAsync(SlashCommandsExtension _, SlashCommandErrorEventArgs e)
-		{
-			logger.LogError(e.Exception, "An error occured executing SlashCommand {cmd} :", e.Context.CommandName);
+	private Task OnSlashCommandErroredAsync(SlashCommandsExtension _, SlashCommandErrorEventArgs e)
+	{
+		_logger.LogError(e.Exception, "An error occured executing SlashCommand {Command} :", e.Context.CommandName);
 
 #if DEBUG
-			throw e.Exception;
+		throw e.Exception;
 #else
 			return Task.CompletedTask;
 #endif
-		}
+	}
 
-		public async Task UninstallCommandsAsync()
-		{
+	public async Task UninstallCommandsAsync()
+	{
 //			Commands.CommandExecuted -= OnCommandExecutedAsync;
 //			client.MessageReceived -= HandleCommandAsync;
 
-			await ReleaseCommandsAsync();
+		await ReleaseCommandsAsync();
+	}
+
+	public async Task RegisterCommandsAsync()
+	{
+		_logger.LogInformation("Using PluginBase v{Version}.", typeof(IPlugin).Assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion);
+		_logger.LogInformation("Current Plugins directory: {PluginsDirectory}", _pluginsLoader.PluginsLoadDirectory);
+
+		await _pluginsFetcher.FetchPluginsAsync();
+		_pluginsLoader.ScanDirectoryForPluginFiles();
+		_pluginsLoader.LoadPluginAssemblies();
+
+		foreach (DependencyInjectionHandler handler in _pluginsLoader.LoadDependencyInjectionHandlers())
+		{
+			_container.AddServices(handler.ConfigureServices(new ServiceCollection()));
 		}
 
-		public async Task RegisterCommandsAsync()
+		_pluginsLoader.LoadPluginManifests();
+		
+		// Add YumeCore internal commands
+		_pluginsLoader.ImportPlugin(new Modules.InternalPlugin());
+
+		// FIXME: Use the new IRunnerContext interface
+		// Scan for NetRunner plugins when YumeCore was loaded from a ConsoleRunner, and if DisallowNetRunnerPlugins is set to true in the config.
+		if (Assembly.GetEntryAssembly()?.GetName().Name == "YumeChan.ConsoleRunner" && YumeCore.Instance.CoreProperties.DisallowNetRunnerPlugins is true
+			&& _pluginsLoader.PluginManifests.Values.Any(p => p.ShouldUseNetRunner))
 		{
-			logger.LogInformation("Using PluginBase v{Version}.", typeof(IPlugin).Assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion);
-			logger.LogInformation("Current Plugins directory: {PluginsDirectory}", externalModulesLoader.PluginsLoadDirectory);
+			throw new NotSupportedException("Attempted to load NetRunner-only plugins on a ConsoleRunner. \nIf this was intended, set DisallowNetRunnerPlugins to false in the YumeCore config.");
+		}
 
-			Plugins = new() { new Modules.InternalPlugin() }; // Add YumeCore internal commands
-			externalModulesLoader.ScanDirectoryForPluginFiles();
-			externalModulesLoader.LoadPluginAssemblies();
-
-			foreach (DependencyInjectionHandler handler in externalModulesLoader.LoadDependencyInjectionHandlers())
+		foreach (IPlugin plugin in _pluginsLoader.PluginManifests.Values)
+		{
+			try
 			{
-				container.AddServices(handler.ConfigureServices(new ServiceCollection()));
+				await LoadPluginAsync(plugin, _slashCommandsGuild);
 			}
-
-			Plugins.AddRange(
-				from IPlugin plugin in externalModulesLoader.LoadPluginManifests()
-				where !Plugins.Exists(p => p?.AssemblyName == plugin.AssemblyName)
-				select plugin);
-
-			ulong? slashCommandsGuild = null; // Used for Development only
-#if DEBUG
-			slashCommandsGuild = 584445871413002242;
-#endif
-
-/*
-			if (SlashCommands.Client.GatewayInfo is not null)
+			catch (Exception e)
 			{
-				await SlashCommands.Client.BulkOverwriteGlobalApplicationCommandsAsync(Array.Empty<DiscordApplicationCommand>());
-			}
-*/
+				_logger.LogError(e, "An error occured while loading plugin {PluginName}", plugin.AssemblyName);
 
-			foreach (IPlugin plugin in Plugins)
-			{
 				try
 				{
-					await plugin.LoadAsync();
-					Commands.RegisterCommands(plugin.GetType().Assembly);
-
-					SlashCommands.RegisterCommands(plugin.GetType().Assembly, slashCommandsGuild);
-					logger.LogInformation("Loaded Plugin '{Plugin}'.", plugin.AssemblyName);
+					await plugin.UnloadAsync();
 				}
-				catch (Exception e)
-				{
-					logger.LogError(e, "An error occured while loading plugin {PluginName}", plugin.AssemblyName);
-
-					try
-					{
-						await plugin.UnloadAsync();
-					}
-					catch {	}
+				catch { /* Ignore any errors. */ }
 
 #if DEBUG
-					throw;
+				throw;
 #endif
-				}
 			}
-
-			Commands.RegisterCommands(Assembly.GetEntryAssembly()); // Add possible Commands from Entry Assembly (contextual)
-
-			//SlashCommands.RegisterCommands<Status>(slashCommandsGuild);
-			//await SlashCommands.RefreshCommands();
 		}
 
+		Commands.RegisterCommands(Assembly.GetEntryAssembly() ?? throw new InvalidOperationException()); // Add possible Commands from Entry Assembly (contextual)
 
-		public async Task ReleaseCommandsAsync()
+		//SlashCommands.RegisterCommands<Status>(slashCommandsGuild);
+		//await SlashCommands.RefreshCommands();
+	}
+
+
+	public async Task ReleaseCommandsAsync()
+	{
+		Commands.UnregisterCommands(Commands.RegisteredCommands.Values.ToArray());
+		
+/*
+		FIXME: Faulty unloading of SlashCommands
+ 
+		if (_slashCommandsGuild is not null)
 		{
-			Commands.UnregisterCommands(Commands.RegisteredCommands.Values.ToArray());
-
-			foreach (IPlugin plugin in new List<IPlugin>(Plugins.Where(p => p is not Modules.InternalPlugin)))
+			await _client.BulkOverwriteGuildApplicationCommandsAsync(_slashCommandsGuild.Value, Array.Empty<DiscordApplicationCommand>());
+		}
+*/		
+		
+		foreach (IPlugin plugin in _pluginsLoader.PluginManifestsInternal.Values.Where(p => p is not Modules.InternalPlugin).ToImmutableArray())
+		{
+			try
 			{
 				await plugin.UnloadAsync();
-				Plugins.Remove(plugin);
+				_pluginsLoader.PluginManifestsInternal.Remove(plugin.AssemblyName);
 
-				logger.LogInformation("Removed Plugin '{Plugin}'.", plugin.AssemblyName);
+				_logger.LogInformation("Removed Plugin '{Plugin}'.", plugin.AssemblyName);
+			
+				_pluginLifetimeListener.NotifyPluginUnloaded(plugin);
+			}
+			catch (Exception e)
+			{
+				_logger.LogError(e, "An error occured while unloading plugin {PluginName}", plugin.AssemblyName);
+				
+#if DEBUG
+				throw;
+#endif
 			}
 		}
+	}
 
-		internal async Task OnCommandErroredAsync(CommandsNextExtension _, CommandErrorEventArgs e)
+	private async Task LoadPluginAsync(IPlugin plugin, ulong? slashCommandsGuild)
+	{
+		await plugin.LoadAsync();
+		Commands.RegisterCommands(plugin.GetType().Assembly);
+
+		SlashCommands.RegisterCommands(plugin.GetType().Assembly, slashCommandsGuild);
+		_logger.LogInformation("Loaded Plugin '{Plugin}'.", plugin.AssemblyName);
+				
+		_pluginLifetimeListener.NotifyPluginLoaded(plugin);
+	}
+	
+	internal async Task OnCommandErroredAsync(CommandsNextExtension _, CommandErrorEventArgs e)
+	{
+		if (e.Exception is ChecksFailedException cf)
 		{
-			if (e.Exception is ChecksFailedException cf)
+			List<string> errorMessages = new();
+
+			foreach (CheckBaseAttribute check in cf.FailedChecks)
 			{
-				List<string> errorMessages = new();
-
-				foreach (CheckBaseAttribute check in cf.FailedChecks)
+				if (check is PluginCheckBaseAttribute pluginCkeck)
 				{
-					if (check is PluginCheckBaseAttribute pluginCkeck)
-					{
-						errorMessages.Add(pluginCkeck.ErrorMessage);
-					}
-					else
-					{
-						errorMessages.Add(check switch
-						{
-							RequireOwnerAttribute => "Sorry. You must be a Bot Owner to run this command.",
-							RequireDirectMessageAttribute => "Sorry, not here. Please send me a Direct Message with that command.",
-							RequireGuildAttribute => "Sorry, not here. Please send this command in a server.",
-							RequireNsfwAttribute => "Sorry. As much as I'd love to, I've gotta keep the hot stuff to the right channels.",
-							CooldownAttribute cd => $"Sorry. This command is on Cooldown. You can use it {cd.MaxUses} time(s) every {cd.Reset.TotalSeconds} seconds.",
-							RequireUserPermissionsAttribute p => $"Sorry. You need to have permission(s) ``{p.Permissions}`` to run this.",
-							_ => null
-						});
-					}
+					errorMessages.Add(pluginCkeck.ErrorMessage);
 				}
-
-				if (errorMessages.Any())
+				else
 				{
-					await e.Context.RespondAsync(string.Join('\n', errorMessages));
+					errorMessages.Add(check switch
+					{
+						RequireOwnerAttribute             => "Sorry. You must be a Bot Owner to run this command.",
+						RequireDirectMessageAttribute     => "Sorry, not here. Please send me a Direct Message with that command.",
+						RequireGuildAttribute             => "Sorry, not here. Please send this command in a server.",
+						RequireNsfwAttribute              => "Sorry. As much as I'd love to, I've gotta keep the hot stuff to the right channels.",
+						CooldownAttribute cd              => $"Sorry. This command is on Cooldown. You can use it {cd.MaxUses} time(s) every {cd.Reset.TotalSeconds} seconds.",
+						RequireUserPermissionsAttribute p => $"Sorry. You need to have permission(s) ``{p.Permissions}`` to run this.",
+						_                                 => null
+					});
 				}
 			}
-			else
+
+			if (errorMessages.Any())
 			{
+				await e.Context.RespondAsync(string.Join('\n', errorMessages));
+			}
+		}
+		else
+		{
 #if DEBUG
-				string response = $"An error occurred : \n```{e.Exception}```";
+			string response = $"An error occurred : \n```{e.Exception}```";
 #else
 				string response = $"Something went wrong while executing your command : \n{e.Exception.Message}";
 #endif
 
-				await e.Context.RespondAsync(response);
-				logger.LogError("An error occured executing '{command}' from user '{user}' : \n{exception}", e.Command.QualifiedName, e.Context.User.Id, e.Exception);
-			}		
-		}
-
-
-
-
-		/*	private async Task HandleCommandAsync(SocketMessage arg)
-				{
-					if (arg is SocketUserMessage message)
-					{
-						int argPosition = 0;
-
-						if (message.HasStringPrefix(Config.CommandPrefix, ref argPosition) || message.HasMentionPrefix(client.CurrentUser, ref argPosition))
-						{
-							SocketCommandContext context = new(client, message);
-
-							await Commands.ExecuteAsync(context, argPosition, services).ConfigureAwait(false);
-						}
-					}
-				}
-		*/
-
-		public Task OnCommandExecuted(CommandsNextExtension sender, CommandExecutionEventArgs e)
-		{
-			logger.LogDebug("Command '{command}' received from User '{user}'.", e.Command.QualifiedName, e.Context.User.Id);
-			return Task.CompletedTask;
-		}
-
-
-
-		/*		public async Task LogAsync(LogMessage logMessage)
-				{
-					if (logMessage.Exception is CommandException cmdException)
-					{
-						// Inform the user that something unexpected has happened
-		#if DEBUG
-						await cmdException.Context.Channel.SendMessageAsync(cmdException.ToString());
-		#else
-						await cmdException.Context.Channel.SendMessageAsync("Something went wrong.");
-		#endif
-
-						// Log the incident
-						await logger.Log(new LogMessage(LogSeverity.Error, "Commands", $"{cmdException.Context.User} failed to execute '{cmdException.Command.Name}' in channel {cmdException.Context.Channel}.", cmdException));
-					}
-				}
-		*/
+			await e.Context.RespondAsync(response);
+			_logger.LogError("An error occured executing '{Command}' from user '{User}' : \n{Exception}", e.Command.QualifiedName, e.Context.User.Id, e.Exception);
+		}		
 	}
+
+
+
+
+	/*	private async Task HandleCommandAsync(SocketMessage arg)
+			{
+				if (arg is SocketUserMessage message)
+				{
+					int argPosition = 0;
+
+					if (message.HasStringPrefix(Config.CommandPrefix, ref argPosition) || message.HasMentionPrefix(client.CurrentUser, ref argPosition))
+					{
+						SocketCommandContext context = new(client, message);
+
+						await Commands.ExecuteAsync(context, argPosition, services).ConfigureAwait(false);
+					}
+				}
+			}
+	*/
+
+	public Task OnCommandExecuted(CommandsNextExtension sender, CommandExecutionEventArgs e)
+	{
+		_logger.LogInformation("Command '{Command}' received from User '{User}'.", e.Command.QualifiedName, e.Context.User.Id);
+		return Task.CompletedTask;
+	}
+
+
+
+	/*		public async Task LogAsync(LogMessage logMessage)
+			{
+				if (logMessage.Exception is CommandException cmdException)
+				{
+					// Inform the user that something unexpected has happened
+	#if DEBUG
+					await cmdException.Context.Channel.SendMessageAsync(cmdException.ToString());
+	#else
+					await cmdException.Context.Channel.SendMessageAsync("Something went wrong.");
+	#endif
+
+					// Log the incident
+					await logger.Log(new LogMessage(LogSeverity.Error, "Commands", $"{cmdException.Context.User} failed to execute '{cmdException.Command.Name}' in channel {cmdException.Context.Channel}.", cmdException));
+				}
+			}
+	*/
 }

@@ -1,8 +1,4 @@
-﻿using System.Runtime.CompilerServices;
-
-
-[assembly: InternalsVisibleTo("DynamicProxyGenAssembly2")]
-namespace YumeChan.Core.Config;
+﻿namespace YumeChan.Core.Config;
 
 public interface ICoreProperties
 {
@@ -16,6 +12,8 @@ public interface ICoreProperties
 	public string Path_Plugins { get; internal set; }
 
 	public string CommandPrefix { get; internal set; }
+	
+	public bool? DisallowNetRunnerPlugins { get; internal set; }
 
 	internal ICoreDatabaseProperties MongoProperties { get; set; }
 	internal ICoreDatabaseProperties PostgresProperties { get; set; }

@@ -8,11 +8,11 @@
 	<Authorized>
 		<li class="nav-item me-3"><img class="img-fluid rounded-circle" style="height:2.5rem" src=@GetAvatarLink().GetAwaiter().GetResult() /></li>
 		<li class="navbar-text text-light me-3">Welcome, @GetUsername().GetAwaiter().GetResult() !</li>
-		<li class="nav-item"><NavLink class="nav-link text-white" href="logout">Logout</NavLink></li>
+		<li class="nav-item"><NavLink class="nav-link text-white" href="/logout">Logout</NavLink></li>
 	</Authorized>
 
 	<NotAuthorized>
-		<li class="nav-item"><NavLink class="nav-link text-white" href=@($"login?redirectUri={CurrentUri}")>Login</NavLink></li>
+		<li class="nav-item"><NavLink class="nav-link text-white" href=@($"/login?redirectUri={CurrentUri}")>Login</NavLink></li>
 	</NotAuthorized>
 </AuthorizeView>
 
