@@ -105,11 +105,17 @@ public sealed class PluginsLoader
 					_loadAssemblies.Add(a);
 				}
 			}
+			// Catch any assembly with bad IL.
+			catch (BadImageFormatException e)
+			{
+				YumeCore.Instance.Logger.LogDebug("Assembly {AssemblyName} is not a valid MSIL assembly.", file.FullName);
+			}
+			
 			// Catch any assemblies with dependency issues, or broken types.
 			catch (ReflectionTypeLoadException e) when (e.LoaderExceptions.Any(x => x?.GetType() == typeof(FileNotFoundException)))
 			{
-				YumeCore.Instance.Logger.LogDebug(e, "Assembly {FileName} is not suitable for loading, skipping it.", file.Name);
-				YumeCore.Instance.Logger.LogDebug("Path: {FilePath}", file.FullName);
+				YumeCore.Instance.Logger.LogDebug(e, "Assembly {FileName} is not suitable for loading, skipping it.", file.FullName);
+				
 			}
 			// Anything else is strange. Log it as a warning.
 			catch (Exception e)

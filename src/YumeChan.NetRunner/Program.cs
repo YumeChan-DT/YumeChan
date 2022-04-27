@@ -35,7 +35,7 @@ public static class Program
 		YumeCore.Instance.Services = _container;
 		_container.RegisterInstance(new NetRunnerContext(RunnerType.Console, typeof(Program).Assembly.GetName().Name, informationalVersion));
 		
-		await YumeCore.Instance.StartBotAsync().ConfigureAwait(false);
+		await YumeCore.Instance.StartBotAsync();
 		await host.RunAsync();
 	}
 	public static IHostBuilder CreateHostBuilder(string[] args)
