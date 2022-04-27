@@ -51,6 +51,10 @@
 		<PackageReference Include="Microsoft.AspNetCore.Authentication" Version="2.2.0" />
 		<PackageReference Include="Microsoft.Extensions.Logging" Version="6.0.0" />
 		<PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="6.0.0" />
+		<PackageReference Include="Microsoft.TypeScript.MSBuild" Version="4.6.2">
+			<PrivateAssets>all</PrivateAssets>
+			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+		</PackageReference>
 		<PackageReference Include="Microsoft.VisualStudio.Web.BrowserLink" Version="2.2.0" />
 		<PackageReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Design" Version="6.0.3" />
 		<PackageReference Include="Serilog.AspNetCore" Version="5.0.0" />
@@ -82,4 +86,25 @@
 	  <_ContentIncludedByDefault Remove="Config\SocialGuard.YC\api.json" />
 	  <_ContentIncludedByDefault Remove="Config\YumeChan.DreamJockey\global-config.json" />
 	</ItemGroup>
+
+	<ItemGroup>
+		<TypeScriptCompile Include="*.ts" />
+		<TypeScriptCompile Remove="wwwroot\lib\**" />
+	</ItemGroup>
+
+	<PropertyGroup>
+		<TypeScriptTarget>ESNext</TypeScriptTarget>
+		<TypeScriptJSXEmit>React</TypeScriptJSXEmit>
+		<TypeScriptModuleKind>AMD</TypeScriptModuleKind>
+		<TypeScriptCompileOnSaveEnabled>True</TypeScriptCompileOnSaveEnabled>
+		<TypeScriptNoImplicitAny>False</TypeScriptNoImplicitAny>
+		<TypeScriptRemoveComments>True</TypeScriptRemoveComments>
+		<TypeScriptOutFile>wwwroot\js\site.js</TypeScriptOutFile>
+		<TypeScriptOutDir />
+		<TypeScriptGeneratesDeclarations>False</TypeScriptGeneratesDeclarations>
+		<TypeScriptNoEmitOnError>True</TypeScriptNoEmitOnError>
+		<TypeScriptSourceMap>False</TypeScriptSourceMap>
+		<TypeScriptMapRoot />
+		<TypeScriptSourceRoot />
+	</PropertyGroup>
 </Project>
