@@ -3,21 +3,21 @@
 @using YumeChan.PluginBase
 
 @inject PluginsLoader PluginsLoader;
+@inject IJSRuntime JsRuntime;
 
 @page "/plugin/{PluginName}/{*PathSlug}"
 @page "/p/{PluginName}/{*PathSlug}"
 
-<NestedPluginRouter Plugin="_plugin" RoutePath=@PathSlug>
+<NestedPluginRouter Plugin="_plugin" RoutePath=@PathSlug PreferExactMatches>
     <Found Context="routeData">
-        <base href="/p/@PluginName/" />
-        <AuthorizeRouteView RouteData="routeData" />
+        <AuthorizeRouteView @ref=_authorizeRouteView RouteData=routeData />
     </Found>
-    
+
     <NotFound>
         <CascadingAuthenticationState>
             @if (PathSlug is null)
             {
-                @* This means we've hit the root of the plugin, yet no homepage for the plugin exists. *@
+            @* This means we've hit the root of the plugin, yet no homepage for the plugin exists. *@
                 <h5>Hmm... Seems like @PluginName has no plugin homepage.</h5>
             }
             else
@@ -28,11 +28,17 @@
     </NotFound>
 </NestedPluginRouter>
 
+@{ _routerRendered = true; }
+
 @code {
 	[Parameter] public string PluginName { get; set; }
 	[Parameter] public string PathSlug { get; set; }
 
+    private AuthorizeRouteView _authorizeRouteView = new();
     private IPlugin _plugin;
+    
+    private bool _routerRendered;
+    
     
     protected override void OnParametersSet()
     {
@@ -40,4 +46,15 @@
         PluginsLoader.PluginManifests.TryGetValue(PluginName, out _plugin);
     }
 
+    protected override bool ShouldRender() => !_routerRendered;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        @if (firstRender && _plugin is not null)
+        {
+            await JsRuntime.InvokeVoidAsync("setBase", $"/p/{PluginName}/");
+        }
+        
+        await base.OnAfterRenderAsync(firstRender);
+    }
 }

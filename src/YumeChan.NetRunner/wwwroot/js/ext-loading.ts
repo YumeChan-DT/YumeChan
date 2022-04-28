@@ -26,3 +26,7 @@ function loadJs(sourceUrl: string) {
 
     document.body.appendChild(tag);
 }
+
+function setBase(baseUrl: string) {
+    document.querySelector('base').href = baseUrl;
+}

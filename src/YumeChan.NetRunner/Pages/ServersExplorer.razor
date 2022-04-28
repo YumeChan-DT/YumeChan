@@ -22,9 +22,9 @@
 		@foreach (DiscordGuild guild in GuildsList.Values)
 		{
 			<tr>
-				<td>@guild.Id</td>
+				<td>@guild.Id.ToString()</td>
 				<td>@guild.Name</td>
-				<td>@guild.MemberCount</td>
+				<td>@guild.MemberCount.ToString()</td>
 			</tr>
 		}
 	</tbody>
