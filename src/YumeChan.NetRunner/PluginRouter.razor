@@ -8,7 +8,7 @@
 @page "/plugin/{PluginName}/{*PathSlug}"
 @page "/p/{PluginName}/{*PathSlug}"
 
-<NestedPluginRouter Plugin="_plugin" RoutePath=@PathSlug PreferExactMatches>
+<NestedPluginRouter Plugin="_plugin" RoutePath=@(PathSlug ?? "/") PreferExactMatches>
     <Found Context="routeData">
         <AuthorizeRouteView @ref=_authorizeRouteView RouteData=routeData />
     </Found>
