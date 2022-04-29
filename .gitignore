@@ -342,3 +342,5 @@ src/YumeChan.NetRunner/appsettings.Production.json
 src/YumeChan.NetRunner/Plugins/
 
 src/YumeChan.NetRunner/wwwroot/js/site.js
+
+src/YumeChan.NetRunner/wwwroot/js/site.js.map

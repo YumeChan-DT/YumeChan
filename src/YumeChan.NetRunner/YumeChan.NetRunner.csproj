@@ -23,30 +23,30 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\YumeChan.Core\YumeChan.Core.csproj"/>
-        <ProjectReference Include="..\YumeChan.NetRunner.Plugins\YumeChan.NetRunner.Plugins.csproj"/>
+        <ProjectReference Include="..\YumeChan.Core\YumeChan.Core.csproj" />
+        <ProjectReference Include="..\YumeChan.NetRunner.Plugins\YumeChan.NetRunner.Plugins.csproj" />
     </ItemGroup>
 
     <ItemGroup>
-        <PackageReference Include="AspNet.Security.OAuth.Discord" Version="6.0.6"/>
-        <PackageReference Include="Microsoft.AspNetCore.Authentication" Version="2.2.0"/>
-        <PackageReference Include="Microsoft.Extensions.Logging" Version="6.0.0"/>
-        <PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="6.0.0"/>
+        <PackageReference Include="AspNet.Security.OAuth.Discord" Version="6.0.6" />
+        <PackageReference Include="Microsoft.AspNetCore.Authentication" Version="2.2.0" />
+        <PackageReference Include="Microsoft.Extensions.Logging" Version="6.0.0" />
+        <PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="6.0.0" />
         <PackageReference Include="Microsoft.TypeScript.MSBuild" Version="4.6.2">
             <PrivateAssets>all</PrivateAssets>
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
-        <PackageReference Include="Microsoft.VisualStudio.Web.BrowserLink" Version="2.2.0"/>
-        <PackageReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Design" Version="6.0.3"/>
-        <PackageReference Include="Serilog.AspNetCore" Version="5.0.0"/>
-        <PackageReference Include="Serilog.Extensions.Hosting" Version="4.2.0"/>
-        <PackageReference Include="Serilog.Extensions.Logging" Version="3.1.0"/>
-        <PackageReference Include="Serilog.Sinks.Console" Version="4.0.1"/>
+        <PackageReference Include="Microsoft.VisualStudio.Web.BrowserLink" Version="2.2.0" />
+        <PackageReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Design" Version="6.0.3" />
+        <PackageReference Include="Serilog.AspNetCore" Version="5.0.0" />
+        <PackageReference Include="Serilog.Extensions.Hosting" Version="4.2.0" />
+        <PackageReference Include="Serilog.Extensions.Logging" Version="3.1.0" />
+        <PackageReference Include="Serilog.Sinks.Console" Version="4.0.1" />
         <PackageReference Include="SourceLink.Create.CommandLine" Version="2.8.3">
             <PrivateAssets>all</PrivateAssets>
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
-        <PackageReference Include="System.Configuration.ConfigurationManager" Version="6.0.0"/>
+        <PackageReference Include="System.Configuration.ConfigurationManager" Version="6.0.0" />
     </ItemGroup>
 
     <ItemGroup>
@@ -62,23 +62,9 @@
     </ItemGroup>
 
     <ItemGroup>
-        <TypeScriptCompile Include="*.ts"/>
-        <TypeScriptCompile Remove="wwwroot\lib\**"/>
+        <TypeScriptCompile Include="*.ts" />
+        <TypeScriptCompile Remove="wwwroot\lib\**" />
+        <Content Remove="tsconfig.json" />
+        <TypeScriptCompile Include="tsconfig.json" />
     </ItemGroup>
-
-    <PropertyGroup>
-        <TypeScriptTarget>ESNext</TypeScriptTarget>
-        <TypeScriptJSXEmit>React</TypeScriptJSXEmit>
-        <TypeScriptModuleKind>AMD</TypeScriptModuleKind>
-        <TypeScriptCompileOnSaveEnabled>True</TypeScriptCompileOnSaveEnabled>
-        <TypeScriptNoImplicitAny>False</TypeScriptNoImplicitAny>
-        <TypeScriptRemoveComments>True</TypeScriptRemoveComments>
-        <TypeScriptOutFile>wwwroot\js\site.js</TypeScriptOutFile>
-        <TypeScriptOutDir/>
-        <TypeScriptGeneratesDeclarations>False</TypeScriptGeneratesDeclarations>
-        <TypeScriptNoEmitOnError>True</TypeScriptNoEmitOnError>
-        <TypeScriptSourceMap>False</TypeScriptSourceMap>
-        <TypeScriptMapRoot/>
-        <TypeScriptSourceRoot/>
-    </PropertyGroup>
 </Project>
