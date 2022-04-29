@@ -1,4 +1,4 @@
-﻿@using YumeChan.NetRunner.Plugins.Infrastructure.Blazor.Router
+@using YumeChan.NetRunner.Plugins.Infrastructure.Blazor.Router
 @using YumeChan.Core.Services.Plugins
 @using YumeChan.PluginBase
 
@@ -53,6 +53,7 @@
         @if (firstRender && _plugin is not null)
         {
             await JsRuntime.InvokeVoidAsync("setBase", $"/p/{PluginName}/");
+            await JsRuntime.InvokeVoidAsync("loadCss", $"{PluginName}.bundle.scp.css");
         }
         
         await base.OnAfterRenderAsync(firstRender);
