@@ -53,11 +53,11 @@
         if (firstRender && _plugin is not null)
         {
             await JsRuntime.InvokeVoidAsync("setBase", $"/p/{PluginName}/");
+            await JsRuntime.InvokeVoidAsync("loadCss", "css/plugin.css");
             await JsRuntime.InvokeVoidAsync("loadCss", $"{PluginName}.bundle.scp.css");
             await JsRuntime.InvokeVoidAsync("loadJs", "js/plugin.js");
         }
 
         await base.OnAfterRenderAsync(firstRender);
     }
-
 }
