@@ -3,16 +3,27 @@
     directive matching the current URI.
 *@
 
-<Router AppAssembly="@typeof(Program).Assembly">
-    <Found Context="routeData">
-        <AuthorizeRouteView RouteData="@routeData" DefaultLayout="@typeof(MainLayout)" />
-    </Found>
-    
-    <NotFound>
-        <CascadingAuthenticationState>
-            <LayoutView Layout="@typeof(MainLayout)">
-                <p>Sorry, there's nothing at this address.</p>
-            </LayoutView>
-        </CascadingAuthenticationState>
-    </NotFound>
-</Router>
+@using YumeChan.NetRunner.Plugins.Infrastructure.Blazor.Router
+@using System.Text.RegularExpressions
+
+@* ReSharper disable once Blazor.EditorRequired *@
+<HandoffRouter AppAssembly="@typeof(Program).Assembly">
+	<Found Context="routeData">
+		<AuthorizeRouteView DefaultLayout="@typeof(MainLayout)" RouteData="@routeData" />
+	</Found>
+
+	<NotFound>
+		<CascadingAuthenticationState>
+			<LayoutView Layout="@typeof(MainLayout)">
+				<p>Sorry, there's nothing at this address.</p>
+			</LayoutView>
+		</CascadingAuthenticationState>
+	</NotFound>
+</HandoffRouter>
+
+@code {
+	protected override bool ShouldRender() => false;
+
+
+
+}

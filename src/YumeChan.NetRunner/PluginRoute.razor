@@ -8,7 +8,7 @@
 @page "/plugin/{PluginName}/{*PathSlug}"
 @page "/p/{PluginName}/{*PathSlug}"
 
-<NestedPluginRouter Plugin="_plugin" RoutePath=@(PathSlug ?? "/") PreferExactMatches>
+<PluginRouter Plugin="_plugin" RoutePath=@(PathSlug ?? "/")>
     <Found Context="routeData">
         <AuthorizeRouteView @ref=_authorizeRouteView RouteData=routeData />
     </Found>
@@ -26,36 +26,38 @@
             }
         </CascadingAuthenticationState>
     </NotFound>
-</NestedPluginRouter>
-
-@{ _routerRendered = true; }
+</PluginRouter>
 
 @code {
-	[Parameter] public string PluginName { get; set; }
-	[Parameter] public string PathSlug { get; set; }
+
+    [Parameter]
+    public string PluginName { get; set; }
+
+    [Parameter]
+    public string PathSlug { get; set; }
 
     private AuthorizeRouteView _authorizeRouteView = new();
     private IPlugin _plugin;
-    
-    private bool _routerRendered;
-    
-    
+
+
     protected override void OnParametersSet()
     {
         base.OnParametersSet();
         PluginsLoader.PluginManifests.TryGetValue(PluginName, out _plugin);
     }
 
-    protected override bool ShouldRender() => !_routerRendered;
+    protected override bool ShouldRender() => false;
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        @if (firstRender && _plugin is not null)
+        if (firstRender && _plugin is not null)
         {
             await JsRuntime.InvokeVoidAsync("setBase", $"/p/{PluginName}/");
             await JsRuntime.InvokeVoidAsync("loadCss", $"{PluginName}.bundle.scp.css");
+            await JsRuntime.InvokeVoidAsync("loadJs", "js/plugin.js");
         }
-        
+
         await base.OnAfterRenderAsync(firstRender);
     }
+
 }
