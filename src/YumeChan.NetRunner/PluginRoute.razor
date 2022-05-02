@@ -1,0 +1,63 @@
+@using YumeChan.NetRunner.Plugins.Infrastructure.Blazor.Router
+@using YumeChan.Core.Services.Plugins
+@using YumeChan.PluginBase
+
+@inject PluginsLoader PluginsLoader;
+@inject IJSRuntime JsRuntime;
+
+@page "/plugin/{PluginName}/{*PathSlug}"
+@page "/p/{PluginName}/{*PathSlug}"
+
+<PluginRouter Plugin="_plugin" RoutePath=@(PathSlug ?? "/")>
+    <Found Context="routeData">
+        <AuthorizeRouteView @ref=_authorizeRouteView RouteData=routeData />
+    </Found>
+
+    <NotFound>
+        <CascadingAuthenticationState>
+            @if (PathSlug is null)
+            {
+            @* This means we've hit the root of the plugin, yet no homepage for the plugin exists. *@
+                <h5>Hmm... Seems like @PluginName has no plugin homepage.</h5>
+            }
+            else
+            {
+                <p>Sorry, there's nothing at this address.</p>
+            }
+        </CascadingAuthenticationState>
+    </NotFound>
+</PluginRouter>
+
+@code {
+
+    [Parameter]
+    public string PluginName { get; set; }
+
+    [Parameter]
+    public string PathSlug { get; set; }
+
+    private AuthorizeRouteView _authorizeRouteView = new();
+    private IPlugin _plugin;
+
+
+    protected override void OnParametersSet()
+    {
+        base.OnParametersSet();
+        PluginsLoader.PluginManifests.TryGetValue(PluginName, out _plugin);
+    }
+
+    protected override bool ShouldRender() => false;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender && _plugin is not null)
+        {
+            await JsRuntime.InvokeVoidAsync("setBase", $"/p/{PluginName}/");
+            await JsRuntime.InvokeVoidAsync("loadCss", "css/plugin.css");
+            await JsRuntime.InvokeVoidAsync("loadCss", $"{PluginName}.bundle.scp.css");
+            await JsRuntime.InvokeVoidAsync("loadJs", "js/plugin.js");
+        }
+
+        await base.OnAfterRenderAsync(firstRender);
+    }
+}

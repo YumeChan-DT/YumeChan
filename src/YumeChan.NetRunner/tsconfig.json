@@ -1,0 +1,24 @@
+{
+  "compilerOptions": {
+    "outFile": "./wwwroot/js/site.js",
+    "module": "AMD",
+    "noImplicitAny": false,
+    "noEmitOnError": true,
+    "removeComments": false,
+    "sourceMap": false,
+    "target": "ESNext",
+    "moduleResolution": "Node",
+    "paths": {
+      "@lib/*": [ "./wwwroot/lib/*" ],
+      "@popperjs/*": [ "./wwwroot/lib/popperjs/*" ],
+      "@types/*": [ "./wwwroot/lib/types/*" ],
+      "jquery/*": [ "./wwwroot/lib/jquery/*" ]
+    },
+    "typeRoots": ["./wwwroot/lib/types/*"]
+  },
+  "exclude": [
+    "./node_modules/*",
+    "./wwwroot/*"
+  ],
+  "compileOnSave": true
+}

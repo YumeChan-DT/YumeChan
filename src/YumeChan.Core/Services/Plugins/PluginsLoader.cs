@@ -88,23 +88,34 @@ public sealed class PluginsLoader
 	{
 		_loadAssemblies.Clear();
 
+
 		// Try to load the assemblies from the file system, warn in console if unsuccessful.
-		foreach (FileInfo file in _pluginFiles.DistinctBy(f => f.Name).Where(f => f.Name != Path.GetFileName(typeof(IPlugin).Assembly.Location)))
+		foreach (FileInfo file in _pluginFiles
+					.DistinctBy(f => f.Name)
+					.Where(f => f.Name != Path.GetFileName(typeof(IPlugin).Assembly.Location))
+					.OrderBy(f => f.Name)) // OrderBy is necessary to prevent cross-platform issues.
 		{
 			try
 			{
 				Assembly a = AssemblyLoadContext.Default.LoadFromAssemblyPath(file.FullName);
 
 				// Check if the assembly loads its types properly.
-				if (a.GetTypes().Any())
+				if (a.GetExportedTypes().Any())
 				{
 					_loadAssemblies.Add(a);
 				}
 			}
+			// Catch any assembly with bad IL.
+			catch (BadImageFormatException e)
+			{
+				YumeCore.Instance.Logger.LogDebug("Assembly {AssemblyName} is not a valid MSIL assembly.", file.FullName);
+			}
+			
 			// Catch any assemblies with dependency issues, or broken types.
 			catch (ReflectionTypeLoadException e) when (e.LoaderExceptions.Any(x => x?.GetType() == typeof(FileNotFoundException)))
 			{
-				YumeCore.Instance.Logger.LogDebug("Assembly {FileName} is not suitable for loading, skipping it.", file.Name);
+				YumeCore.Instance.Logger.LogDebug(e, "Assembly {FileName} is not suitable for loading, skipping it.", file.FullName);
+				
 			}
 			// Anything else is strange. Log it as a warning.
 			catch (Exception e)

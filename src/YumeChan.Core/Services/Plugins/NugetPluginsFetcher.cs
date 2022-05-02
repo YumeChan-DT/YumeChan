@@ -7,6 +7,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.InteropServices;
 using System.Runtime.Versioning;
 using System.Text.RegularExpressions;
 using System.Threading;
@@ -62,7 +63,7 @@ public sealed class NugetPluginsFetcher : IDisposable
 			await Parallel.ForEachAsync(_pluginProperties.EnabledPlugins, ct, async (plugin, ct) =>
 				{
 					// Get the package metadata for specified name and version (default to latest version)
-					PackageIdentity? pluginPackageIdentity = await GetPackageIdentityAsync(plugin.Key, plugin.Value) ?? await GetPackageIdentityAsync(plugin.Key);
+					PackageIdentity? pluginPackageIdentity = await GetPackageIdentityAsync(plugin.Key, plugin.Value, true) ?? await GetPackageIdentityAsync(plugin.Key);
 
 					if (pluginPackageIdentity is null)
 					{
@@ -256,7 +257,11 @@ public sealed class NugetPluginsFetcher : IDisposable
 		// Sort all directories by matched moniker, then by last version, and pull all .dll files to "files" list.
 		foreach (Regex regex in TargetMonikerRegexes)
 		{
-			foreach (DirectoryInfo dir in directories.Where(d => regex.IsMatch(d.FullName)).OrderByDescending(d => d.Name, StringComparer.OrdinalIgnoreCase))
+			foreach (DirectoryInfo dir in directories
+						.Where(d => 
+							regex.Matches(d.FullName).Count == 1 
+							|| regex.Matches(d.FullName).Count == 2 && string.Equals(regex.Matches(d.FullName)[1].Value, RuntimeInformation.RuntimeIdentifier, StringComparison.OrdinalIgnoreCase))
+						.OrderByDescending(d => d.Name, StringComparer.OrdinalIgnoreCase))
 			{
 				files.AddRange(dir.GetFiles("*.dll", SearchOption.AllDirectories));
 			}
@@ -300,7 +305,7 @@ public static class NugetUtilities
 	public static IEnumerable<Regex> TargetMonikerRegexes { get; } = new List<Regex>
 	{
 		// net x.x (5.0+) moniker
-		new(@"net\d+\.\d+"),
+		new(@"(net\d+\.\d+)-(\D+)"),
 		
 		// netstandard x.x moniker
 		new(@"netstandard\d+\.\d+"),

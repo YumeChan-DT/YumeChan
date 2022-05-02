@@ -1,4 +1,4 @@
-﻿@page "/bot/controls"
+@page "/bot/controls"
 @attribute [Authorize(Roles = UserRoles.Admin)]
 
 @using YumeChan.Core;
@@ -83,7 +83,7 @@
 					@currentActivity.Name
 				}
 			</p>
-		</div>
+		</div>	
 
 		<div class="card-footer py-3">
 			<EditForm Model="statusModel" OnValidSubmit="HandleValidSubmit" class="form-inline">
@@ -129,6 +129,8 @@
 			currentActivity = args.Activity;
 			return Task.CompletedTask;
 		};
+		
+		await base.OnParametersSetAsync();
 	}
 
 

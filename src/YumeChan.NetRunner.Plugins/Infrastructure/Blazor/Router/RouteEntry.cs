@@ -128,18 +128,18 @@ internal class RouteEntry
 		}
 	}
 
-	private void AddDefaultValues(Dictionary<string, object> parameters, int templateIndex, TemplateSegment[] segments)
+	private static void AddDefaultValues(IDictionary<string, object> parameters, int templateIndex, IReadOnlyList<TemplateSegment> segments)
 	{
-		for (int i = templateIndex; i < segments.Length; i++)
+		for (int i = templateIndex; i < segments.Count; i++)
 		{
 			TemplateSegment? currentSegment = segments[i];
 			parameters[currentSegment.Value] = null;
 		}
 	}
 
-	private bool RemainingSegmentsAreOptional(int index, TemplateSegment[] segments)
+	private static bool RemainingSegmentsAreOptional(int index, IReadOnlyList<TemplateSegment> segments)
 	{
-		for (int i = index; index < segments.Length - 1; index++)
+		for (int i = index; index < segments.Count - 1; index++)
 		{
 			if (!segments[i].IsOptional)
 			{

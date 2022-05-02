@@ -1,3 +1,4 @@
+using System.IO;
 using AspNet.Security.OAuth.Discord;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
@@ -6,14 +7,16 @@ using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.HttpOverrides;
+using Microsoft.AspNetCore.StaticFiles.Infrastructure;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-using Microsoft.OpenApi.Models;
+using YumeChan.Core.Config;
 using YumeChan.NetRunner.Infrastructure.Blazor;
 using YumeChan.NetRunner.Plugins.Infrastructure;
 using YumeChan.NetRunner.Plugins.Infrastructure.Api;
+using YumeChan.NetRunner.Plugins.Infrastructure.Filesystem;
 using YumeChan.NetRunner.Services.Authentication;
 
 namespace YumeChan.NetRunner;
@@ -99,6 +102,21 @@ public class Startup
 
 		
 		app.UseStaticFiles();
+		app.UseStaticFiles(options: new()
+		{
+			FileProvider = new PluginWebAssetsProvider(app.ApplicationServices.GetService<ICoreProperties>()?.Path_Plugins 
+				?? throw new InvalidOperationException("Plugin path not found")),
+			
+			RequestPath = "/_content"
+		});
+		
+		app.UseStaticFiles(options: new()
+		{
+			FileProvider = new PluginWebAssetsProvider(app.ApplicationServices.GetService<ICoreProperties>()?.Path_Plugins 
+				?? throw new InvalidOperationException("Plugin path not found")),
+			
+			RequestPath = "/p"
+		});
 
 		app.UseApiPluginsSwagger();
 
