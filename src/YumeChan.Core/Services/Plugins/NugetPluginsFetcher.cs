@@ -1,4 +1,4 @@
-﻿#nullable enable
+#nullable enable
 
 using System;
 using System.Collections.Generic;
@@ -270,12 +270,36 @@ public sealed class NugetPluginsFetcher : IDisposable
 		// Move all selected files to the target folder (if not present already).
 		foreach (FileInfo file in files.AsParallel())
 		{
-			if (!File.Exists(Path.Combine(targetFolder.FullName, file.Name)))
+			string targetFilePath = Path.Combine(targetFolder.FullName, file.Name);
+			
+			if (!File.Exists(targetFilePath))
 			{
-				file.MoveTo(Path.Combine(targetFolder.FullName, file.Name));
+				file.MoveTo(targetFilePath);
 			}
 		}
 
+		// Get the content/wwwroot folder, and copy its contents to the target folder (preserving directory structure, creating folders as needed).
+		DirectoryInfo wwwrootFolder = new (Path.Combine(downloadFolder.FullName, "content", "wwwroot"));
+
+		if (wwwrootFolder.Exists)
+		{
+			foreach (FileInfo file in wwwrootFolder.GetFiles("*", SearchOption.AllDirectories))
+			{
+				FileInfo targetFile = new(Path.Combine(targetFolder.FullName, "wwwroot", file.FullName[(wwwrootFolder.FullName.Length + 1)..]));
+
+				if (!targetFile.Exists)
+				{
+					if (targetFile.Directory is { Exists: false })
+					{
+						Directory.CreateDirectory(targetFile.Directory.FullName);
+					}
+					
+					file.MoveTo(targetFile.FullName);
+				}
+			}
+		}
+		
+		
 		// Delete the downloaded package (download folder).
 		downloadFolder.Delete(true);
 	}
@@ -295,7 +319,8 @@ public sealed class NugetPluginsFetcher : IDisposable
 	/// </summary>
 	private static NuGetVersion? GetLocalPackageVersion(string pluginsDirectory, string packageName) 
 		=> new DirectoryInfo(Path.Combine(pluginsDirectory, packageName)).Exists 
-			&& FileVersionInfo.GetVersionInfo(Path.Combine(pluginsDirectory, packageName, $"{packageName}.dll")) is { } fileVersionInfo 
+			&& new FileInfo(Path.Combine(pluginsDirectory, packageName, $"{packageName}.dll")) is { Exists: true } file 
+			&& FileVersionInfo.GetVersionInfo(file.FullName) is { } fileVersionInfo 
 				? new(fileVersionInfo.FileVersion) 
 				: null;
 }
