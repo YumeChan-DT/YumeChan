@@ -16,7 +16,7 @@ namespace YumeChan.Core.Services.Config;
 /// <summary>
 /// Represents a Read-Write JSON-based configuration file.
 /// </summary>
-internal class JsonWritableConfig : IWritableConfiguration
+internal sealed class JsonWritableConfig : IWritableConfiguration
 {
 	public string CurrentPrefix { get; }
 

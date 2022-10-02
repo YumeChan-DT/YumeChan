@@ -6,7 +6,7 @@ using YumeChan.PluginBase.Tools;
 
 namespace YumeChan.Core.Services.Config;
 
-public class InterfaceConfigProvider<TConfig> : IInterfaceConfigProvider<TConfig> where TConfig : class
+public sealed class InterfaceConfigProvider<TConfig> : IInterfaceConfigProvider<TConfig> where TConfig : class
 {
 	private readonly ILoggerFactory _loggerFactory;
 	private const string FileExtension = ".json";

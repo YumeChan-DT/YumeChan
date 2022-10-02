@@ -5,44 +5,43 @@ using Microsoft.Extensions.Logging;
 using System.Threading.Tasks;
 using YumeChan.Core.Config;
 
-namespace YumeChan.Core
+namespace YumeChan.Core;
+
+public class LavalinkHandler
 {
-	public class LavalinkHandler
+	public LavalinkExtension Lavalink { get; internal set; }
+	public LavalinkConfiguration LavalinkConfiguration { get; internal set; }
+
+	internal ICoreLavalinkProperties Config { get; set; }
+
+	private readonly DiscordClient client;
+	private readonly ILogger<LavalinkHandler> logger;
+
+	public LavalinkHandler(DiscordClient client, ILogger<LavalinkHandler> logger)
 	{
-		public LavalinkExtension Lavalink { get; internal set; }
-		public LavalinkConfiguration LavalinkConfiguration { get; internal set; }
+		this.client = client;
+		this.logger = logger;
+	}
 
-		internal ICoreLavalinkProperties Config { get; set; }
+	public async Task Initialize()
+	{
+		Lavalink ??= client.UseLavalink();
+		logger.LogInformation("Initialized Lavalink Extension.");
 
-		private readonly DiscordClient client;
-		private readonly ILogger<LavalinkHandler> logger;
-
-		public LavalinkHandler(DiscordClient client, ILogger<LavalinkHandler> logger)
+		ConnectionEndpoint lavalinkEndpoint = new()
 		{
-			this.client = client;
-			this.logger = logger;
-		}
+			Hostname = Config.Hostname,
+			Port = Config.Port ?? 2333
+		};
 
-		public async Task Initialize()
+		LavalinkConfiguration = new()
 		{
-			Lavalink ??= client.UseLavalink();
-			logger.LogInformation("Initialized Lavalink Extension.");
+			Password = Config.Password,
+			RestEndpoint = lavalinkEndpoint,
+			SocketEndpoint = lavalinkEndpoint
+		};
 
-			ConnectionEndpoint lavalinkEndpoint = new()
-			{
-				Hostname = Config.Hostname,
-				Port = Config.Port ?? 2333
-			};
-
-			LavalinkConfiguration = new()
-			{
-				Password = Config.Password,
-				RestEndpoint = lavalinkEndpoint,
-				SocketEndpoint = lavalinkEndpoint
-			};
-
-			LavalinkNodeConnection connection = await Lavalink.ConnectAsync(LavalinkConfiguration);
-			logger.LogInformation("Established Lavalink Connection (Host: {hostname}:{port})", connection.NodeEndpoint.Hostname, connection.NodeEndpoint.Port);
-		}
+		LavalinkNodeConnection connection = await Lavalink.ConnectAsync(LavalinkConfiguration);
+		logger.LogInformation("Established Lavalink Connection (Host: {hostname}:{port})", connection.NodeEndpoint.Hostname, connection.NodeEndpoint.Port);
 	}
 }

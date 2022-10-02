@@ -11,7 +11,7 @@ namespace YumeChan.Core.Infrastructure.Dynamic.Config;
 /// <summary>
 /// Provides a JSON-Config backed List of <see cref="T"/>.
 /// </summary>
-internal class DynamicJsonList<T> : IList<T>, IList, IReadOnlyList<T>
+internal sealed class DynamicJsonList<T> : IList<T>, IList, IReadOnlyList<T>
 {
 	private readonly List<T> _list;
 	private readonly JsonWritableConfig _config;

@@ -10,7 +10,7 @@ namespace YumeChan.Core.Services.Config;
 /// Provides a wrapper for a configuration interface, based on <see cref="JsonWritableConfig"/>, using Castle Dynamic Proxy.
 /// </summary>
 /// <typeparam name="TConfig">Type of config interface to be wrapped</typeparam>
-internal class InterfaceWritableConfigWrapper<TConfig>
+internal sealed class InterfaceWritableConfigWrapper<TConfig>
 	where TConfig : class
 {
 	/// <summary>

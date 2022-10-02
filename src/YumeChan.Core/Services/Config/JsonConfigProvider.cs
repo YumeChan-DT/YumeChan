@@ -13,7 +13,7 @@ using YumeChan.PluginBase.Tools;
 
 namespace YumeChan.Core.Services.Config;
 
-public class JsonConfigProvider<TPlugin> : IJsonConfigProvider<TPlugin> where TPlugin : IPlugin
+public sealed class JsonConfigProvider<TPlugin> : IJsonConfigProvider<TPlugin> where TPlugin : IPlugin
 {
 	private readonly ILoggerFactory _loggerFactory;
 	private static readonly PhysicalFileProvider _configFileProvider = new(Path.Combine(Directory.GetCurrentDirectory(), "config"));

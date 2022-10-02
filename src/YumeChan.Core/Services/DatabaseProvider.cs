@@ -9,7 +9,7 @@ using YumeChan.PluginBase.Tools.Data;
 
 namespace YumeChan.Core.Services;
 
-public class DatabaseProvider<TPlugin> : IDatabaseProvider<TPlugin> where TPlugin : IPlugin
+public sealed class DatabaseProvider<TPlugin> : IDatabaseProvider<TPlugin> where TPlugin : IPlugin
 {
 	private static ICoreProperties CoreProperties => YumeCore.Instance.CoreProperties;
 	private const string pluginDbPrefix = "yc-plugin-";

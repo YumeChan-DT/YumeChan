@@ -10,7 +10,7 @@ namespace YumeChan.Core.Infrastructure.Dynamic.Config;
 /// <summary>
 /// Provides a JSON-Config backed Dictionary of key <see cref="TKey" /> and value <see cref="TValue" />.
 /// </summary>
-internal class DynamicJsonDictionary<TKey, TValue> : IDictionary<TKey, TValue>, IDictionary, IReadOnlyDictionary<TKey, TValue>, ISerializable, IDeserializationCallback 
+internal sealed class DynamicJsonDictionary<TKey, TValue> : IDictionary<TKey, TValue>, IDictionary, IReadOnlyDictionary<TKey, TValue>, ISerializable, IDeserializationCallback 
 	where TKey : notnull
 {
 	private readonly Dictionary<TKey, TValue> _dictionary;

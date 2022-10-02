@@ -2,20 +2,19 @@
 using System;
 using System.Threading.Tasks;
 
-namespace YumeChan.Core.Modules
+namespace YumeChan.Core.Modules;
+
+public sealed class InternalPlugin : IPlugin
 {
-	public class InternalPlugin : IPlugin
-	{
-		public string AssemblyName { get; } = typeof(YumeCore).Assembly.GetName().Name;
-		public string DisplayName => "YumeCore Internals";
+	public string AssemblyName { get; } = typeof(YumeCore).Assembly.GetName().Name;
+	public string DisplayName => "YumeCore Internals";
 		
-		public bool Loaded => YumeCore.Instance.CoreState is YumeCoreState.Online;
-		public bool ShouldUseNetRunner => false;
-		public bool StealthMode => false;
+	public bool Loaded => YumeCore.Instance.CoreState is YumeCoreState.Online;
+	public bool ShouldUseNetRunner => false;
+	public bool StealthMode => false;
 		
-		public string Version => YumeCore.CoreVersion;
+	public string Version => YumeCore.CoreVersion;
 		
-		public Task LoadAsync() => Task.CompletedTask;
-		public Task UnloadAsync() => Task.CompletedTask;
-	}
+	public Task LoadAsync() => Task.CompletedTask;
+	public Task UnloadAsync() => Task.CompletedTask;
 }
