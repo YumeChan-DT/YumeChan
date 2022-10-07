@@ -12,8 +12,9 @@ using YumeChan.Core.Config;
 using YumeChan.Core.Services;
 using YumeChan.Core.Services.Config;
 using YumeChan.Core.Services.Plugins;
+using YumeChan.PluginBase.Database.MongoDB;
+using YumeChan.PluginBase.Database.Postgres;
 using YumeChan.PluginBase.Tools;
-using YumeChan.PluginBase.Tools.Data;
 
 namespace YumeChan.Core;
 
@@ -66,7 +67,8 @@ public sealed class YumeCore
 		.RegisterSingleton<CommandHandler>()
 		.RegisterSingleton<LavalinkHandler>()
 		.RegisterSingleton<NugetPluginsFetcher>()
-		.RegisterSingleton(typeof(IDatabaseProvider<>), typeof(DatabaseProvider<>))
+		.RegisterSingleton(typeof(IMongoDatabaseProvider<>), typeof(UnifiedDatabaseProvider<>))
+		.RegisterSingleton(typeof(IPostgresDatabaseProvider<>), typeof(UnifiedDatabaseProvider<>))
 		.RegisterSingleton(typeof(IInterfaceConfigProvider<>), typeof(InterfaceConfigProvider<>))
 		.RegisterSingleton(typeof(IJsonConfigProvider<>), typeof(JsonConfigProvider<>))
 			

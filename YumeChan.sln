@@ -14,9 +14,24 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "YumeChan.Essentials", "src\
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "YumeChan.NetRunner", "src\YumeChan.NetRunner\YumeChan.NetRunner.csproj", "{AD328D2F-1AD0-414A-96A0-456820765C37}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "YumeChan.PluginBase", "src\YumeChan.PluginBase\YumeChan.PluginBase.csproj", "{BA3AB42C-6875-4F32-9476-89EB8432716C}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "YumeChan.PluginBase", "src\YumeChan.PluginBase\YumeChan.PluginBase\YumeChan.PluginBase.csproj", "{BA3AB42C-6875-4F32-9476-89EB8432716C}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "YumeChan.NetRunner.Plugins", "src\YumeChan.NetRunner.Plugins\YumeChan.NetRunner.Plugins.csproj", "{ED8DDB07-7915-437F-9EBA-635EFA286161}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Runners", "Runners", "{F9A8D4C3-D16D-4E2B-8203-FDA3342D0CC5}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Core", "Core", "{FD731CEA-D9F2-425E-A7E0-C76505A40F27}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "PluginBase", "PluginBase", "{23773141-347A-4F0C-9667-8C1FA1DA1C69}"
+	ProjectSection(SolutionItems) = preProject
+		src\YumeChan.PluginBase\.config\dotnet-tools.json = src\YumeChan.PluginBase\.config\dotnet-tools.json
+		src\YumeChan.PluginBase\Directory.Build.props = src\YumeChan.PluginBase\Directory.Build.props
+		src\YumeChan.PluginBase\version.json = src\YumeChan.PluginBase\version.json
+	EndProjectSection
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "YumeChan.PluginBase.Database.MongoDB", "src\YumeChan.PluginBase\YumeChan.PluginBase.Database.MongoDB\YumeChan.PluginBase.Database.MongoDB.csproj", "{19003A5F-3CDF-44DD-8800-8E3C651487E0}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "YumeChan.PluginBase.Database.Postgres", "src\YumeChan.PluginBase\YumeChan.PluginBase.Database.Postgres\YumeChan.PluginBase.Database.Postgres.csproj", "{E8018B42-85E3-45D5-BF26-9A7BB8D1E0B9}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -74,11 +89,36 @@ Global
 		{ED8DDB07-7915-437F-9EBA-635EFA286161}.Release|Any CPU.Build.0 = Release|Any CPU
 		{ED8DDB07-7915-437F-9EBA-635EFA286161}.Release|x64.ActiveCfg = Release|Any CPU
 		{ED8DDB07-7915-437F-9EBA-635EFA286161}.Release|x64.Build.0 = Release|Any CPU
+		{19003A5F-3CDF-44DD-8800-8E3C651487E0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{19003A5F-3CDF-44DD-8800-8E3C651487E0}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{19003A5F-3CDF-44DD-8800-8E3C651487E0}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{19003A5F-3CDF-44DD-8800-8E3C651487E0}.Debug|x64.Build.0 = Debug|Any CPU
+		{19003A5F-3CDF-44DD-8800-8E3C651487E0}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{19003A5F-3CDF-44DD-8800-8E3C651487E0}.Release|Any CPU.Build.0 = Release|Any CPU
+		{19003A5F-3CDF-44DD-8800-8E3C651487E0}.Release|x64.ActiveCfg = Release|Any CPU
+		{19003A5F-3CDF-44DD-8800-8E3C651487E0}.Release|x64.Build.0 = Release|Any CPU
+		{E8018B42-85E3-45D5-BF26-9A7BB8D1E0B9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E8018B42-85E3-45D5-BF26-9A7BB8D1E0B9}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E8018B42-85E3-45D5-BF26-9A7BB8D1E0B9}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{E8018B42-85E3-45D5-BF26-9A7BB8D1E0B9}.Debug|x64.Build.0 = Debug|Any CPU
+		{E8018B42-85E3-45D5-BF26-9A7BB8D1E0B9}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E8018B42-85E3-45D5-BF26-9A7BB8D1E0B9}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E8018B42-85E3-45D5-BF26-9A7BB8D1E0B9}.Release|x64.ActiveCfg = Release|Any CPU
+		{E8018B42-85E3-45D5-BF26-9A7BB8D1E0B9}.Release|x64.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {E5929E23-4306-4CDC-84EF-D48C0D7C16D7}
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{B4E6E6B5-B495-4668-BB0D-1107B457C420} = {F9A8D4C3-D16D-4E2B-8203-FDA3342D0CC5}
+		{AD328D2F-1AD0-414A-96A0-456820765C37} = {F9A8D4C3-D16D-4E2B-8203-FDA3342D0CC5}
+		{ED8DDB07-7915-437F-9EBA-635EFA286161} = {F9A8D4C3-D16D-4E2B-8203-FDA3342D0CC5}
+		{58155AE6-D0DF-45E3-9B38-64ED0ACA8AC0} = {FD731CEA-D9F2-425E-A7E0-C76505A40F27}
+		{BA3AB42C-6875-4F32-9476-89EB8432716C} = {23773141-347A-4F0C-9667-8C1FA1DA1C69}
+		{19003A5F-3CDF-44DD-8800-8E3C651487E0} = {23773141-347A-4F0C-9667-8C1FA1DA1C69}
+		{E8018B42-85E3-45D5-BF26-9A7BB8D1E0B9} = {23773141-347A-4F0C-9667-8C1FA1DA1C69}
 	EndGlobalSection
 EndGlobal
