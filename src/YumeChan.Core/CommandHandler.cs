@@ -23,6 +23,7 @@ using YumeChan.PluginBase;
 using YumeChan.PluginBase.Infrastructure;
 using DSharpPlus.SlashCommands.EventArgs;
 using DSharpPlus.Entities;
+using DSharpPlus.SlashCommands.Attributes;
 using YumeChan.Core.Services.Plugins;
 
 namespace YumeChan.Core;
@@ -97,6 +98,7 @@ public class CommandHandler
 		Commands.CommandExecuted += OnCommandExecuted;
 
 		SlashCommands.SlashCommandErrored += OnSlashCommandErroredAsync;
+		SlashCommands.ContextMenuErrored += OnContextMenuErroredAsync;
 
 //			Commands.CommandExecuted += OnCommandExecutedAsync; // Hook execution event
 //			client.MessageReceived += HandleCommandAsync; // Hook command handler
@@ -104,17 +106,6 @@ public class CommandHandler
 		await RegisterCommandsAsync();
 
 		Commands.SetHelpFormatter<HelpCommandFormatter>();
-	}
-
-	private Task OnSlashCommandErroredAsync(SlashCommandsExtension _, SlashCommandErrorEventArgs e)
-	{
-		_logger.LogError(e.Exception, "An error occured executing SlashCommand {Command} :", e.Context.CommandName);
-
-#if DEBUG
-		throw e.Exception;
-#else
-			return Task.CompletedTask;
-#endif
 	}
 
 	public async Task UninstallCommandsAsync()
@@ -194,7 +185,7 @@ public class CommandHandler
 		}
 */		
 		
-		foreach (IPlugin plugin in _pluginsLoader.PluginManifestsInternal.Values.Where(p => p is not Modules.InternalPlugin).ToImmutableArray())
+		foreach (IPlugin plugin in _pluginsLoader.PluginManifestsInternal.Values.Where(p => p is not Modules.InternalPlugin).ToArray())
 		{
 			try
 			{
@@ -231,30 +222,19 @@ public class CommandHandler
 	{
 		if (e.Exception is ChecksFailedException cf)
 		{
-			List<string> errorMessages = new();
-
-			foreach (CheckBaseAttribute check in cf.FailedChecks)
+			string[] errorMessages = cf.FailedChecks.Select(check => check switch
 			{
-				if (check is PluginCheckBaseAttribute pluginCkeck)
-				{
-					errorMessages.Add(pluginCkeck.ErrorMessage);
-				}
-				else
-				{
-					errorMessages.Add(check switch
-					{
-						RequireOwnerAttribute             => "Sorry. You must be a Bot Owner to run this command.",
-						RequireDirectMessageAttribute     => "Sorry, not here. Please send me a Direct Message with that command.",
-						RequireGuildAttribute             => "Sorry, not here. Please send this command in a server.",
-						RequireNsfwAttribute              => "Sorry. As much as I'd love to, I've gotta keep the hot stuff to the right channels.",
-						CooldownAttribute cd              => $"Sorry. This command is on Cooldown. You can use it {cd.MaxUses} time(s) every {cd.Reset.TotalSeconds} seconds.",
-						RequireUserPermissionsAttribute p => $"Sorry. You need to have permission(s) ``{p.Permissions}`` to run this.",
-						_                                 => null
-					});
-				}
-			}
+				PluginCheckBaseAttribute p => p.ErrorMessage,
+				RequireOwnerAttribute => "Sorry. You must be a Bot Owner to run this command.",
+				RequireDirectMessageAttribute => "Sorry, not here. Please send me a Direct Message with that command.",
+				RequireGuildAttribute => "Sorry, not here. Please send this command in a server.",
+				RequireNsfwAttribute => "Sorry. As much as I'd love to, I've gotta keep the hot stuff to the right channels.",
+				CooldownAttribute cd => $"Sorry. This command is on Cooldown. You can use it {cd.MaxUses} time(s) every {cd.Reset.TotalSeconds} seconds.",
+				RequireUserPermissionsAttribute p => $"Sorry. You need to have permission(s) ``{p.Permissions}`` to run this.",
+				_ => null
+			}).ToArray();
 
-			if (errorMessages.Any())
+			if (errorMessages.Length is not 0)
 			{
 				await e.Context.RespondAsync(string.Join('\n', errorMessages));
 			}
@@ -268,51 +248,81 @@ public class CommandHandler
 #endif
 
 			await e.Context.RespondAsync(response);
-			_logger.LogError("An error occured executing '{Command}' from user '{User}' : \n{Exception}", e.Command.QualifiedName, e.Context.User.Id, e.Exception);
+			_logger.LogError(e.Exception, "An error occured executing '{Command}' from user '{User}'.", e.Command.QualifiedName, e.Context.User.Id);
 		}		
 	}
 
-
-
-
-	/*	private async Task HandleCommandAsync(SocketMessage arg)
+	private async Task OnSlashCommandErroredAsync(SlashCommandsExtension _, SlashCommandErrorEventArgs e)
+	{
+		if (e.Exception is SlashExecutionChecksFailedException cf)
+		{
+			string[] errorMessages = cf.FailedChecks.Select(check => check switch
 			{
-				if (arg is SocketUserMessage message)
-				{
-					int argPosition = 0;
+				PluginSlashCheckBaseAttribute p => p.ErrorMessage,
+				SlashRequireOwnerAttribute => "Sorry. You must be a Bot Owner to run this command.",
+				SlashRequireDirectMessageAttribute => "Sorry, not here. Please send me a Direct Message with that command.",
+				SlashRequireGuildAttribute => "Sorry, not here. Please send this command in a server.",
+//				SlashRequireNsfwAttribute => "Sorry. As much as I'd love to, I've gotta keep the hot stuff to the right channels.",
+//				SlashCooldownAttribute cd => $"Sorry. This command is on Cooldown. You can use it {cd.MaxUses} time(s) every {cd.Reset.TotalSeconds} seconds.",
+				SlashRequireUserPermissionsAttribute p => $"Sorry. You need to have permission(s) ``{p.Permissions}`` to run this.",
+				_ => null
+			}).ToArray();
 
-					if (message.HasStringPrefix(Config.CommandPrefix, ref argPosition) || message.HasMentionPrefix(client.CurrentUser, ref argPosition))
-					{
-						SocketCommandContext context = new(client, message);
-
-						await Commands.ExecuteAsync(context, argPosition, services).ConfigureAwait(false);
-					}
-				}
+			if (errorMessages.Length is not 0)
+			{
+				await e.Context.CreateResponseAsync(string.Join('\n', errorMessages), true);
 			}
-	*/
+		}
+		else
+		{
+#if DEBUG
+			string response = $"An error occurred : \n```{e.Exception}```";
+#else
+				string response = $"Something went wrong while executing your command : \n{e.Exception.Message}";
+#endif
 
-	public Task OnCommandExecuted(CommandsNextExtension sender, CommandExecutionEventArgs e)
+			await e.Context.CreateResponseAsync(response, true);
+			_logger.LogError(e.Exception, "An error occured executing '{Command}' from user '{User}'.", e.Context.CommandName, e.Context.User.Id);
+		}
+	}
+	
+	private async Task OnContextMenuErroredAsync(SlashCommandsExtension _, ContextMenuErrorEventArgs e)
+	{
+		if (e.Exception is ContextMenuExecutionChecksFailedException cf)
+		{
+			string[] errorMessages = cf.FailedChecks.Select(check => check switch
+			{
+				PluginContextCheckBaseAttribute p => p.ErrorMessage,
+//				RequireOwnerAttribute => "Sorry. You must be a Bot Owner to run this command.",
+//				RequireDirectMessageAttribute => "Sorry, not here. Please send me a Direct Message with that command.",
+//				RequireGuildAttribute => "Sorry, not here. Please send this command in a server.",
+//				RequireNsfwAttribute => "Sorry. As much as I'd love to, I've gotta keep the hot stuff to the right channels.",
+//				CooldownAttribute cd => $"Sorry. This command is on Cooldown. You can use it {cd.MaxUses} time(s) every {cd.Reset.TotalSeconds} seconds.",
+//				RequireUserPermissionsAttribute p => $"Sorry. You need to have permission(s) ``{p.Permissions}`` to run this.",
+				_ => null
+			}).ToArray();
+
+			if (errorMessages.Length is not 0)
+			{
+				await e.Context.CreateResponseAsync(string.Join('\n', errorMessages), true);
+			}
+		}
+		else
+		{
+#if DEBUG
+			string response = $"An error occurred : \n```{e.Exception}```";
+#else
+			string response = $"Something went wrong while executing your command : \n{e.Exception.Message}";
+#endif
+
+			await e.Context.CreateResponseAsync(response, true);
+			_logger.LogError(e.Exception, "An error occured executing '{Command}' from user '{User}'.", e.Context.CommandName, e.Context.User.Id);
+		}
+	}
+
+	private Task OnCommandExecuted(CommandsNextExtension sender, CommandExecutionEventArgs e)
 	{
 		_logger.LogInformation("Command '{Command}' received from User '{User}'.", e.Command.QualifiedName, e.Context.User.Id);
 		return Task.CompletedTask;
 	}
-
-
-
-	/*		public async Task LogAsync(LogMessage logMessage)
-			{
-				if (logMessage.Exception is CommandException cmdException)
-				{
-					// Inform the user that something unexpected has happened
-	#if DEBUG
-					await cmdException.Context.Channel.SendMessageAsync(cmdException.ToString());
-	#else
-					await cmdException.Context.Channel.SendMessageAsync("Something went wrong.");
-	#endif
-
-					// Log the incident
-					await logger.Log(new LogMessage(LogSeverity.Error, "Commands", $"{cmdException.Context.User} failed to execute '{cmdException.Command.Name}' in channel {cmdException.Context.Channel}.", cmdException));
-				}
-			}
-	*/
 }
