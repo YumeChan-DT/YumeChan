@@ -35,23 +35,24 @@ public static class Program
 		YumeCore.Instance.Services = _container;
 		_container.RegisterInstance(new NetRunnerContext(RunnerType.Console, typeof(Program).Assembly.GetName().Name, informationalVersion));
 		
-		await YumeCore.Instance.StartBotAsync();
-		await host.RunAsync();
-	}
-	public static IHostBuilder CreateHostBuilder(string[] args)
-	{
-		return Host.CreateDefaultBuilder(args)
-			.UseUnityServiceProvider()
-			.ConfigureLogging(x => x.ClearProviders())
-			.ConfigureWebHostDefaults(webBuilder => webBuilder.UseStartup<Startup>())
-			.ConfigureContainer<IUnityContainer>((context, container) =>
-			{
-				Program._container = container;  // This assignment is necessary, as configuration only affects the child container.
+		await Task.WhenAll(
+			YumeCore.Instance.StartBotAsync(),
+			host.RunAsync()
+		);
 
-				container.AddExtension(new LoggingExtension(new SerilogLoggerFactory()));
-				container.AddServices(new ServiceCollection().AddLogging(x => x.AddSerilog()));
-
-				YumeCore.Instance.ConfigureContainer(container);
-			});
+		await host.WaitForShutdownAsync();
 	}
+	public static IHostBuilder CreateHostBuilder(string[] args) => Host.CreateDefaultBuilder(args)
+		.UseUnityServiceProvider()
+		.ConfigureLogging(x => x.ClearProviders())
+		.ConfigureWebHostDefaults(webBuilder => webBuilder.UseStartup<Startup>())
+		.ConfigureContainer<IUnityContainer>((_, container) =>
+		{
+			_container = container; // This assignment is necessary, as configuration only affects the child container.
+
+			container.AddExtension(new LoggingExtension(new SerilogLoggerFactory()));
+			container.AddServices(new ServiceCollection().AddLogging(x => x.AddSerilog()));
+
+			YumeCore.Instance.ConfigureContainer(container);
+		});
 }

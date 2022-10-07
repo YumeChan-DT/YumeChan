@@ -5,6 +5,7 @@ using Serilog;
 using Serilog.Events;
 using Serilog.Extensions.Logging;
 using System.Reflection;
+using System.Threading;
 using System.Threading.Tasks;
 using Unity;
 using Unity.Microsoft.DependencyInjection;
@@ -38,9 +39,13 @@ public static class Program
 
 		Microsoft.Extensions.Logging.ILogger logger = _container.Resolve<Microsoft.Extensions.Logging.ILogger>();
 		logger.LogInformation("Yume-Chan ConsoleRunner v{Version}.", informationalVersion);
+		
+		await Task.WhenAll(
+			host.StartAsync(),
+			YumeCore.Instance.StartBotAsync()
+		);
 
-		await YumeCore.Instance.StartBotAsync().ConfigureAwait(false);
-		await host.RunAsync();
+		await host.WaitForShutdownAsync();
 	}
 
 	public static IHostBuilder CreateHostBuilder(UnityContainer serviceRegistry = null) => new HostBuilder()
