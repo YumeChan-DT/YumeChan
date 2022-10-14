@@ -1,0 +1,49 @@
+﻿version: "3.9"
+
+services:
+  yumechan:
+    container_name: "yumechan"
+    hostname: "yumechan"
+    build: 
+      context: "../.."
+      dockerfile: "src/YumeChan.NetRunner/Dockerfile"
+    ports:
+      - "5000:80"
+      - "5001:443"
+    volumes:
+      - "../../build/config.docker/yumechan/:/app/config/"
+    networks:
+      - yumechan
+    depends_on: 
+      - lavalink
+      - mongo
+  
+  mongo:
+    container_name: "mongo"
+    hostname: "mongo"
+    image: "mongo:latest"
+    volumes:
+      - "../../build/data.docker/mongo/:/data/db/"
+      - "../../build/config.docker/mongo/:/data/configdb/"
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=yumechan
+      - MONGO_INITDB_ROOT_PASSWORD=yumechan
+    networks:
+      - yumechan
+    ports:
+      - "27017:27017"
+  
+  lavalink:
+    container_name: "lavalink"
+    hostname: "lavalink"
+    image: "fredboat/lavalink:latest"
+    volumes:
+      - "../../build/config.docker/lavalink/:/opt/lavalink/"
+    networks:
+      - yumechan
+    ports:
+      - "2333:2333"
+
+
+networks:
+  yumechan:
