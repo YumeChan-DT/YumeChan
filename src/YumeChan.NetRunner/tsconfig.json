@@ -6,13 +6,10 @@
     "noEmitOnError": true,
     "removeComments": false,
     "sourceMap": false,
-    "target": "ESNext",
+    "target": "ES2020",
     "moduleResolution": "Node",
     "paths": {
-      "@lib/*": [ "./wwwroot/lib/*" ],
-      "@popperjs/*": [ "./wwwroot/lib/popperjs/*" ],
-      "@types/*": [ "./wwwroot/lib/types/*" ],
-      "jquery/*": [ "./wwwroot/lib/jquery/*" ]
+      "@lib/*": [ "./wwwroot/lib/*" ]
     },
     "typeRoots": ["./wwwroot/lib/types/*"]
   },

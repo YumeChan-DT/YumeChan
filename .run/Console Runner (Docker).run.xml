@@ -1,0 +1,23 @@
+﻿<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="Console Runner (Docker)" type="docker-deploy" factoryName="dockerfile" server-name="Docker">
+    <deployment type="dockerfile">
+      <settings>
+        <option name="imageTag" value="console" />
+        <option name="buildKitEnabled" value="true" />
+        <option name="containerName" value="yc-consolerunner" />
+        <option name="contextFolderPath" value="." />
+        <option name="sourceFilePath" value="src/YumeChan.ConsoleRunner/Dockerfile" />
+        <option name="volumeBindings">
+          <list>
+            <DockerVolumeBindingImpl>
+              <option name="containerPath" value="/app/config" />
+              <option name="hostPath" value="D:\Code\Source\YumeChan\build\config.docker\" />
+            </DockerVolumeBindingImpl>
+          </list>
+        </option>
+      </settings>
+    </deployment>
+    <EXTENSION ID="com.jetbrains.rider.docker.debug" isFastModeEnabled="true" isPublishEnabled="true" />
+    <method v="2" />
+  </configuration>
+</component>
