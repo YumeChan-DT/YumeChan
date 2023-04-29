@@ -5,14 +5,18 @@ using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using Microsoft.OpenApi.Models;
+using Nodsoft.MoltenObsidian.Blazor;
+using Nodsoft.MoltenObsidian.Blazor.Services;
+using Nodsoft.MoltenObsidian.Vault;
 using Swashbuckle.AspNetCore.SwaggerGen;
 using YumeChan.NetRunner.Plugins.Infrastructure.Api;
 using YumeChan.NetRunner.Plugins.Infrastructure.Swagger;
 using YumeChan.NetRunner.Plugins.Services;
+using YumeChan.NetRunner.Plugins.Services.Docs;
 
 namespace YumeChan.NetRunner.Plugins.Infrastructure;
 
-public static class ApiPluginDependencyExtensions
+public static class PluginSupportDependencyExtensions
 {
 	public static IServiceCollection AddApiPluginSupport(this IServiceCollection services)
 	{
@@ -117,5 +121,19 @@ public static class ApiPluginDependencyExtensions
 		}
 
 		return false;
+	}
+	
+	/// <summary>
+	/// Adds support for MoltenObsidian-flavoured plugin documentation, via the use of <see creef="PluginDocsLoader" />.
+	/// </summary>
+	/// <param name="services">The <see cref="IServiceCollection" /> to add the services to.</param>
+	/// <returns>The <see cref="IServiceCollection" /> so that additional calls can be chained.</returns>
+	public static IServiceCollection AddPluginDocsSupport(this IServiceCollection services)
+	{
+		services.AddMoltenObsidianBlazorIntegration();
+		services.AddSingleton<PluginDocsLoader>();
+		services.AddSingleton<VaultRouter>();
+		
+		return services;
 	}
 }

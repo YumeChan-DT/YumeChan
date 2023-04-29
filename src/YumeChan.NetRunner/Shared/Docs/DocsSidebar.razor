@@ -1,0 +1,104 @@
+﻿@using Nodsoft.MoltenObsidian.Vault
+@using YumeChan.Core.Services.Plugins
+@using YumeChan.PluginBase
+@using Castle.Core.Internal
+@using JetBrains.Annotations
+@using YumeChan.PluginBase.Infrastructure
+
+@inject NavigationManager NavigationManager
+@inject PluginsLoader PluginsLoader
+
+<div class="sidebar flex-shrink-0">
+	<div class="flex-column my-3">
+		<div class="nav-item px-3">
+			<div class="navbar-brand my-3">Documentation Browser</div>
+		</div>
+		
+		@* Plugin Selector *@
+		<div class="nav-item px-3">
+			<select @bind="@SelectedPlugin" class="form-select px-3 py-2">
+				<option selected value="">Select a server</option>
+
+				@foreach (IPlugin plugin in Plugins)
+				{
+					<option value="@plugin.AssemblyName">@(plugin.DisplayName)</option>
+				}
+			</select>
+		</div>
+	</div>
+
+	@if (Vault is not null)
+	{
+		<nav class="my-3">
+			@FolderNavigationTree(Vault.Root, isRoot: true)
+		</nav>
+	}
+</div>
+
+@code {
+#nullable enable
+	
+	[Parameter, EditorRequired]
+	public IVault? Vault { get; set; }
+	
+	public IEnumerable<IPlugin> Plugins { get; set; } = Enumerable.Empty<IPlugin>();
+
+	private string _selectedPlugin = "";
+	
+	[Parameter]
+	public string SelectedPlugin
+	{
+		get => _selectedPlugin;
+		
+		set
+		{
+			bool shouldNavigate = _selectedPlugin is not "" && value is not "" && value != _selectedPlugin;
+			_selectedPlugin = value;
+			
+			if (shouldNavigate)
+			{
+				NavigationManager.NavigateTo($"/docs/{value}/");
+			}
+		}
+	}
+
+	protected override void OnInitialized()
+	{
+		Plugins = PluginsLoader.PluginManifests.Values.Where(static p => p.GetType().GetAttribute<PluginDocsAttribute>()?.Enabled != false);
+	}
+
+	private static @RenderFragment FolderNavigationTree(IVaultFolder folder, bool isRoot = false) => __builder =>
+	{
+		// Merge all subfolders and files into a single list.
+		IOrderedEnumerable<KeyValuePair<string, IVaultEntity>> items = folder.Subfolders
+			.Where(f => !isRoot || f.Name != ".obsidian")
+			.Cast<IVaultEntity>()
+			.Concat(folder.Files)
+			.Select(x => new KeyValuePair<string, IVaultEntity>(x.Path, x))
+			.OrderBy(x => x.Key);
+
+		// Display the list.
+		foreach (KeyValuePair<string, IVaultEntity> item in items)
+		{
+			if (item.Value is IVaultFolder subfolder)
+			{
+				<div @key="@subfolder.Path" id="@subfolder.Name" class="nav-category my-1">
+					<div class="nav-item ms-3 px-1">
+						<a class="vault-folder-title nav-link" href="@subfolder.Path/">@subfolder.Name</a>
+						@FolderNavigationTree(subfolder)
+                    </div>
+				</div>
+			}
+			else if (item.Value is IVaultNote file)
+			{
+				// The file's path should be filtered to remove the file's extension (".md").
+				<div class="nav-item px-1 ms-3">
+					<a class="vault-item-title nav-link" href="@(file.Path[..^3])">
+						@file.Name[..^3]
+					</a>
+				</div>
+			}
+		}
+	};
+
+}
