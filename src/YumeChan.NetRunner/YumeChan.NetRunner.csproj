@@ -11,15 +11,11 @@
         <RepositoryUrl>https://github.com/YumeChan-DT/YumeChan</RepositoryUrl>
         <RepositoryType>Git</RepositoryType>
         <UserSecretsId>b88ac92e-bd47-4a1a-af10-b5272f68479d</UserSecretsId>
-    </PropertyGroup>
+        <LangVersion>preview</LangVersion>
 
-    <PropertyGroup>
+        <OutDir>$(SolutionDir)build</OutDir>
         <GenerateDocumentationFile>true</GenerateDocumentationFile>
         <NoWarn>$(NoWarn);1591</NoWarn>
-    </PropertyGroup>
-
-    <PropertyGroup>
-        <OutDir>$(SolutionDir)build</OutDir>
     </PropertyGroup>
 
     <ItemGroup>
@@ -29,6 +25,7 @@
 
     <ItemGroup>
         <PackageReference Include="AspNet.Security.OAuth.Discord" Version="6.0.11" />
+        <PackageReference Include="DartSassBuilder" Version="1.0.0" />
         <PackageReference Include="Microsoft.AspNetCore.Authentication" Version="2.2.0" />
         <PackageReference Include="Microsoft.Extensions.Logging" Version="6.0.0" />
         <PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="6.0.0" />
@@ -48,17 +45,16 @@
     </ItemGroup>
 
     <ItemGroup>
-        <Content Update="Config\**">
-            <CopyToOutputDirectory>Never</CopyToOutputDirectory>
-        </Content>
+        <Content Update="Config\**" CopyToOutputDirectory="Never" />
+        <Content Update="appsettings.Production.json" CopyToOutputDirectory="Never" />
     </ItemGroup>
 
-    <ItemGroup>
-        <Content Update="appsettings.Production.json">
-            <CopyToOutputDirectory>Never</CopyToOutputDirectory>
-        </Content>
-    </ItemGroup>
-
+    <PropertyGroup>
+        <DartSassOutputStyle>compressed</DartSassOutputStyle>
+        <DartSassOutputStyle Condition="'$(Configuration)' == 'Debug'">expanded</DartSassOutputStyle>
+        <DartSassOutputLevel>verbose</DartSassOutputLevel>
+    </PropertyGroup>
+    
     <ItemGroup>
         <TypeScriptCompile Include="*.ts" />
         <TypeScriptCompile Remove="wwwroot\lib\**" />

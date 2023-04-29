@@ -19,7 +19,8 @@
 			<ul class="navbar-nav flex-grow-1">
 				<li class="nav-item"><NavLink class="nav-link text-light" href="/">Home</NavLink></li>
 				<li class="nav-item"><NavLink class="nav-link text-light" href="/plugins">Plugins</NavLink></li>
-
+				<li class="nav-item"><NavLink class="nav-link text-light" href="/docs">Docs</NavLink></li>
+				
 				<AuthorizeView Roles=@UserRoles.Admin>
 					<li class="nav-item"><NavLink class="nav-link text-light" href="/bot/controls">Controls</NavLink></li>
 					<li class="nav-item"><NavLink class="nav-link text-light" href="/servers">Servers</NavLink></li>
@@ -50,7 +51,7 @@
 		 * 
 		 * See: https://github.com/DSharpPlus/DSharpPlus/issues/1292
 		 */
-		BotInviteUri = $"https://discord.com/api/oauth2/authorize?client_id={DiscordClient.CurrentApplication.Id}&permissions=8&scope=bot%20applications.commands";
+		BotInviteUri = $"https://discord.com/api/oauth2/authorize?client_id={DiscordClient?.CurrentApplication?.Id}&permissions=8&scope=bot%20applications.commands";
 	}
 
 }

@@ -1,0 +1,147 @@
+﻿@page "/docs"
+@page "/docs/{PluginName}/{*PathSlug}"
+@layout DocsLayout
+
+@using YumeChan.NetRunner.Plugins.Services.Docs
+@using Nodsoft.MoltenObsidian.Vault
+@using Nodsoft.MoltenObsidian.Blazor
+@using Nodsoft.MoltenObsidian.Blazor.Helpers
+@using Nodsoft.MoltenObsidian.Blazor.Templates
+@using YumeChan.NetRunner.Shared.Docs
+@using System.IO
+
+@inject PluginDocsLoader PluginDocsLoader
+
+<div class="page mt-xl-3">
+    <DocsSidebar Vault="@_vault" SelectedPlugin="@PluginName" />
+
+    <main>
+        <article class="content px-4 my-3">
+            @BuildBreadcrumb(PathSlug)
+    
+            @if (PluginName is null or "" && PathSlug is null or "")
+            {
+                
+            }
+            @* Loading *@
+            else if (_vault is null && _loadingError is null)
+            {
+                <h3 class="text-info">Loading...</h3>
+            }
+            @* No docs found *@
+            else if (_loadingError is DirectoryNotFoundException || _vault?.Files.Count is 0)
+            {
+                <h3 class="text-warning">No docs found.</h3>
+            }
+            @* Error handling *@
+            else if (_loadingError is not null)
+            {
+                <h3 class="text-danger">Error loading plugin docs: <small>@_loadingError.Message</small></h3>
+            }
+            else
+            {
+                <ObsidianVaultDisplay @ref="@_vaultDisplay" Vault="@_vault" BasePath="@_basePath" CurrentPath="@PathSlug">
+                    <NotFound>
+                        <h3 class="text-warning">Not Found</h3>
+                    </NotFound>
+
+                    <FoundIndexNote>@FoundNote.Render(new(context.Note, context.DisplayOptions))</FoundIndexNote>
+                </ObsidianVaultDisplay>
+            }
+        </article>
+    </main>
+</div>
+
+@code {
+#nullable enable
+
+    [Parameter]
+    public string PluginName { get; set; } = string.Empty;
+
+    [Parameter]
+    public string? PathSlug { get; set; }
+
+    private IVault? _vault;
+    private string _basePath = string.Empty;
+
+    private bool _loading;
+
+    private Exception? _loadingError;
+    private ObsidianVaultDisplay _vaultDisplay = new();
+
+    protected override async Task OnParametersSetAsync()
+    {
+        _loadingError = null;
+        await base.OnParametersSetAsync();
+
+        // Edge case: if both parameters are null, don't load anything, and load the index page.
+        if (PluginName is null or "" && PathSlug is null or "")
+        {
+            return;
+        }
+
+        try
+        {
+            _vault = PluginDocsLoader.GetVault(PluginName) ?? throw new($"No vault found for plugin '{PluginName}'.");
+            _basePath = $"/docs/{PluginName}/";
+        }
+        catch (DirectoryNotFoundException e)
+        {
+            _loadingError = e;
+        }
+    }
+
+    /// <summary>
+    /// Builds a Bootstrap breadcrumb using a slash-separated path string.
+    /// </summary>
+    /// <param name="path">The slash-separated path string.</param>
+    /// <returns>The RenderFragment for the breadcrumb.</returns>
+    RenderFragment BuildBreadcrumb(string? path) => __builder =>
+    {
+        path ??= string.Empty;
+
+        List<string> paths = new() { "." };
+        paths.AddRange(path.Split('/'));
+        
+        <ul class="breadcrumb px-3">
+            @for (int i = 0; i < paths.Count; i++)
+            {
+                if (i is 0)
+                {
+                    if (paths is { Count: 1 } or [.., ""])
+                    {
+                        // Render active home link
+                        <li aria-current="page" class="breadcrumb-item active">~</li>
+                        break;
+                    }
+                    
+                    // Render inactive home link
+                    <li class="breadcrumb-item">
+                        <a href="">~</a>
+                    </li>
+
+                    continue;
+                }
+
+                string pathName = paths[i];
+                
+
+                if (i < paths.Count - 1)
+                {
+                    string pathUrl = $"{string.Join("/", paths.Take(i + 1))}";
+                    
+                    // Inactive breadcrumb item with link
+                    <li class="breadcrumb-item">
+                        <a href="@pathUrl">@pathName</a>
+                    </li>
+                }
+                else
+                {
+                    // Active breadcrumb item without link
+                    <li aria-current="page" class="breadcrumb-item active">@pathName</li>
+                }
+            }
+        </ul>
+    };
+
+}

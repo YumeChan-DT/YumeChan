@@ -22,6 +22,8 @@
       <PackageReference Include="Microsoft.AspNetCore.Mvc.Core" Version="2.2.5" />
       <PackageReference Include="Microsoft.AspNetCore.Mvc.Versioning.ApiExplorer" Version="5.0.0" />
       <PackageReference Include="Microsoft.AspNetCore.WebUtilities" Version="2.2.0" />
+      <PackageReference Include="Nodsoft.MoltenObsidian.Blazor" Version="0.4.3" />
+      <PackageReference Include="Nodsoft.MoltenObsidian.Vaults.FileSystem" Version="0.4.1" />
       <PackageReference Include="Swashbuckle.AspNetCore" Version="6.4.0" />
     </ItemGroup>
 

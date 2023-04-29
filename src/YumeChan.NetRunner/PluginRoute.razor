@@ -8,16 +8,16 @@
 @page "/plugin/{PluginName}/{*PathSlug}"
 @page "/p/{PluginName}/{*PathSlug}"
 
-<PluginRouter Plugin="_plugin" RoutePath=@(PathSlug ?? "/")>
+<PluginRouter Plugin="@_plugin" RoutePath=@(PathSlug ?? "/")>
     <Found Context="routeData">
-        <AuthorizeRouteView @ref=_authorizeRouteView RouteData=routeData />
+        <AuthorizeRouteView @ref="@_authorizeRouteView" RouteData=routeData />
     </Found>
 
     <NotFound>
         <CascadingAuthenticationState>
             @if (PathSlug is null)
             {
-            @* This means we've hit the root of the plugin, yet no homepage for the plugin exists. *@
+                @* This means we've hit the root of the plugin, yet no homepage for the plugin exists. *@
                 <h5>Hmm... Seems like @PluginName has no plugin homepage.</h5>
             }
             else

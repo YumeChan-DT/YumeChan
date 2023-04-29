@@ -43,6 +43,7 @@ public class Startup
 
 		services.AddApiPluginSupport();
 		services.AddApiPluginsSwagger();
+		services.AddPluginDocsSupport();
 
 		services.AddRazorPages();
 		services.AddServerSideBlazor();

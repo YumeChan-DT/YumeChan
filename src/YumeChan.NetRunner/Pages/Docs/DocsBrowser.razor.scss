@@ -1,0 +1,13 @@
+.page {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+
+  @media (min-width: 641px) {
+	flex-direction: row;
+  }
+}
+
+main {
+  flex-grow: 1;
+}
