@@ -1,4 +1,5 @@
-﻿@page "/docs/{PluginName}/{*PathSlug}"
+﻿@page "/docs"
+@page "/docs/{PluginName}/{*PathSlug}"
 @layout DocsLayout
 
 @using YumeChan.NetRunner.Plugins.Services.Docs
@@ -17,9 +18,13 @@
     <main>
         <article class="content px-4 my-3">
             @BuildBreadcrumb(PathSlug)
-
+    
+            @if (PluginName is null or "" && PathSlug is null or "")
+            {
+                
+            }
             @* Loading *@
-            @if (_vault is null && _loadingError is null)
+            else if (_vault is null && _loadingError is null)
             {
                 <h3 class="text-info">Loading...</h3>
             }
@@ -69,12 +74,18 @@
         _loadingError = null;
         await base.OnParametersSetAsync();
 
+        // Edge case: if both parameters are null, don't load anything, and load the index page.
+        if (PluginName is null or "" && PathSlug is null or "")
+        {
+            return;
+        }
+
         try
         {
             _vault = PluginDocsLoader.GetVault(PluginName) ?? throw new($"No vault found for plugin '{PluginName}'.");
-            _basePath = this.GetCallingBaseVaultPath().Replace(@"{PluginName}", PluginName);
+            _basePath = $"/docs/{PluginName}/";
         }
-        catch (Exception e)
+        catch (DirectoryNotFoundException e)
         {
             _loadingError = e;
         }
@@ -85,47 +96,48 @@
     /// </summary>
     /// <param name="path">The slash-separated path string.</param>
     /// <returns>The RenderFragment for the breadcrumb.</returns>
-    RenderFragment BuildBreadcrumb(string path) => __builder =>
+    RenderFragment BuildBreadcrumb(string? path) => __builder =>
     {
         path ??= string.Empty;
 
         List<string> paths = new() { "." };
         paths.AddRange(path.Split('/'));
-
+        
         <ul class="breadcrumb px-3">
             @for (int i = 0; i < paths.Count; i++)
             {
                 if (i is 0)
                 {
-                    if (paths.Count is 1)
-                    {
-                        // Render inactive home link
-                        <li aria-current="page" class="breadcrumb-item active">~</li>
-                    }
-                    else
+                    if (paths is { Count: 1 } or [.., ""])
                     {
                         // Render active home link
-                        <li class="breadcrumb-item">
-                            <a href="">~</a>
-                        </li>
+                        <li aria-current="page" class="breadcrumb-item active">~</li>
+                        break;
                     }
+                    
+                    // Render inactive home link
+                    <li class="breadcrumb-item">
+                        <a href="">~</a>
+                    </li>
 
                     continue;
                 }
 
                 string pathName = paths[i];
-                string pathUrl = $"{string.Join("/", paths.Take(i + 1))}";
+                
 
                 if (i < paths.Count - 1)
                 {
-                    // Active breadcrumb item with link
+                    string pathUrl = $"{string.Join("/", paths.Take(i + 1))}";
+                    
+                    // Inactive breadcrumb item with link
                     <li class="breadcrumb-item">
                         <a href="@pathUrl">@pathName</a>
                     </li>
                 }
                 else
                 {
-                    // Inactive breadcrumb item without link
+                    // Active breadcrumb item without link
                     <li aria-current="page" class="breadcrumb-item active">@pathName</li>
                 }
             }

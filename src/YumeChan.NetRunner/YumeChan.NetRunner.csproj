@@ -11,6 +11,7 @@
         <RepositoryUrl>https://github.com/YumeChan-DT/YumeChan</RepositoryUrl>
         <RepositoryType>Git</RepositoryType>
         <UserSecretsId>b88ac92e-bd47-4a1a-af10-b5272f68479d</UserSecretsId>
+        <LangVersion>preview</LangVersion>
 
         <OutDir>$(SolutionDir)build</OutDir>
         <GenerateDocumentationFile>true</GenerateDocumentationFile>

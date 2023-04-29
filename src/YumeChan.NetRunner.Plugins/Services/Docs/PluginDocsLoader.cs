@@ -57,7 +57,8 @@ public sealed class PluginDocsLoader
 		// Then, do we have a PluginDocsAttribute?
 		Type pluginType = pluginName.GetType();
 
-		PluginDocsAttribute? attribute = pluginType.GetCustomAttribute<PluginDocsAttribute>() ?? pluginType.Assembly.GetCustomAttribute<PluginDocsAttribute>();
+		PluginDocsAttribute? attribute = pluginType.GetCustomAttributes<PluginDocsAttribute>().FirstOrDefault()
+		                                 ?? pluginType.Assembly.GetCustomAttributes<PluginDocsAttribute>().FirstOrDefault();
 		
 		if (attribute is { Enabled: false })
 		{
