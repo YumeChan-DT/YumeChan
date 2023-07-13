@@ -8,52 +8,46 @@ using DSharpPlus.Interactivity.Extensions;
 using DSharpPlus.SlashCommands;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using System;
-using System.Collections.Generic;
-using System.Collections.Immutable;
-using System.Linq;
 using System.Reflection;
-using System.Threading.Tasks;
 using Unity;
 using Unity.Microsoft.DependencyInjection;
 using YumeChan.Core.Config;
 using YumeChan.Core.Services.Formatters;
-using YumeChan.Core.Infrastructure.SlashCommands;
 using YumeChan.PluginBase;
 using YumeChan.PluginBase.Infrastructure;
 using DSharpPlus.SlashCommands.EventArgs;
-using DSharpPlus.Entities;
 using DSharpPlus.SlashCommands.Attributes;
 using YumeChan.Core.Services.Plugins;
 
+#nullable enable
 namespace YumeChan.Core;
 
-public class CommandHandler
+public sealed class CommandHandler
 {
-	public CommandsNextExtension Commands { get; internal set; }
-	public InteractivityExtension Interactivity { get; internal set; }
-	public SlashCommandsExtension SlashCommands { get; internal set; }
+	public CommandsNextExtension Commands { get; internal set; } = null!;
+	public InteractivityExtension Interactivity { get; internal set; } = null!;
+	public SlashCommandsExtension SlashCommands { get; internal set; } = null!;
 
-	public CommandsNextConfiguration CommandsConfiguration { get; internal set; }
-	public InteractivityConfiguration InteractivityConfiguration { get; internal set; }
-	public SlashCommandsConfiguration SlashCommandsConfiguration { get; internal set; }
+	public CommandsNextConfiguration? CommandsConfiguration { get; internal set; }
+	public InteractivityConfiguration? InteractivityConfiguration { get; internal set; }
+	public SlashCommandsConfiguration? SlashCommandsConfiguration { get; internal set; }
 
-	internal ICoreProperties Config { get; set; }
+	internal ICoreProperties? Config { get; set; }
 
 	private readonly DiscordClient _client;
 	private readonly IServiceProvider _services;
 	private readonly IUnityContainer _container;
 	private readonly NugetPluginsFetcher _pluginsFetcher;
 	private readonly PluginLifetimeListener _pluginLifetimeListener;
-	private readonly ILogger _logger;
+	private readonly ILogger<CommandHandler> _logger;
 	private readonly PluginsLoader _pluginsLoader;
 
-	private static readonly ulong? _slashCommandsGuild = null; // Used for Development only
+	private static readonly ulong? SlashCommandsGuild; // Used for Development only
 
 	static CommandHandler()
 	{
 #if DEBUG
-		_slashCommandsGuild = 584445871413002242;
+		SlashCommandsGuild = 584445871413002242;
 #endif
 	}
 
@@ -147,7 +141,7 @@ public class CommandHandler
 		{
 			try
 			{
-				await LoadPluginAsync(plugin, _slashCommandsGuild);
+				await LoadPluginAsync(plugin, SlashCommandsGuild);
 			}
 			catch (Exception e)
 			{
@@ -176,14 +170,14 @@ public class CommandHandler
 	{
 		Commands.UnregisterCommands(Commands.RegisteredCommands.Values.ToArray());
 		
-/*
-		FIXME: Faulty unloading of SlashCommands
- 
-		if (_slashCommandsGuild is not null)
-		{
-			await _client.BulkOverwriteGuildApplicationCommandsAsync(_slashCommandsGuild.Value, Array.Empty<DiscordApplicationCommand>());
-		}
-*/		
+
+		// FIXME: Faulty unloading of SlashCommands
+		//
+		// if (_slashCommandsGuild is not null)
+		// {
+		// 	await _client.BulkOverwriteGuildApplicationCommandsAsync(_slashCommandsGuild.Value, Array.Empty<DiscordApplicationCommand>());
+		// }
+		
 		
 		foreach (IPlugin plugin in _pluginsLoader.PluginManifestsInternal.Values.Where(p => p is not Modules.InternalPlugin).ToArray())
 		{
@@ -192,13 +186,12 @@ public class CommandHandler
 				await plugin.UnloadAsync();
 				_pluginsLoader.PluginManifestsInternal.Remove(plugin.AssemblyName);
 
-				_logger.LogInformation("Removed Plugin '{Plugin}'.", plugin.AssemblyName);
-			
+				_logger.LogInformation("Removed Plugin '{Plugin}'", plugin.AssemblyName);
 				_pluginLifetimeListener.NotifyPluginUnloaded(plugin);
 			}
 			catch (Exception e)
 			{
-				_logger.LogError(e, "An error occured while unloading plugin {PluginName}", plugin.AssemblyName);
+				_logger.LogError(e, "An error occured while unloading plugin '{PluginName}'", plugin.AssemblyName);
 				
 #if DEBUG
 				throw;
@@ -213,16 +206,16 @@ public class CommandHandler
 		Commands.RegisterCommands(plugin.GetType().Assembly);
 
 		SlashCommands.RegisterCommands(plugin.GetType().Assembly, slashCommandsGuild);
-		_logger.LogInformation("Loaded Plugin '{Plugin}'.", plugin.AssemblyName);
-				
+		_logger.LogInformation("Loaded Plugin '{Plugin}'", plugin.AssemblyName);
+
 		_pluginLifetimeListener.NotifyPluginLoaded(plugin);
 	}
-	
-	internal async Task OnCommandErroredAsync(CommandsNextExtension _, CommandErrorEventArgs e)
+
+	private async Task OnCommandErroredAsync(CommandsNextExtension _, CommandErrorEventArgs e)
 	{
 		if (e.Exception is ChecksFailedException cf)
 		{
-			string[] errorMessages = cf.FailedChecks.Select(check => check switch
+			string?[] errorMessages = cf.FailedChecks.Select(check => check switch
 			{
 				PluginCheckBaseAttribute p => p.ErrorMessage,
 				RequireOwnerAttribute => "Sorry. You must be a Bot Owner to run this command.",
@@ -248,15 +241,15 @@ public class CommandHandler
 #endif
 
 			await e.Context.RespondAsync(response);
-			_logger.LogError(e.Exception, "An error occured executing '{Command}' from user '{User}'.", e.Command.QualifiedName, e.Context.User.Id);
-		}		
+			_logger.LogError(e.Exception, "An error occured executing '{Command}' from user '{User}'", e.Command?.QualifiedName, e.Context.User.Id);
+		}
 	}
 
 	private async Task OnSlashCommandErroredAsync(SlashCommandsExtension _, SlashCommandErrorEventArgs e)
 	{
 		if (e.Exception is SlashExecutionChecksFailedException cf)
 		{
-			string[] errorMessages = cf.FailedChecks.Select(check => check switch
+			string?[] errorMessages = cf.FailedChecks.Select(check => check switch
 			{
 				PluginSlashCheckBaseAttribute p => p.ErrorMessage,
 				SlashRequireOwnerAttribute => "Sorry. You must be a Bot Owner to run this command.",
@@ -282,7 +275,7 @@ public class CommandHandler
 #endif
 
 			await e.Context.CreateResponseAsync(response, true);
-			_logger.LogError(e.Exception, "An error occured executing '{Command}' from user '{User}'.", e.Context.CommandName, e.Context.User.Id);
+			_logger.LogError(e.Exception, "An error occured executing '{Command}' from user '{User}'", e.Context.CommandName, e.Context.User.Id);
 		}
 	}
 	
@@ -290,7 +283,7 @@ public class CommandHandler
 	{
 		if (e.Exception is ContextMenuExecutionChecksFailedException cf)
 		{
-			string[] errorMessages = cf.FailedChecks.Select(check => check switch
+			string?[] errorMessages = cf.FailedChecks.Select(check => check switch
 			{
 				PluginContextCheckBaseAttribute p => p.ErrorMessage,
 //				RequireOwnerAttribute => "Sorry. You must be a Bot Owner to run this command.",
@@ -316,13 +309,13 @@ public class CommandHandler
 #endif
 
 			await e.Context.CreateResponseAsync(response, true);
-			_logger.LogError(e.Exception, "An error occured executing '{Command}' from user '{User}'.", e.Context.CommandName, e.Context.User.Id);
+			_logger.LogError(e.Exception, "An error occured executing '{Command}' from user '{User}'", e.Context.CommandName, e.Context.User.Id);
 		}
 	}
 
 	private Task OnCommandExecuted(CommandsNextExtension sender, CommandExecutionEventArgs e)
 	{
-		_logger.LogInformation("Command '{Command}' received from User '{User}'.", e.Command.QualifiedName, e.Context.User.Id);
+		_logger.LogInformation("Command '{Command}' received from User '{User}'", e.Command.QualifiedName, e.Context.User.Id);
 		return Task.CompletedTask;
 	}
 }

@@ -1,0 +1,56 @@
+.sidebar .navbar-toggler {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+.sidebar .top-row {
+  height: 3.5rem;
+}
+.sidebar .navbar-brand {
+  font-size: 1.2rem;
+}
+.sidebar .oi {
+  width: 2rem;
+  font-size: 1.1rem;
+  vertical-align: text-top;
+  top: -2px;
+}
+.sidebar .nav-item {
+  font-size: 0.9rem;
+  padding-bottom: 0.2rem;
+}
+.sidebar .nav-item a {
+  color: #d7d7d7;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  padding: 0.3rem 1rem 0.3rem 1rem;
+}
+.sidebar .nav-item a:active {
+  background-color: rgba(255, 255, 255, 0.25);
+  color: white !important;
+}
+.sidebar .nav-item a:hover {
+  background-color: rgba(255, 255, 255, 0.21);
+  color: white !important;
+}
+
+a.vault-folder-title {
+  font-weight: 600;
+}
+a.vault-item-title {
+  color: var(--bs-primary) !important;
+}
+
+@media (min-width: 641px) {
+  .sidebar {
+    width: 20rem;
+    position: sticky;
+    top: 0;
+  }
+  .navbar-toggler {
+    display: none;
+  }
+  .collapse {
+    /* Never collapse the sidebar for wide screens */
+    display: block;
+  }
+}

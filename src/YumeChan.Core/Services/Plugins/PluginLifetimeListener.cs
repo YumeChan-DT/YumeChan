@@ -1,6 +1,6 @@
-﻿using System.Threading.Tasks;
-using YumeChan.PluginBase;
+﻿using YumeChan.PluginBase;
 
+#nullable enable
 namespace YumeChan.Core.Services.Plugins;
 
 /// <summary>
@@ -18,12 +18,12 @@ public sealed class PluginLifetimeListener
 	/// <summary>
 	/// Occurs when a plugin is loaded.
 	/// </summary>
-	public event PluginLifetimeEventHandler PluginLoaded;
+	public event PluginLifetimeEventHandler? PluginLoaded;
 	
 	/// <summary>
 	/// Occurs when a plugin is unloaded.
 	/// </summary>
-	public event PluginLifetimeEventHandler PluginUnloaded;
+	public event PluginLifetimeEventHandler? PluginUnloaded;
 	
 	internal void NotifyPluginLoaded(IPlugin plugin) => PluginLoaded?.Invoke(plugin);
 	internal void NotifyPluginUnloaded(IPlugin plugin) => PluginUnloaded?.Invoke(plugin);

@@ -1,11 +1,9 @@
 using DSharpPlus;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using System;
-using System.IO;
+using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
 using System.Runtime.InteropServices;
-using System.Threading.Tasks;
 using Unity;
 using Unity.Microsoft.DependencyInjection;
 using YumeChan.Core.Config;
@@ -16,6 +14,7 @@ using YumeChan.PluginBase.Database.MongoDB;
 using YumeChan.PluginBase.Database.Postgres;
 using YumeChan.PluginBase.Tools;
 
+#nullable enable
 namespace YumeChan.Core;
 
 public enum YumeCoreState
@@ -26,10 +25,11 @@ public enum YumeCoreState
 public sealed class YumeCore
 {
 	public static YumeCore Instance => _instance ??= new();
-	private static YumeCore _instance;
+	private static YumeCore? _instance;
 
 	public YumeCoreState CoreState { get; private set; }
-	public static string CoreVersion { get; } = typeof(YumeCore).Assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion;
+
+	public static string CoreVersion { get; } = typeof(YumeCore).Assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion ?? "Unknown"; 
 
 	public DiscordClient Client { get; set; }
 	public CommandHandler CommandHandler { get; set; }
@@ -61,7 +61,7 @@ public sealed class YumeCore
 			FactoryLifetime.Singleton
 		)
 			
-		.RegisterFactory<PluginsLoader>(uc => new PluginsLoader(uc.Resolve<ICoreProperties>().Path_Plugins), FactoryLifetime.Singleton)
+		.RegisterFactory<PluginsLoader>(static uc => new PluginsLoader(uc.Resolve<ICoreProperties>().Path_Plugins), FactoryLifetime.Singleton)
 			
 		.RegisterInstance(PluginLifetimeListener.Instance)
 		.RegisterSingleton<CommandHandler>()
@@ -73,11 +73,11 @@ public sealed class YumeCore
 		.RegisterSingleton(typeof(IJsonConfigProvider<>), typeof(JsonConfigProvider<>))
 			
 		.RegisterFactory<ICoreProperties>(
-			uc => uc.Resolve<InterfaceConfigProvider<ICoreProperties>>().InitConfig("coreconfig.json", true).InitDefaults(),
+			static uc => uc.Resolve<InterfaceConfigProvider<ICoreProperties>>().InitConfig("coreconfig.json", true).InitDefaults(),
 			FactoryLifetime.Singleton)
 			
 		.RegisterFactory<IPluginLoaderProperties>(
-			uc => uc.Resolve<InterfaceConfigProvider<IPluginLoaderProperties>>().InitConfig("plugins.json", true).InitDefaults(),
+			static uc => uc.Resolve<InterfaceConfigProvider<IPluginLoaderProperties>>().InitConfig("plugins.json", true).InitDefaults(),
 			FactoryLifetime.Singleton)
 
 		.AddServices(new ServiceCollection()
@@ -95,14 +95,14 @@ public sealed class YumeCore
 
 		ResolveCoreComponents();
 
-		Logger.LogInformation("YumeCore v{version}.", CoreVersion);
+		Logger.LogInformation("YumeCore v{version}", CoreVersion);
 
 		CoreState = YumeCoreState.Starting;
 
 		await CommandHandler.InstallCommandsAsync();
 		await Client.ConnectAsync();
 		await Client.InitializeAsync();
-		await LavalinkHandler.Initialize();
+		await LavalinkHandler.InitializeAsync();
 
 		CoreState = YumeCoreState.Online;
 	}
@@ -140,38 +140,35 @@ public sealed class YumeCore
 
 	private string GetBotToken()
 	{
-		string token = CoreProperties.BotToken;
+		string? token = CoreProperties.BotToken;
 
-		if (string.IsNullOrWhiteSpace(token))
+		if (!string.IsNullOrWhiteSpace(token))
 		{
-			string envVarName = $"{CoreProperties.AppInternalName}.Token";
-
-			if (TryBotTokenFromEnvironment(envVarName, out token, out EnvironmentVariableTarget target))
-			{
-				Logger.LogInformation("Bot Token was read from {Target} Environment Variable \"{EnvVar}\", instead of \"coreproperties.json\" Config File.", target, envVarName);
-			}
-			else
-			{
-				ApplicationException e = new("No Bot Token supplied.");
-					
-				Logger.LogCritical(e, "No Bot Token was found in \"coreconfig.json\" Config File, and Environment Variables \"{EnvVar}\" from relevant targets are empty. Please set a Bot Token before launching the Bot.", 
-					envVarName);
-
-				throw e;
-			}
+			return token;
 		}
 
-		return token;
+		string envVarName = $"{CoreProperties.AppInternalName}.Token";
+
+		if (TryBotTokenFromEnvironment(envVarName, out token, out EnvironmentVariableTarget target))
+		{
+			Logger.LogInformation("Bot Token was read from {target} Environment Variable \"{envVar}\", instead of \"coreproperties.json\" Config File", target, envVarName);
+			return token;
+		}
+
+		ApplicationException e = new("No Bot Token supplied.");
+		Logger.LogCritical(e, "No Bot Token was found in \"coreconfig.json\" Config File, and Environment Variables \"{envVar}\" from relevant targets are empty. Please set a Bot Token before launching the Bot", envVarName);
+
+		throw e;
 	}
 
-	private static bool TryBotTokenFromEnvironment(string envVarName, out string token, out EnvironmentVariableTarget foundFromTarget)
+	private static bool TryBotTokenFromEnvironment(string envVarName, [NotNullWhen(true)] out string? token, out EnvironmentVariableTarget foundFromTarget)
 	{
 		if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
 		{
 			foreach (EnvironmentVariableTarget target in typeof(EnvironmentVariableTarget).GetEnumValues())
 			{
 				token = Environment.GetEnvironmentVariable(envVarName, target);
-
+				
 				if (token is not null)
 				{
 					foundFromTarget = target;
@@ -185,16 +182,14 @@ public sealed class YumeCore
 
 			return false;
 		}
-		else
-		{
-			token = Environment.GetEnvironmentVariable(envVarName);
 
-			foundFromTarget = EnvironmentVariableTarget.Process;
+		token = Environment.GetEnvironmentVariable(envVarName);
+		foundFromTarget = EnvironmentVariableTarget.Process;
 
-			return token is not null;
-		}
+		return token is not null;
 	}
 
+	[SuppressMessage("ReSharper", "NullCoalescingConditionIsAlwaysNotNullAccordingToAPIContract")]
 	private void ResolveCoreComponents()
 	{
 		Logger ??= Services.Resolve<ILogger<YumeCore>>();

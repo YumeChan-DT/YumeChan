@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
         <TargetFramework>net6.0</TargetFramework>
@@ -12,6 +12,7 @@
         <RepositoryType>Git</RepositoryType>
         <SignAssembly>false</SignAssembly>
         <LangVersion>preview</LangVersion>
+        <ImplicitUsings>enable</ImplicitUsings>
     </PropertyGroup>
 
     <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
@@ -23,7 +24,7 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="Castle.Core" Version="5.1.0" />
+        <PackageReference Include="Castle.Core" Version="5.1.1" />
         <PackageReference Include="DSharpPlus" Version="4.4.*" />
         <PackageReference Include="DSharpPlus.CommandsNext" Version="4.4.*" />
         <PackageReference Include="DSharpPlus.Interactivity" Version="4.4.*" />
@@ -34,8 +35,8 @@
         <PackageReference Include="Microsoft.Extensions.FileProviders.Physical" Version="6.0.0" />
         <PackageReference Include="Microsoft.Extensions.Http" Version="6.0.0" />
         <PackageReference Include="Microsoft.Extensions.Logging" Version="6.0.0" />
-        <PackageReference Include="NuGet.Configuration" Version="6.3.0" />
-        <PackageReference Include="NuGet.Resolver" Version="6.3.0" />
+        <PackageReference Include="NuGet.Configuration" Version="6.5.0" />
+        <PackageReference Include="NuGet.Resolver" Version="6.5.0" />
         <PackageReference Include="System.Text.Json" Version="6.0.6" />
         <PackageReference Include="Unity" Version="5.11.10" />
         <PackageReference Include="Nodsoft.Unity.Microsoft.DependencyInjection" Version="5.11.5" />

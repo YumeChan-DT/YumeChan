@@ -98,7 +98,7 @@ public class ApiPluginLoader : IHostedService
 
 	}
 
-	public async Task StartAsync(CancellationToken cancellationToken)
+	public Task StartAsync(CancellationToken cancellationToken)
 	{
 		// Start by catching up on previously loaded plugins
 		foreach (IPlugin plugin in _pluginsLoader.PluginManifests.Values)
@@ -113,11 +113,15 @@ public class ApiPluginLoader : IHostedService
 		// Okay! Time for work now ^^
 		_lifetimeListener.PluginLoaded += LoadApiPlugin;
 		_lifetimeListener.PluginUnloaded += UnloadApiPlugin;
+		
+		return Task.CompletedTask;
 	}
 
-	public async Task StopAsync(CancellationToken cancellationToken)
+	public Task StopAsync(CancellationToken cancellationToken)
 	{
 		_lifetimeListener.PluginLoaded -= LoadApiPlugin;
 		_lifetimeListener.PluginUnloaded -= UnloadApiPlugin;
+		
+		return Task.CompletedTask;
 	}
 }

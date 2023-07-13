@@ -1,17 +1,11 @@
 #nullable enable
 
-using System;
-using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Diagnostics;
-using System.IO;
-using System.Linq;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Runtime.Versioning;
 using System.Text.RegularExpressions;
-using System.Threading;
-using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyModel;
 using Microsoft.Extensions.Logging;
 using NuGet.Common;
@@ -259,8 +253,9 @@ public sealed class NugetPluginsFetcher : IDisposable
 		{
 			foreach (DirectoryInfo dir in directories
 						.Where(d => 
-							regex.Matches(d.FullName).Count == 1 
-							|| regex.Matches(d.FullName).Count == 2 && string.Equals(regex.Matches(d.FullName)[1].Value, RuntimeInformation.RuntimeIdentifier, StringComparison.OrdinalIgnoreCase))
+							regex.Matches(d.FullName).Count is 1 
+							|| regex.Matches(d.FullName).Count is 2 
+							&& string.Equals(regex.Matches(d.FullName)[1].Value, RuntimeInformation.RuntimeIdentifier, StringComparison.OrdinalIgnoreCase))
 						.OrderByDescending(d => d.Name, StringComparer.OrdinalIgnoreCase))
 			{
 				files.AddRange(dir.GetFiles("*.dll", SearchOption.AllDirectories));

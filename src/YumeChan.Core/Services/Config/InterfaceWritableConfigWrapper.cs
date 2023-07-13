@@ -1,5 +1,4 @@
-﻿using System;
-using System.Runtime.CompilerServices;
+﻿using System.Runtime.CompilerServices;
 using Castle.DynamicProxy;
 using YumeChan.Core.Infrastructure.Dynamic.Config;
 
@@ -31,7 +30,12 @@ internal sealed class InterfaceWritableConfigWrapper<TConfig>
 	/// <returns>New instance of the config interface.</returns>
 	public TConfig CreateInstance() => Instance = InterfaceWritableConfigWrapper.CreateInstance(_config, typeof(TConfig)) as TConfig;
 
-
+	/// <summary>
+	/// Provides an implicit conversion from <see cref="InterfaceWritableConfigWrapper{TConfig}"/> to <typeparamref name="TConfig"/>.
+	/// </summary>
+	/// <param name="wrapper">Wrapper to be converted.</param>
+	/// <returns>Instance of the config interface.</returns>
+	public static implicit operator TConfig(InterfaceWritableConfigWrapper<TConfig> wrapper) => wrapper.Instance;
 }
 
 internal static class InterfaceWritableConfigWrapper

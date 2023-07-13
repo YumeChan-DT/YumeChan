@@ -1,12 +1,14 @@
 ﻿using YumeChan.PluginBase;
-using System;
-using System.Threading.Tasks;
 
 namespace YumeChan.Core.Modules;
+#nullable enable
 
+/// <summary>
+/// Represents the internal plugin, identifying the core of Yume-Chan.
+/// </summary>
 public sealed class InternalPlugin : IPlugin
 {
-	public string AssemblyName { get; } = typeof(YumeCore).Assembly.GetName().Name;
+	public string AssemblyName { get; } = typeof(YumeCore).Assembly.GetName().Name!;
 	public string DisplayName => "YumeCore Internals";
 		
 	public bool Loaded => YumeCore.Instance.CoreState is YumeCoreState.Online;

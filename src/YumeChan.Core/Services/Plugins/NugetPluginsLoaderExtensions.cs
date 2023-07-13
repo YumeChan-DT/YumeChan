@@ -1,5 +1,4 @@
-﻿using System.Linq;
-using Microsoft.Extensions.DependencyInjection;
+﻿using Microsoft.Extensions.DependencyInjection;
 using NuGet.Configuration;
 using NuGet.Protocol.Core.Types;
 using YumeChan.Core.Config;

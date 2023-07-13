@@ -1,7 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using MongoDB.Driver;
-using System;
-using System.Data.Common;
 using Npgsql;
 using YumeChan.PluginBase;
 using YumeChan.PluginBase.Database.MongoDB;

@@ -1,13 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Collections.Immutable;
-using System.IO;
-using System.Linq;
-using System.Reflection;
+﻿using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Runtime.Loader;
 using System.Security;
-using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using Unity;
 using YumeChan.PluginBase;
@@ -50,7 +44,7 @@ public sealed class PluginsLoader
 		return PluginsLoadDirectory;
 	}
 
-	private static void SetPluginsDirectoryEnvironmentVariables(string varName = PluginsLocationEnvVarName, string value = null)
+	private static void SetPluginsDirectoryEnvironmentVariables(string varName = PluginsLocationEnvVarName, string? value = null)
 	{
 		try
 		{
@@ -63,7 +57,7 @@ public sealed class PluginsLoader
 		}
 		catch (SecurityException e)
 		{
-			YumeCore.Instance.Logger.LogWarning(e, "Failed to write Environment Variable {VariableName}.", varName);
+			YumeCore.Instance.Logger.LogWarning(e, "Failed to write Environment Variable {variableName}.", varName);
 		}
 	}
 
@@ -106,21 +100,21 @@ public sealed class PluginsLoader
 				}
 			}
 			// Catch any assembly with bad IL.
-			catch (BadImageFormatException e)
+			catch (BadImageFormatException)
 			{
-				YumeCore.Instance.Logger.LogDebug("Assembly {AssemblyName} is not a valid MSIL assembly.", file.FullName);
+				YumeCore.Instance.Logger.LogDebug("Assembly {assemblyName} is not a valid MSIL assembly.", file.FullName);
 			}
 			
 			// Catch any assemblies with dependency issues, or broken types.
 			catch (ReflectionTypeLoadException e) when (e.LoaderExceptions.Any(x => x?.GetType() == typeof(FileNotFoundException)))
 			{
-				YumeCore.Instance.Logger.LogDebug(e, "Assembly {FileName} is not suitable for loading, skipping it.", file.FullName);
+				YumeCore.Instance.Logger.LogDebug(e, "Assembly {fileName} is not suitable for loading, skipping it.", file.FullName);
 				
 			}
 			// Anything else is strange. Log it as a warning.
 			catch (Exception e)
 			{
-				YumeCore.Instance.Logger.LogWarning(e,"Failed to load assembly \"{FileName}\".", file);
+				YumeCore.Instance.Logger.LogWarning(e,"Failed to load assembly \"{fileName}\".", file);
 			}
 		}
 	}
@@ -143,7 +137,7 @@ public sealed class PluginsLoader
 			try
 			{
 				// Try to load the plugin manifests from the assemblies, log error in console if unsuccessful.
-				foreach (Type t in a.ExportedTypes.Where(x => x.ImplementsInterface(typeof(IPlugin))))
+				foreach (Type t in a.ExportedTypes.Where(static x => x.ImplementsInterface(typeof(IPlugin))))
 				{
 					try
 					{
@@ -155,13 +149,13 @@ public sealed class PluginsLoader
 					}
 					catch (Exception e)
 					{
-						YumeCore.Instance.Logger.LogError(e,"Failed to instantiate plugin {PluginName}.", t?.Name);
+						YumeCore.Instance.Logger.LogError(e,"Failed to instantiate plugin {pluginName}.", t.Name);
 					}
 				}
 			}
 			catch (Exception e)
 			{
-				YumeCore.Instance.Logger.LogError(e,"Failed to load plugin manifests from assembly {AssemblyFullName}.", a?.FullName);
+				YumeCore.Instance.Logger.LogError(e,"Failed to load plugin manifests from assembly {assemblyFullName}.", a.FullName);
 			}
 		}
 
@@ -177,7 +171,7 @@ public sealed class PluginsLoader
 			try
 			{
 				// Try to load the dependency injection handlers from the assemblies, log error in console if unsuccessful.
-				foreach (Type type in a.ExportedTypes.Where(t => t.IsSubclassOf(typeof(DependencyInjectionHandler))))
+				foreach (Type type in a.ExportedTypes.Where(static t => t.IsSubclassOf(typeof(DependencyInjectionHandler))))
 				{
 					try
 					{
@@ -185,13 +179,13 @@ public sealed class PluginsLoader
 					}
 					catch (Exception e)
 					{
-						YumeCore.Instance.Logger.LogError(e, "Failed to instantiate dependency injection handler {TypeName}.", type.Name);
+						YumeCore.Instance.Logger.LogError(e, "Failed to instantiate dependency injection handler {typeName}.", type.Name);
 					}
 				}
 			}
 			catch (Exception e)
 			{
-				YumeCore.Instance.Logger.LogError(e, "Failed to load dependency injection handler types from assembly {AssemblyFullName}.", a.FullName);
+				YumeCore.Instance.Logger.LogError(e, "Failed to load dependency injection handler types from assembly {assemblyFullName}.", a.FullName);
 			}
 		}
 		

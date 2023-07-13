@@ -1,50 +1,72 @@
 ﻿using Microsoft.Extensions.FileProviders;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Primitives;
-using System;
 using System.Collections.Concurrent;
-using System.IO;
 using System.Text.Encodings.Web;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using YumeChan.Core.Infrastructure.Json.Converters;
+using YumeChan.Core.Config;
 using YumeChan.PluginBase;
 using YumeChan.PluginBase.Tools;
 
 namespace YumeChan.Core.Services.Config;
+#nullable enable
 
-public sealed class JsonConfigProvider<TPlugin> : IJsonConfigProvider<TPlugin> where TPlugin : IPlugin
+/// <summary>
+/// Common base class for all typed <see cref="JsonConfigProvider{TPlugin}"/>.
+/// </summary>
+public abstract class JsonConfigProvider
 {
-	private readonly ILoggerFactory _loggerFactory;
-	private static readonly PhysicalFileProvider _configFileProvider = new(Path.Combine(Directory.GetCurrentDirectory(), "config"));
-	private static readonly ConcurrentDictionary<string, IChangeToken> _configReloadTokens = new();
-	private readonly ILogger<JsonConfigProvider<TPlugin>> _logger;
+	protected const string FileExtension = ".json";
 
-	private const string FileExtension = ".json";
-
-	private static JsonSerializerOptions JsonSerializerOptions { get; } = new JsonSerializerOptions()
+	protected static readonly ConcurrentDictionary<string, IChangeToken> ConfigReloadTokens = new();
+	protected static readonly JsonSerializerOptions JsonSerializerOptions = new()
 	{
 		AllowTrailingCommas = true,
 		WriteIndented = true,
 		NumberHandling = JsonNumberHandling.AllowReadingFromString,
 		Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
 		ReadCommentHandling = JsonCommentHandling.Skip,
-		Converters = {  new JsonStringEnumConverter() }		
+		Converters = {  new JsonStringEnumConverter() }
 	};
 
-	public JsonConfigProvider(ILoggerFactory loggerFactory)
+	protected static PhysicalFileProvider ConfigFileProvider => _configFileProvider ??= _defaultConfigFileProvider;
+	
+	private static PhysicalFileProvider? _configFileProvider;
+	private static readonly PhysicalFileProvider _defaultConfigFileProvider = new(Path.Combine(Directory.GetCurrentDirectory(), "config"));
+
+
+	protected JsonConfigProvider(ICoreProperties coreProperties)
+	{
+		_configFileProvider ??= new(coreProperties.Path_Config);
+	}
+}
+
+/// <summary>
+/// Provides a <see cref="IWritableConfiguration"/> for a plugin.
+/// </summary>
+/// <typeparam name="TPlugin">The plugin type.</typeparam>
+public sealed class JsonConfigProvider<TPlugin> : JsonConfigProvider, IJsonConfigProvider<TPlugin> where TPlugin : IPlugin
+{
+	private readonly ILoggerFactory _loggerFactory;
+	private readonly ILogger<JsonConfigProvider<TPlugin>> _logger;
+
+	public JsonConfigProvider(ICoreProperties coreProperties, ILoggerFactory loggerFactory) : base(coreProperties)
 	{
 		_loggerFactory = loggerFactory;
 		_logger = loggerFactory.CreateLogger<JsonConfigProvider<TPlugin>>();
 	}
+	
+	/// <inheritdoc/>
+	public IWritableConfiguration GetConfiguration(string filename, bool autosave = true, bool autoreload = true) 
+		=> GetConfiguration(filename, false, autosave, autoreload);
 
-	public IWritableConfiguration GetConfiguration(string filename, bool autosave, bool autoreload) => GetConfiguration(filename, false, autosave, autoreload);
-
+	
 	internal JsonWritableConfig GetConfiguration(string filename, bool placeFileAtConfigRoot, bool autosave, bool autoreload)
 	{
 		filename += filename.EndsWith(FileExtension) ? string.Empty : FileExtension;
 		string configFileSubpath = placeFileAtConfigRoot ? filename : Path.Combine(typeof(TPlugin).Assembly.GetName().Name ?? throw new InvalidOperationException(), filename);
-		IFileInfo file = _configFileProvider.GetFileInfo(configFileSubpath);
+		IFileInfo file = ConfigFileProvider.GetFileInfo(configFileSubpath);
 		
 		return GetConfiguration(file, autosave, autoreload, _loggerFactory);
 	}
@@ -69,7 +91,7 @@ public sealed class JsonConfigProvider<TPlugin> : IJsonConfigProvider<TPlugin> w
 
 		if (autoreload)
 		{
-			reloadToken = _configReloadTokens.GetOrAdd(file.PhysicalPath, _configFileProvider.Watch);
+			reloadToken = ConfigReloadTokens.GetOrAdd(file.PhysicalPath, ConfigFileProvider.Watch);
 		}
 
 		return new(new(file.PhysicalPath), JsonSerializerOptions, loggerFactory.CreateLogger<JsonWritableConfig>(), reloadToken, null, firstLoad, autosave, autoreload);

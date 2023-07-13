@@ -1,10 +1,13 @@
 ﻿using DSharpPlus.CommandsNext;
 using DSharpPlus.CommandsNext.Converters;
 using DSharpPlus.CommandsNext.Entities;
+using JetBrains.Annotations;
 
+#nullable enable
 namespace YumeChan.Core.Services.Formatters;
 
-public class HelpCommandFormatter : DefaultHelpFormatter
+[UsedImplicitly]
+public sealed class HelpCommandFormatter : DefaultHelpFormatter
 {
     public HelpCommandFormatter(CommandContext ctx) : base(ctx) { }
 

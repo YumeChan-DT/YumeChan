@@ -2,9 +2,7 @@
 
 #nullable enable
 
-using System;
 using System.Collections;
-using System.Collections.Generic;
 using YumeChan.Core.Services.Config;
 namespace YumeChan.Core.Infrastructure.Dynamic.Config;
 
@@ -38,8 +36,8 @@ internal sealed class DynamicJsonList<T> : IList<T>, IList, IReadOnlyList<T>
 	public void CopyTo(Array array, int index) => (_list as IList).CopyTo(array, index);
 
 	public int Count => _list.Count;
-	public bool IsSynchronized { get; }
-	public object SyncRoot { get; }
+	public bool IsSynchronized => (_list as ICollection).IsSynchronized;
+	public object SyncRoot => (_list as ICollection).SyncRoot;
 
 	public bool IsReadOnly => false;
 
@@ -55,7 +53,7 @@ internal sealed class DynamicJsonList<T> : IList<T>, IList, IReadOnlyList<T>
 		_config.SetValue(_jsonPath, _list);
 	}
 
-	public int Add(object value)
+	public int Add(object? value)
 	{
 		if (value is null) throw new ArgumentNullException(nameof(value));
 		

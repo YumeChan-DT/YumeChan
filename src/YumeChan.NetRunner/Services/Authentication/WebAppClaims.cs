@@ -17,12 +17,12 @@ public class WebAppClaims : IClaimsTransformation
 
 	public Task<ClaimsPrincipal> TransformAsync(ClaimsPrincipal principal)
 	{
-		if (principal.Identity.IsAuthenticated)
+		if (principal.Identity is { IsAuthenticated: true })
 		{
 			ClaimsIdentity identity = new();
 			ulong snowflake = Convert.ToUInt64(principal.FindFirstValue(ClaimTypes.NameIdentifier));
 
-			if (_client.CurrentApplication.Owners.Select(u => u.Id).Contains(snowflake))
+			if (_client.CurrentApplication?.Owners.Select(static u => u.Id).Contains(snowflake) ?? false)
 			{
 				identity.AddClaim(new(ClaimTypes.Role, UserRoles.Admin));
 			}

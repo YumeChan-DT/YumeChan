@@ -1,11 +1,10 @@
-﻿using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.Linq;
+﻿using System.Collections;
+using System.Diagnostics.CodeAnalysis;
 using System.Runtime.Serialization;
 using YumeChan.Core.Services.Config;
 
 namespace YumeChan.Core.Infrastructure.Dynamic.Config;
+#nullable enable
 
 /// <summary>
 /// Provides a JSON-Config backed Dictionary of key <see cref="TKey" /> and value <see cref="TValue" />.
@@ -17,7 +16,7 @@ internal sealed class DynamicJsonDictionary<TKey, TValue> : IDictionary<TKey, TV
 	private readonly JsonWritableConfig _config;
 	private readonly string _jsonPath;
 
-	public DynamicJsonDictionary(JsonWritableConfig config, string jsonPath, IEnumerable<KeyValuePair<TKey, TValue>> collection = null)
+	public DynamicJsonDictionary(JsonWritableConfig config, string jsonPath, IEnumerable<KeyValuePair<TKey, TValue>>? collection = null)
 	{
 		_config = config;
 		_jsonPath = jsonPath;
@@ -33,8 +32,8 @@ internal sealed class DynamicJsonDictionary<TKey, TValue> : IDictionary<TKey, TV
 	bool IDictionary<TKey, TValue>.ContainsKey(TKey key) => _dictionary.ContainsKey(key);
 	bool IReadOnlyDictionary<TKey, TValue>.ContainsKey(TKey key) => _dictionary.ContainsKey(key);
 	
-	bool IReadOnlyDictionary<TKey, TValue>.TryGetValue(TKey key, out TValue value) => _dictionary.TryGetValue(key, out value);
-	bool IDictionary<TKey, TValue>.TryGetValue(TKey key, out TValue value) => _dictionary.TryGetValue(key, out value);
+	bool IReadOnlyDictionary<TKey, TValue>.TryGetValue(TKey key, [MaybeNullWhen(false)] out TValue value) => _dictionary.TryGetValue(key, out value);
+	bool IDictionary<TKey, TValue>.TryGetValue(TKey key, [MaybeNullWhen(false)] out TValue value) => _dictionary.TryGetValue(key, out value);
 	
 	public bool Remove(TKey key)
 	{
@@ -62,10 +61,10 @@ internal sealed class DynamicJsonDictionary<TKey, TValue> : IDictionary<TKey, TV
 	ICollection IDictionary.Values => _dictionary.Values;
 
 
-	object IDictionary.this[object key]
+	object? IDictionary.this[object key]
 	{
 		get => (_dictionary as IDictionary)[key];
-		
+
 		set
 		{
 			if (key is TKey tKey && value is TValue tValue)
@@ -96,7 +95,7 @@ internal sealed class DynamicJsonDictionary<TKey, TValue> : IDictionary<TKey, TV
 
 	public void Add(KeyValuePair<TKey, TValue> item) => Add(item.Key, item.Value);
 	
-	public void Add(object key, object value)
+	public void Add(object key, object? value)
 	{
 		if (key is TKey tKey && value is TValue tValue)
 		{
@@ -138,5 +137,5 @@ internal sealed class DynamicJsonDictionary<TKey, TValue> : IDictionary<TKey, TV
 
 	public void GetObjectData(SerializationInfo info, StreamingContext context) => (_dictionary as ISerializable).GetObjectData(info, context);
 
-	public void OnDeserialization(object sender) => (_dictionary as IDeserializationCallback).OnDeserialization(sender);
+	public void OnDeserialization(object? sender) => (_dictionary as IDeserializationCallback).OnDeserialization(sender);
 }

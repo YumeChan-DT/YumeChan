@@ -1,5 +1,4 @@
 ﻿#nullable enable
-using System.IO;
 using NuGet.Packaging;
 using NuGet.Packaging.Core;
 

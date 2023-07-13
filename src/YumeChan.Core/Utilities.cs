@@ -1,10 +1,4 @@
-using Microsoft.Extensions.Logging;
 using YumeChan.Core.Config;
-using System;
-using System.Threading.Tasks;
-using System.Linq;
-using System.Reflection;
-using NuGet.Packaging;
 using static DSharpPlus.Entities.DiscordEmbedBuilder;
 
 namespace YumeChan.Core;

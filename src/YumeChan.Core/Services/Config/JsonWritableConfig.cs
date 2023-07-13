@@ -1,32 +1,28 @@
 ﻿using Microsoft.Extensions.Primitives;
-using System;
 using System.Collections;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
 using System.Text.Json;
 using System.Text.Json.Nodes;
-using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using YumeChan.PluginBase.Tools;
 
 namespace YumeChan.Core.Services.Config;
+#nullable enable
 
 /// <summary>
 /// Represents a Read-Write JSON-based configuration file.
 /// </summary>
 internal sealed class JsonWritableConfig : IWritableConfiguration
 {
-	public string CurrentPrefix { get; }
+	public string? CurrentPrefix { get; }
 
 	public bool IsFirstLoad { get; }
 
-	internal readonly FileInfo _file;
+	private readonly FileInfo _file;
 	private readonly ILogger<JsonWritableConfig> _logger;
 	private readonly bool _autoreload;
 	private readonly JsonSerializerOptions _serializerOptions;
-	private readonly IChangeToken _changeToken;
+	private readonly IChangeToken? _changeToken;
 	private readonly bool _autosave;
 	internal JsonNode JsonData;
 
@@ -34,9 +30,9 @@ internal sealed class JsonWritableConfig : IWritableConfiguration
 	/// <summary>
 	/// Public constructor, used to create or load a new configuration file.
 	/// </summary>
-	public JsonWritableConfig(FileInfo file, JsonSerializerOptions serializerOptions, ILogger<JsonWritableConfig> logger,
-		IChangeToken changeToken = null,
-		string prefix = null,
+	public JsonWritableConfig(FileInfo file, JsonSerializerOptions? serializerOptions, ILogger<JsonWritableConfig> logger,
+		IChangeToken? changeToken = null,
+		string? prefix = null,
 		bool firstLoad = false,
 		bool autosave = true,
 		bool autoreload = true)
@@ -45,14 +41,14 @@ internal sealed class JsonWritableConfig : IWritableConfiguration
 	/// <summary>
 	/// Private constructor, used in section loading and nested operations.
 	/// </summary>
-	private JsonWritableConfig(FileInfo file, JsonSerializerOptions serializerOptions, ILogger<JsonWritableConfig> logger,
-		IChangeToken changeToken = null,
-		string prefix = null,
-		bool firstLoad = false,
-		bool autosave = true,
-		bool autoreload = true,
-		JsonNode jsonData = null)
-	{
+	private JsonWritableConfig(FileInfo file, JsonSerializerOptions? serializerOptions, ILogger<JsonWritableConfig> logger,
+		IChangeToken? changeToken,
+		string? prefix,
+		bool firstLoad,
+		bool autosave,
+		bool autoreload,
+		JsonNode? jsonData
+	) {
 		_file = file ?? throw new ArgumentNullException(nameof(file));
 		_logger = logger;
 		_autoreload = autoreload;
@@ -80,7 +76,7 @@ internal sealed class JsonWritableConfig : IWritableConfiguration
 			}
 			catch (Exception e)
 			{
-				logger.LogError(e, "Failed to load config file {FileName}.", file.FullName);
+				logger.LogError(e, "Failed to load config file {fileName}", file.FullName);
 			}
 		}
 
@@ -89,7 +85,7 @@ internal sealed class JsonWritableConfig : IWritableConfiguration
 	}
 
 	/// <inheritdoc />
-	public string this[string key]
+	public string? this[string key]
 	{
 		get => GetValue<string>(key);
 		set => SetValue(key, value);
@@ -101,8 +97,11 @@ internal sealed class JsonWritableConfig : IWritableConfiguration
 	public async Task LoadFromFileAsync()
 	{
 		await using FileStream stream = _file.OpenRead();
-		JsonData = await JsonSerializer.DeserializeAsync<JsonNode>(stream, _serializerOptions);
-		_logger.LogDebug("Loaded config file {FileName}.", _file.FullName);
+		
+		JsonData = await JsonSerializer.DeserializeAsync<JsonNode>(stream, _serializerOptions) 
+			?? throw new InvalidOperationException("Failed to deserialize JSON file.");
+		
+		_logger.LogDebug("Loaded config file {fileName}", _file.FullName);
 	}
 
 	/// <summary>
@@ -112,7 +111,7 @@ internal sealed class JsonWritableConfig : IWritableConfiguration
 	{
 		await using FileStream stream = _file.OpenWrite();
 		await JsonSerializer.SerializeAsync(stream, JsonData, _serializerOptions);
-		_logger.LogDebug("Saved config file {FileName}.", _file.FullName);
+		_logger.LogDebug("Saved config file {fileName}", _file.FullName);
 	}
 
 	/// <inheritdoc />
@@ -120,15 +119,15 @@ internal sealed class JsonWritableConfig : IWritableConfiguration
 	/// Gets a value from the JSON-keyed dictionary, and returns a prefixed <see cref="IWritableConfiguration" /> if the value is a complex object.
 	/// Returns null if a value is not found.
 	/// </summary>
-	public object GetValue(string path) => GetValue(path, typeof(object));
+	public object? GetValue(string path) => GetValue(path, typeof(object));
 
 	/// <inheritdoc />
 	/// <summary>
 	/// Gets a value from the JSON-Keyed dictionary, or returns the default value if the value cannot be casted or is not found.
 	/// </summary>
-	public T GetValue<T>(string path) => GetValue(path, typeof(T)) is T value ? value : default;
+	public T? GetValue<T>(string path) => GetValue(path, typeof(T)) is T value ? value : default;
 
-	internal object GetValue(string path, Type returnType, bool returnRaw = false)
+	internal object? GetValue(string path, Type returnType, bool returnRaw = false)
 	{
 		// Sanitize string, then get absolute JSON path relative to the current prefix
 		path = ParseRelativePath(path, CurrentPrefix);
@@ -138,36 +137,27 @@ internal sealed class JsonWritableConfig : IWritableConfiguration
 
 		foreach (string key in path.Split(':'))
 		{
-			if (node is JsonObject obj)
+			switch (node)
 			{
-				if (((IDictionary<string, JsonNode>)obj).TryGetValue(key, out JsonNode value))
-				{
+				// If the node is an object, try to get the value from the key, as if it were a dictionary.
+				case JsonObject obj when ((IDictionary<string, JsonNode?>)obj).TryGetValue(key, out JsonNode? value) && value is not null:
 					node = value;
-				}
-				else
-				{
+					break;
+
+				// If the node is an array, try to get the value from the index, so long as it's within the array's bounds (and not empty).
+				case JsonArray arr when int.TryParse(key, out int index) && index >= 0 && index < arr.Count:
+					node = arr[index]!;
+					break;
+
+				default:
 					return null;
-				}
-			}
-			else if (node is JsonArray arr)
-			{
-				if (int.TryParse(key, out int index) && index >= 0 && index < arr.Count)
-				{
-					node = arr[index];
-				}
-				else
-				{
-					return null;
-				}
-			}
-			else
-			{
-				return null;
 			}
 		}
 
-		object returnValue = node switch
+		object? returnValue = node switch
 		{
+			null => null,
+			
 			// If returnRaw is true, return the raw value.
 			_ when returnRaw => node.ToJsonString(_serializerOptions),
 			
@@ -175,11 +165,13 @@ internal sealed class JsonWritableConfig : IWritableConfiguration
 			JsonObject when returnType.IsAssignableTo(typeof(IDictionary)) || returnType.IsGenericType && returnType.GetGenericTypeDefinition() == typeof(IDictionary<,>) => node,
 			JsonArray when returnType.IsAssignableTo(typeof(IEnumerable)) => node,
 			JsonObject or JsonArray => new JsonWritableConfig(_file, _serializerOptions, _logger, _changeToken, path, false, _autosave, false, JsonData),
-			_ => node?.AsValue()
+			_ => node.AsValue()
 		};
 
 		return returnValue switch
 		{
+			null => null,
+			
 			// If returnRaw is true, return the raw value.
 			string s when returnRaw => s,
 			
@@ -188,35 +180,35 @@ internal sealed class JsonWritableConfig : IWritableConfiguration
 			JsonArray value => value.Deserialize(returnType, _serializerOptions),
 			JsonObject value => value.Deserialize(returnType, _serializerOptions),
 			JsonWritableConfig value => value,
-			null => null,
+			
 			_ => throw new JsonException($"Cannot cast value on key {path} to type {returnType.FullName}.")
 		};
 	}
 
 	/// <inheritdoc />
-	public void SetValue(string path, object value) => SetValue<object>(path, value);
+	public void SetValue(string path, object? value) => SetValue<object>(path, value);
 
 	/// <inheritdoc />
 	/// <summary>
 	/// Set property in _json at specified path (creating any missing nodes)
 	/// </summary>
-	public void SetValue<T>(string path, T value) => SetValue(path, value, typeof(T));
+	public void SetValue<T>(string path, T? value) => SetValue(path, value, typeof(T));
 
-	internal void SetValue(string path, object value, Type valueType)
+	internal void SetValue(string path, object? value, Type valueType)
 	{
 		path = ParseRelativePath(path, CurrentPrefix);
 		
 		// Introspect down the JSON tree, until last node is reached
-		JsonNode node = JsonData;
+		JsonNode? node = JsonData;
 
 		foreach (string key in path.Split(':'))
 		{
 			node = node switch
 			{
-				JsonObject obj when ((IDictionary<string, JsonNode>)obj).TryGetValue(key, out JsonNode jsonValue) => jsonValue,
-				JsonObject obj                                                                                    => obj[key] = new JsonObject(),
-				JsonArray arr                                                                                     => int.TryParse(key, out int index) && index >= 0 && index < arr.Count ? arr[index] : arr[index] = new JsonArray(),
-				_                                                                                                 => JsonData[key] = new JsonObject()
+				JsonObject obj when ((IDictionary<string, JsonNode?>)obj).TryGetValue(key, out JsonNode? jsonValue) => jsonValue,
+				JsonObject obj => obj[key] = new JsonObject(),
+				JsonArray arr => int.TryParse(key, out int index) && index >= 0 && index < arr.Count ? arr[index] : arr[index] = new JsonArray(),
+				_ => JsonData[key] = new JsonObject()
 			};
 		}
 
@@ -225,42 +217,43 @@ internal sealed class JsonWritableConfig : IWritableConfiguration
 		{
 			node = node.Parent ?? node;
 
-			// Assign directly if the value is a string
-			if (value is string str)
+			switch (value)
 			{
-				node[path.Split(':').Last()] = str;
-			}
-			// Special case for Dictionary types
-			else if (value is IDictionary dictionary)
-			{
-				JsonObject jsonObject = new();
+				// Assign directly if the value is a string
+				case string str:
+					node[path.Split(':').Last()] = str;
+					break;
+				
+				// Special case for Dictionary types
+				case IDictionary dictionary:
+					JsonObject jsonObject = new();
 
-				foreach (DictionaryEntry entry in dictionary)
-				{
-					// I swear this is the only way to do this... Serialize the value to JSON, then deserialize it back to a JsonNode...
-					jsonObject[entry.Key.ToString()] = JsonNode.Parse(JsonSerializer.Serialize(entry.Value, _serializerOptions));
-				}
+					foreach (DictionaryEntry entry in dictionary)
+					{
+						// I swear this is the only way to do this... Serialize the value to JSON, then deserialize it back to a JsonNode...
+						jsonObject[entry.Key.ToString()!] = JsonNode.Parse(JsonSerializer.Serialize(entry.Value, _serializerOptions));
+					}
 
-				node[path.Split(':').Last()] = jsonObject;
-			}
-			// Special case made for enumerables
-			else if (value is IEnumerable enumerable)
-			{
-				JsonArray arr = new();
+					node[path.Split(':').Last()] = jsonObject;
+					break;
 
-				foreach (object item in enumerable)
-				{
-					arr.Add(item);
-				}
+				// Special case made for enumerables
+				case IEnumerable enumerable:
+					JsonArray arr = new();
 
-				node[path.Split(':').Last()] = arr;
+					foreach (object item in enumerable)
+					{
+						arr.Add(item);
+					}
+
+					node[path.Split(':').Last()] = arr;
+					break;
+				
+				default:
+					// Serialize the value to JSON
+					node[path.Split(':').Last()] = JsonSerializer.Serialize(value, valueType, _serializerOptions);
+					break;
 			}
-			else
-			{
-				// Serialize the value to JSON
-				node[path.Split(':').Last()] = JsonSerializer.Serialize(value, valueType, _serializerOptions);
-			}
-			
 		}
 		else if (node is JsonArray arr)
 		{
@@ -281,7 +274,7 @@ internal sealed class JsonWritableConfig : IWritableConfiguration
 	/// <summary>
 	/// Sanitizes string, then get absolute JSON path relative to the current prefix
 	/// </summary>
-	private static string ParseRelativePath(string path, string currentPrefix)
+	private static string ParseRelativePath(string path, string? currentPrefix)
 	{
 		if (path.EndsWith(':'))
 		{
@@ -301,7 +294,7 @@ internal sealed class JsonWritableConfig : IWritableConfiguration
 	public IEnumerable<IConfigurationSection> GetChildren() => throw new NotImplementedException();
 
 	/// <inheritdoc />
-	public IChangeToken GetReloadToken() => _changeToken;
+	public IChangeToken? GetReloadToken() => _changeToken;
 
 	/// <summary>
 	/// Gets a new <see cref="JsonWritableConfig"/> instance with the specified prefix.

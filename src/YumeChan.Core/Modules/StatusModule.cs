@@ -1,12 +1,7 @@
-﻿using System;
-using System.Diagnostics;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
+﻿using System.Diagnostics;
 using DSharpPlus;
 using DSharpPlus.Entities;
 using DSharpPlus.SlashCommands;
-using DSharpPlus.SlashCommands.Attributes;
 using YumeChan.Core.Services.Plugins;
 using YumeChan.PluginBase;
 using static YumeChan.Core.YumeCore;
@@ -19,7 +14,7 @@ namespace YumeChan.Core.Modules;
 
 
 [SlashCommandGroup("status", "Displays YumeCore Status")]
-public class StatusModule : ApplicationCommandModule, ICoreModule
+public sealed class StatusModule : ApplicationCommandModule, ICoreModule
 {
 	private readonly PluginsLoader _pluginsLoader;
 
@@ -27,8 +22,8 @@ public class StatusModule : ApplicationCommandModule, ICoreModule
 	{
 		_pluginsLoader = pluginsLoader;
 	}
-	
-	internal const string MissingVersionSubstitute = "Unknown";
+
+	private const string MissingVersionSubstitute = "Unknown";
 
 	[SlashCommand("core", "Gets the status of current YumeCore.")]
 	public async Task CoreStatusAsync(InteractionContext ctx)
