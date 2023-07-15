@@ -20,6 +20,7 @@ public static class Program
 	public static async Task Main(string[] args)
 	{
 		string informationalVersion = Assembly.GetEntryAssembly()?.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion;
+		_container.RegisterInstance(new NetRunnerContext(RunnerType.Console, typeof(Program).Assembly.GetName().Name, informationalVersion));
 		
 		Log.Logger = new LoggerConfiguration()
 			.MinimumLevel.Debug()
@@ -28,15 +29,14 @@ public static class Program
 			.Enrich.FromLogContext()
 			.WriteTo.Console()
 			.CreateLogger();
+        
+		using IHost host = CreateHostBuilder(args).Build();
+		IServiceProvider services = host.Services;
 
-
-		IHost host = CreateHostBuilder(args).Build();
-
-		YumeCore.Instance.Services = _container;
-		_container.RegisterInstance(new NetRunnerContext(RunnerType.Console, typeof(Program).Assembly.GetName().Name, informationalVersion));
+		YumeCore yumeCore = services.GetRequiredService<YumeCore>();
 		
 		await Task.WhenAll(
-			YumeCore.Instance.StartBotAsync(),
+			yumeCore.StartBotAsync(),
 			host.RunAsync()
 		);
 
@@ -49,10 +49,6 @@ public static class Program
 		.ConfigureContainer<IUnityContainer>((_, container) =>
 		{
 			_container = container; // This assignment is necessary, as configuration only affects the child container.
-
 			container.AddExtension(new LoggingExtension(new SerilogLoggerFactory()));
-			container.AddServices(new ServiceCollection().AddLogging(x => x.AddSerilog()));
-
-			YumeCore.Instance.ConfigureContainer(container);
 		});
 }

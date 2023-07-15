@@ -12,6 +12,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Serilog;
 using YumeChan.Core.Config;
 using YumeChan.NetRunner.Infrastructure.Blazor;
 using YumeChan.NetRunner.Plugins.Infrastructure;
@@ -34,13 +35,15 @@ public class Startup
 	// For more information on how to configure your application, visit https://go.microsoft.com/fwlink/?LinkID=398940
 	public void ConfigureServices(IServiceCollection services)
 	{
+		services.AddYumeCoreServices();
+		
 		services.AddControllers(builder =>
 			{
 				builder.ConfigurePluginNameRoutingToken();
 				builder.Conventions.Add(new PluginApiRoutingConvention());
 			}
 		);
-
+		
 		services.AddApiPluginSupport();
 		services.AddApiPluginsSwagger();
 		services.AddPluginDocsSupport();
@@ -73,13 +76,10 @@ public class Startup
 		services.AddLogging(x =>
 		{
 			x.ClearProviders();
+			x.AddSerilog();
 		});
 
-		
-
 		services.AddSingleton<IComponentActivator, ComponentActivator>();
-		services.AddSingleton(YumeCore.Instance);
-
 		services.AddScoped<IClaimsTransformation, WebAppClaims>();
 	}
 

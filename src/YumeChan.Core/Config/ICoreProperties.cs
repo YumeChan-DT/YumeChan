@@ -30,7 +30,7 @@ public interface ICoreProperties
 	/// <summary>
 	/// The path to the bot's working directory.
 	/// </summary>
-	public string Path_Core { get; internal set; }
+	public string? Path_Core { get; internal set; }
 	
 	/// <summary>
 	/// The path to the bot's configuration directory.
@@ -38,7 +38,7 @@ public interface ICoreProperties
 	/// <value>
 	/// Defaults to <c>{Path_Core}/config"</c>.
 	/// </value>
-	public string Path_Config { get; internal set; }
+	public string? Path_Config { get; internal set; }
 	
 	/// <summary>
 	/// The path to the bot's plugin directory.
@@ -46,7 +46,7 @@ public interface ICoreProperties
 	/// <value>
 	/// Defaults to <c>{Path_Core}/plugins"</c>.
 	/// </value>
-	public string Path_Plugins { get; internal set; }
+	public string? Path_Plugins { get; internal set; }
 
 	/// <summary>
 	/// The prefix used to identify commands.
