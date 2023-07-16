@@ -1,7 +1,6 @@
 ﻿using System.Diagnostics.CodeAnalysis;
 using Microsoft.Extensions.FileProviders;
 using Microsoft.Extensions.Logging;
-using YumeChan.Core.Config;
 using YumeChan.Core.Modules;
 using YumeChan.PluginBase.Tools;
 

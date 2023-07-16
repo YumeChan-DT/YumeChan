@@ -1,9 +1,9 @@
-﻿using System.Reflection;
+using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Runtime.Loader;
 using System.Security;
+using DryIoc;
 using Microsoft.Extensions.Logging;
-using Unity;
 using YumeChan.PluginBase;
 
 namespace YumeChan.Core.Services.Plugins;

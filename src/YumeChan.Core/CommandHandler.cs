@@ -9,8 +9,8 @@ using DSharpPlus.SlashCommands;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System.Reflection;
-using Unity;
-using Unity.Microsoft.DependencyInjection;
+using DryIoc;
+using DryIoc.Microsoft.DependencyInjection;
 using YumeChan.Core.Config;
 using YumeChan.Core.Services.Formatters;
 using YumeChan.PluginBase;
@@ -36,7 +36,7 @@ public sealed class CommandHandler
 
 	private readonly DiscordClient _client;
 	private readonly IServiceProvider _services;
-	private readonly IUnityContainer _container;
+	private readonly IContainer _container;
 	private readonly NugetPluginsFetcher _pluginsFetcher;
 	private readonly PluginLifetimeListener _pluginLifetimeListener;
 	private readonly ILogger<CommandHandler> _logger;
@@ -52,7 +52,7 @@ public sealed class CommandHandler
 	}
 
 	
-	public CommandHandler(DiscordClient client, ILogger<CommandHandler> logger, IServiceProvider services, IUnityContainer container, NugetPluginsFetcher pluginsFetcher,
+	public CommandHandler(DiscordClient client, ILogger<CommandHandler> logger, IServiceProvider services, IContainer container, NugetPluginsFetcher pluginsFetcher,
 		PluginLifetimeListener pluginLifetimeListener, PluginsLoader pluginsLoader)
 	{
 		_client = client;
@@ -121,7 +121,7 @@ public sealed class CommandHandler
 
 		foreach (DependencyInjectionHandler handler in _pluginsLoader.LoadDependencyInjectionHandlers())
 		{
-			_container.AddServices(handler.ConfigureServices(new ServiceCollection()));
+			_container.Populate(handler.ConfigureServices(new ServiceCollection()));
 		}
 
 		_pluginsLoader.LoadPluginManifests();

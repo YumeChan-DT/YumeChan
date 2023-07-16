@@ -26,6 +26,7 @@
 
     <ItemGroup>
         <PackageReference Include="Castle.Core" Version="5.1.1" />
+        <PackageReference Include="DryIoc.Microsoft.DependencyInjection" Version="6.2.0" />
         <PackageReference Include="DSharpPlus" Version="4.4.*" />
         <PackageReference Include="DSharpPlus.CommandsNext" Version="4.4.*" />
         <PackageReference Include="DSharpPlus.Interactivity" Version="4.4.*" />
@@ -39,9 +40,6 @@
         <PackageReference Include="NuGet.Configuration" Version="6.5.0" />
         <PackageReference Include="NuGet.Resolver" Version="6.5.0" />
         <PackageReference Include="System.Text.Json" Version="6.0.6" />
-        <PackageReference Include="Unity" Version="5.11.10" />
-        <PackageReference Include="Nodsoft.Unity.Microsoft.DependencyInjection" Version="5.11.5" />
-        <PackageReference Include="Unity.Microsoft.Logging" Version="5.11.1" />
     </ItemGroup>
 
     <ItemGroup>

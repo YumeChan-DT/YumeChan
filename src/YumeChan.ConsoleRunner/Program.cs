@@ -1,15 +1,13 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+﻿using System;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Serilog;
 using Serilog.Events;
-using Serilog.Extensions.Logging;
 using System.Reflection;
-using System.Threading;
 using System.Threading.Tasks;
-using Unity;
-using Unity.Microsoft.DependencyInjection;
-using Unity.Microsoft.Logging;
+using DryIoc;
+using DryIoc.Microsoft.DependencyInjection;
 using YumeChan.Core;
 using YumeChan.PluginBase.Tools;
 
@@ -17,8 +15,6 @@ namespace YumeChan.ConsoleRunner;
 
 public static class Program
 {
-	private static IUnityContainer _container = new UnityContainer();
-
 	private static readonly LoggerConfiguration SerilogConfiguration = new LoggerConfiguration()
 		.MinimumLevel.Debug()
 		.MinimumLevel.Override("Microsoft", LogEventLevel.Information)
@@ -26,19 +22,21 @@ public static class Program
 		.Enrich.FromLogContext()
 		.WriteTo.Console();
 
+	private static readonly string _informationalVersion = Assembly.GetEntryAssembly()?.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion;
+
 	public static async Task Main(string[] _)
 	{
-		string informationalVersion = Assembly.GetEntryAssembly()?.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion;
+		
 
 		Log.Logger = SerilogConfiguration.CreateLogger();
 
 		IHost host = CreateHostBuilder().Build();
+        
+		await using AsyncServiceScope scope = host.Services.CreateAsyncScope();
+		IServiceProvider services = scope.ServiceProvider;
 
-		YumeCore.Instance.Services = _container;
-		_container.RegisterInstance(new ConsoleRunnerContext(RunnerType.Console, typeof(Program).Assembly.GetName().Name, informationalVersion));
-
-		Microsoft.Extensions.Logging.ILogger logger = _container.Resolve<Microsoft.Extensions.Logging.ILogger>();
-		logger.LogInformation("Yume-Chan ConsoleRunner v{version}.", informationalVersion);
+		Microsoft.Extensions.Logging.ILogger logger = services.GetRequiredService<Microsoft.Extensions.Logging.ILogger>();
+		logger.LogInformation("Yume-Chan ConsoleRunner v{version}.", _informationalVersion);
 		
 		await Task.WhenAll(
 			host.StartAsync(),
@@ -48,17 +46,17 @@ public static class Program
 		await host.WaitForShutdownAsync();
 	}
 
-	public static IHostBuilder CreateHostBuilder(UnityContainer serviceRegistry = null) => new HostBuilder()
-		.UseUnityServiceProvider(serviceRegistry ?? new())
+	public static IHostBuilder CreateHostBuilder() => new HostBuilder()
+		.UseServiceProviderFactory(new DryIocServiceProviderFactory())
 		.ConfigureLogging(static x => x.ClearProviders())
 		.UseSerilog()
-		.ConfigureContainer<IUnityContainer>(static (_, container) =>
+		.ConfigureContainer<Container>(static (_, container) =>
 		{
-			_container = container; // This assignment is necessary, as configuration only affects the child container.
-
-			container.AddExtension(new LoggingExtension(new SerilogLoggerFactory()));
-			container.AddServices(new ServiceCollection()
-				.AddYumeCoreServices()
-				.AddLogging(static x => x.AddSerilog()));
+			ServiceCollection services = new();
+			
+			services.AddSingleton(new ConsoleRunnerContext(RunnerType.Console, typeof(Program).Assembly.GetName().Name, _informationalVersion));
+			services.AddYumeCoreServices();
+			
+			container.Populate(services);
 		});
 }

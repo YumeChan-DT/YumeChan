@@ -1,5 +1,4 @@
-﻿using DSharpPlus.Entities;
-using DSharpPlus;
+﻿using DSharpPlus;
 using Microsoft.AspNetCore.Authentication;
 using System.Security.Claims;
 using Microsoft.Extensions.Configuration;

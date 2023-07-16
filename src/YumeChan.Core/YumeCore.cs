@@ -1,18 +1,9 @@
 using DSharpPlus;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
-using System.Runtime.InteropServices;
-using Unity;
-using Unity.Microsoft.DependencyInjection;
+using DryIoc;
 using YumeChan.Core.Config;
-using YumeChan.Core.Services;
 using YumeChan.Core.Services.Config;
-using YumeChan.Core.Services.Plugins;
-using YumeChan.PluginBase.Database.MongoDB;
-using YumeChan.PluginBase.Database.Postgres;
-using YumeChan.PluginBase.Tools;
 
 #nullable enable
 namespace YumeChan.Core;
@@ -34,7 +25,7 @@ public sealed class YumeCore
 	public DiscordClient Client { get; set; }
 	public CommandHandler CommandHandler { get; set; }
 	public LavalinkHandler LavalinkHandler { get; set; }
-	public IUnityContainer Services { get; set; }
+	public IContainer Services { get; set; }
 
 	internal ILogger<YumeCore> Logger { get; set; }
 
@@ -42,7 +33,7 @@ public sealed class YumeCore
 	public ICoreProperties CoreProperties { get; private set; }
 
 
-	public YumeCore(IUnityContainer services)
+	public YumeCore(IContainer services)
 	{
 		Services = services;
 		

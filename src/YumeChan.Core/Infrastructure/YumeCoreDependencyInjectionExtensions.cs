@@ -19,6 +19,7 @@ public static class YumeCoreDependencyInjectionExtensions
 {
 	public static IServiceCollection AddYumeCoreServices(this IServiceCollection services)
 	{
+		services.AddSingleton<YumeCore>();
 		services.AddSingleton<DiscordClient>(static services => new(new()
 		{
 			Intents = DiscordIntents.All,
@@ -35,9 +36,9 @@ public static class YumeCoreDependencyInjectionExtensions
 		services.AddSingleton<CommandHandler>();
 		services.AddSingleton<LavalinkHandler>();
 		services.AddSingleton<NugetPluginsFetcher>();
-		services.AddSingleton<PluginsDependenciesManager>();
 		services.AddSingleton<DiscordBotTokenProvider>();
 		
+		services.AddSingleton(typeof(JsonConfigProvider<>));
 		services.AddSingleton(typeof(InterfaceConfigProvider<>));
         
 		services.AddSingleton(typeof(IMongoDatabaseProvider<>), typeof(UnifiedDatabaseProvider<>));

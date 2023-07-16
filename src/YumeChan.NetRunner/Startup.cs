@@ -1,4 +1,4 @@
-using System.IO;
+using System.Reflection;
 using AspNet.Security.OAuth.Discord;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
@@ -7,7 +7,6 @@ using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.HttpOverrides;
-using Microsoft.AspNetCore.StaticFiles.Infrastructure;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -19,10 +18,11 @@ using YumeChan.NetRunner.Plugins.Infrastructure;
 using YumeChan.NetRunner.Plugins.Infrastructure.Api;
 using YumeChan.NetRunner.Plugins.Infrastructure.Filesystem;
 using YumeChan.NetRunner.Services.Authentication;
+using YumeChan.PluginBase.Tools;
 
 namespace YumeChan.NetRunner;
 
-public class Startup
+public sealed class Startup
 {
 	public IConfiguration Configuration { get; }
 
@@ -36,6 +36,9 @@ public class Startup
 	public void ConfigureServices(IServiceCollection services)
 	{
 		services.AddYumeCoreServices();
+        
+		string informationalVersion = Assembly.GetEntryAssembly()?.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion;
+		services.AddSingleton(new NetRunnerContext(RunnerType.Console, typeof(Program).Assembly.GetName().Name, informationalVersion));
 		
 		services.AddControllers(builder =>
 			{

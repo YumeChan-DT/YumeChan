@@ -1,6 +1,4 @@
-﻿using System.Collections;
-using Microsoft.OpenApi.Models;
-using Swashbuckle.AspNetCore.SwaggerUI;
+﻿using Microsoft.OpenApi.Models;
 
 namespace YumeChan.NetRunner.Plugins.Infrastructure.Swagger;
 

@@ -3,7 +3,6 @@ using Nodsoft.MoltenObsidian.Vault;
 using Nodsoft.MoltenObsidian.Vaults.FileSystem;
 using YumeChan.Core.Config;
 using YumeChan.Core.Services.Plugins;
-using YumeChan.PluginBase;
 using YumeChan.PluginBase.Infrastructure;
 
 namespace YumeChan.NetRunner.Plugins.Services.Docs;

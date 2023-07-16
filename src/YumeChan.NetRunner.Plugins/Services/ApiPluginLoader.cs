@@ -4,7 +4,6 @@ using Microsoft.AspNetCore.Mvc.ApplicationParts;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
 using Swashbuckle.AspNetCore.SwaggerGen;
-using YumeChan.Core;
 using YumeChan.Core.Services.Plugins;
 using YumeChan.NetRunner.Plugins.Infrastructure;
 using YumeChan.NetRunner.Plugins.Infrastructure.Api;
