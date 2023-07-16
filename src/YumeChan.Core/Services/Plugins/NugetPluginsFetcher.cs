@@ -249,19 +249,29 @@ public sealed class NugetPluginsFetcher : IDisposable
 		List<FileInfo> files = new();
 
 		// Sort all directories by matched moniker, then by last version, and pull all .dll files to "files" list.
-		foreach (Regex regex in TargetMonikerRegexes)
+		for (int i = 0; i < TargetMonikerRegexes.Length; i++)
 		{
+			Regex regex = TargetMonikerRegexes[i];
+
 			foreach (DirectoryInfo dir in directories
-						.Where(d => 
-							regex.Matches(d.FullName).Count is 1 
-							|| regex.Matches(d.FullName).Count is 2 
-							&& string.Equals(regex.Matches(d.FullName)[1].Value, RuntimeInformation.RuntimeIdentifier, StringComparison.OrdinalIgnoreCase))
-						.OrderByDescending(d => d.Name, StringComparer.OrdinalIgnoreCase))
+				.Where(d =>
+					regex.Matches(d.FullName).Count is 1
+					|| regex.Matches(d.FullName).Count is 2
+					&& string.Equals(regex.Matches(d.FullName)[1].Value, RuntimeInformation.RuntimeIdentifier, StringComparison.OrdinalIgnoreCase)
+				).OrderByDescending(d => d.Name, StringComparer.OrdinalIgnoreCase))
 			{
+				// Special case for .NET 5.0+ runtime monikers, we must make sure the major version does not exceed the current runtime major version.
+                if (i is 1 && regex.Matches(dir.FullName) is [{ Value: var moniker }, ..] 
+					&& int.TryParse(moniker["net".Length..moniker.IndexOf('.')], out int majorVersion) 
+					&& majorVersion > Environment.Version.Major)
+				{
+					continue;
+				}
+                
 				files.AddRange(dir.GetFiles("*.dll", SearchOption.AllDirectories));
 			}
 		}
-		
+
 		// Move all selected files to the target folder (if not present already).
 		foreach (FileInfo file in files.AsParallel())
 		{
@@ -322,7 +332,7 @@ public sealed class NugetPluginsFetcher : IDisposable
 
 public static class NugetUtilities
 {
-	public static IEnumerable<Regex> TargetMonikerRegexes { get; } = new List<Regex>
+	public static Regex[] TargetMonikerRegexes { get; } = 
 	{
 		// net x.x (5.0+) moniker
 		new(@"(net\d+\.\d+)-(\D+)"),
