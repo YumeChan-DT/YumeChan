@@ -112,8 +112,8 @@ public sealed class CommandHandler
 
 	public async Task RegisterCommandsAsync()
 	{
-		_logger.LogInformation("Using PluginBase v{Version}.", typeof(IPlugin).Assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion);
-		_logger.LogInformation("Current Plugins directory: {PluginsDirectory}", _pluginsLoader.PluginsLoadDirectory);
+		_logger.LogInformation("Using PluginBase v{version}.", typeof(IPlugin).Assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion);
+		_logger.LogInformation("Current Plugins directory: {pluginsDirectory}", _pluginsLoader.PluginsLoadDirectory);
 
 		await _pluginsFetcher.FetchPluginsAsync();
 		_pluginsLoader.ScanDirectoryForPluginFiles();
@@ -124,7 +124,9 @@ public sealed class CommandHandler
 			_container.Populate(handler.ConfigureServices(new ServiceCollection()));
 		}
 
-		_pluginsLoader.LoadPluginManifests();
+		Dictionary<Assembly, Type> pluginManifestTypes = _pluginsLoader.GetPluginManifestTypes();
+		_container.RegisterMany(pluginManifestTypes.Values, serviceTypeCondition: type => type.IsAssignableTo(typeof(IPlugin)));
+		_pluginsLoader.LoadPluginManifests(pluginManifestTypes);
 		
 		// Add YumeCore internal commands
 		_pluginsLoader.ImportPlugin(new Modules.InternalPlugin());

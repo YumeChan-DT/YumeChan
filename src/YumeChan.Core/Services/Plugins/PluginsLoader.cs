@@ -127,35 +127,33 @@ public sealed class PluginsLoader
 		// Also try add the assembly to the list of plugin assemblies.
 		_pluginAssemblies.TryAdd(plugin.AssemblyName, assembly ?? plugin.GetType().Assembly);
 	}
-	
-	internal IEnumerable<IPlugin> LoadPluginManifests()
+
+	internal Dictionary<Assembly, Type> GetPluginManifestTypes() => new(
+		from a in _loadAssemblies
+		from t in a.ExportedTypes
+		where t.ImplementsInterface(typeof(IPlugin))
+		select new KeyValuePair<Assembly, Type>(a, t)
+	);
+
+	internal IEnumerable<IPlugin> LoadPluginManifests(IEnumerable<KeyValuePair<Assembly, Type>>? pluginTypes = null)
 	{
 		PluginManifestsInternal.Clear();
+
+		pluginTypes ??= GetPluginManifestTypes();
 		
-		foreach (Assembly a in _loadAssemblies)
+		foreach (var (a, t) in pluginTypes)
 		{
 			try
 			{
-				// Try to load the plugin manifests from the assemblies, log error in console if unsuccessful.
-				foreach (Type t in a.ExportedTypes.Where(static x => x.ImplementsInterface(typeof(IPlugin))))
-				{
-					try
-					{
-						// Moment of truth...
-						IPlugin plugin = InstantiateManifest(t)!;
-						
-						// It works! Import it.
-						ImportPlugin(plugin, a);
-					}
-					catch (Exception e)
-					{
-						YumeCore.Instance.Logger.LogError(e,"Failed to instantiate plugin {pluginName}.", t.Name);
-					}
-				}
+				// Moment of truth...
+				IPlugin plugin = InstantiateManifest(t)!;
+				
+				// It works! Import it.
+				ImportPlugin(plugin, a);
 			}
 			catch (Exception e)
 			{
-				YumeCore.Instance.Logger.LogError(e,"Failed to load plugin manifests from assembly {assemblyFullName}.", a.FullName);
+				YumeCore.Instance.Logger.LogError(e,"Failed to instantiate plugin {pluginName}.", t.Name);
 			}
 		}
 
