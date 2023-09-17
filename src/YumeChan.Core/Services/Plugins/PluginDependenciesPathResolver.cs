@@ -1,5 +1,4 @@
-﻿#nullable enable
-using NuGet.Packaging;
+﻿using NuGet.Packaging;
 using NuGet.Packaging.Core;
 
 namespace YumeChan.Core.Services.Plugins;

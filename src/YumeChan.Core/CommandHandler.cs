@@ -19,7 +19,6 @@ using DSharpPlus.SlashCommands.EventArgs;
 using DSharpPlus.SlashCommands.Attributes;
 using YumeChan.Core.Services.Plugins;
 
-#nullable enable
 namespace YumeChan.Core;
 
 public sealed class CommandHandler
@@ -42,15 +41,11 @@ public sealed class CommandHandler
 	private readonly ILogger<CommandHandler> _logger;
 	private readonly PluginsLoader _pluginsLoader;
 
-	private static readonly ulong? SlashCommandsGuild; // Used for Development only
-
-	static CommandHandler()
-	{
 #if DEBUG
-		SlashCommandsGuild = 584445871413002242;
+	private const ulong SlashCommandsGuild = 584445871413002242; // Used for Development only 
+#else
+	private const ulong? SlashCommandsGuild = null;
 #endif
-	}
-
 	
 	public CommandHandler(DiscordClient client, ILogger<CommandHandler> logger, IServiceProvider services, IContainer container, NugetPluginsFetcher pluginsFetcher,
 		PluginLifetimeListener pluginLifetimeListener, PluginsLoader pluginsLoader)
@@ -71,7 +66,7 @@ public sealed class CommandHandler
 		CommandsConfiguration ??= new()
 		{
 			Services = _services,
-			StringPrefixes = new[] { Config.CommandPrefix }
+			StringPrefixes = Config?.CommandPrefix is null ? ArraySegment<string>.Empty : new[] { Config.CommandPrefix },
 		};
 
 		InteractivityConfiguration ??= new()
@@ -147,7 +142,7 @@ public sealed class CommandHandler
 			}
 			catch (Exception e)
 			{
-				_logger.LogError(e, "An error occured while loading plugin {PluginName}", plugin.AssemblyName);
+				_logger.LogError(e, "An error occured while loading plugin {pluginName}", plugin.AssemblyName);
 
 				try
 				{
@@ -188,12 +183,12 @@ public sealed class CommandHandler
 				await plugin.UnloadAsync();
 				_pluginsLoader.PluginManifestsInternal.Remove(plugin.AssemblyName);
 
-				_logger.LogInformation("Removed Plugin '{Plugin}'", plugin.AssemblyName);
+				_logger.LogInformation("Removed Plugin '{plugin}'", plugin.AssemblyName);
 				_pluginLifetimeListener.NotifyPluginUnloaded(plugin);
 			}
 			catch (Exception e)
 			{
-				_logger.LogError(e, "An error occured while unloading plugin '{PluginName}'", plugin.AssemblyName);
+				_logger.LogError(e, "An error occured while unloading plugin '{pluginName}'", plugin.AssemblyName);
 				
 #if DEBUG
 				throw;
@@ -208,7 +203,7 @@ public sealed class CommandHandler
 		Commands.RegisterCommands(plugin.GetType().Assembly);
 
 		SlashCommands.RegisterCommands(plugin.GetType().Assembly, slashCommandsGuild);
-		_logger.LogInformation("Loaded Plugin '{Plugin}'", plugin.AssemblyName);
+		_logger.LogInformation("Loaded Plugin '{plugin}'", plugin.AssemblyName);
 
 		_pluginLifetimeListener.NotifyPluginLoaded(plugin);
 	}
@@ -243,7 +238,7 @@ public sealed class CommandHandler
 #endif
 
 			await e.Context.RespondAsync(response);
-			_logger.LogError(e.Exception, "An error occured executing '{Command}' from user '{User}'", e.Command?.QualifiedName, e.Context.User.Id);
+			_logger.LogError(e.Exception, "An error occured executing '{command}' from user '{user}'", e.Command?.QualifiedName, e.Context.User.Id);
 		}
 	}
 
@@ -277,7 +272,7 @@ public sealed class CommandHandler
 #endif
 
 			await e.Context.CreateResponseAsync(response, true);
-			_logger.LogError(e.Exception, "An error occured executing '{Command}' from user '{User}'", e.Context.CommandName, e.Context.User.Id);
+			_logger.LogError(e.Exception, "An error occured executing '{command}' from user '{user}'", e.Context.CommandName, e.Context.User.Id);
 		}
 	}
 	
@@ -311,13 +306,13 @@ public sealed class CommandHandler
 #endif
 
 			await e.Context.CreateResponseAsync(response, true);
-			_logger.LogError(e.Exception, "An error occured executing '{Command}' from user '{User}'", e.Context.CommandName, e.Context.User.Id);
+			_logger.LogError(e.Exception, "An error occured executing '{command}' from user '{user}'", e.Context.CommandName, e.Context.User.Id);
 		}
 	}
 
 	private Task OnCommandExecuted(CommandsNextExtension sender, CommandExecutionEventArgs e)
 	{
-		_logger.LogInformation("Command '{Command}' received from User '{User}'", e.Command.QualifiedName, e.Context.User.Id);
+		_logger.LogInformation("Command '{command}' received from User '{user}'", e.Command.QualifiedName, e.Context.User.Id);
 		return Task.CompletedTask;
 	}
 }

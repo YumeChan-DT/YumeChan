@@ -8,8 +8,6 @@ using YumeChan.PluginBase;
 
 namespace YumeChan.Core.Services.Plugins;
 
-#nullable enable
-
 public sealed class PluginsLoader
 {
 	public IReadOnlyDictionary<string, Assembly> PluginAssemblies => _pluginAssemblies;

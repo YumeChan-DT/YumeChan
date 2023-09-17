@@ -1,8 +1,4 @@
-﻿
-
-#nullable enable
-
-using System.Collections;
+﻿using System.Collections;
 using YumeChan.Core.Services.Config;
 namespace YumeChan.Core.Infrastructure.Dynamic.Config;
 

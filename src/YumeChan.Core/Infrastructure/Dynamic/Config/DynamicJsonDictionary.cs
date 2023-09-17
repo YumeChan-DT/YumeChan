@@ -4,7 +4,6 @@ using System.Runtime.Serialization;
 using YumeChan.Core.Services.Config;
 
 namespace YumeChan.Core.Infrastructure.Dynamic.Config;
-#nullable enable
 
 /// <summary>
 /// Provides a JSON-Config backed Dictionary of key <see cref="TKey" /> and value <see cref="TValue" />.
@@ -135,7 +134,10 @@ internal sealed class DynamicJsonDictionary<TKey, TValue> : IDictionary<TKey, TV
 
 	public bool IsReadOnly => (_dictionary as ICollection<KeyValuePair<TKey, TValue>>).IsReadOnly;
 
+	
+#pragma warning disable SYSLIB0050
 	public void GetObjectData(SerializationInfo info, StreamingContext context) => (_dictionary as ISerializable).GetObjectData(info, context);
+#pragma warning restore SYSLIB0050
 
 	public void OnDeserialization(object? sender) => (_dictionary as IDeserializationCallback).OnDeserialization(sender);
 }

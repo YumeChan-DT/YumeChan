@@ -1,7 +1,6 @@
 ﻿using YumeChan.PluginBase;
 
 namespace YumeChan.Core.Modules;
-#nullable enable
 
 /// <summary>
 /// Represents the internal plugin, identifying the core of Yume-Chan.

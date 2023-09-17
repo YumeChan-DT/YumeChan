@@ -1,6 +1,5 @@
 ﻿using YumeChan.PluginBase;
 
-#nullable enable
 namespace YumeChan.Core.Services.Plugins;
 
 /// <summary>

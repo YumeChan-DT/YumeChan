@@ -1,8 +1,6 @@
 ﻿using System.Diagnostics.CodeAnalysis;
 
 namespace YumeChan.Core.Config;
-#nullable enable
-
 
 /// <summary>
 /// Defines the core properties of Yume-Chan.

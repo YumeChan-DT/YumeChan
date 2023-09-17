@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using YumeChan.Core.Config;
 using static DSharpPlus.Entities.DiscordEmbedBuilder;
 
@@ -12,18 +13,19 @@ public static class Utilities
 
 	public static bool ImplementsInterface(this Type type, Type interfaceType) => type.GetInterfaces().Any(t => t == interfaceType);
 
+	[SuppressMessage("ReSharper", "NullCoalescingConditionIsAlwaysNotNullAccordingToAPIContract")]
 	public static ICoreProperties InitDefaults(this ICoreProperties properties)
 	{
 		properties.AppInternalName ??= "YumeChan";
 		properties.AppDisplayName ??= "Yume-Chan";
-		properties.BotToken ??= string.Empty;
+		properties.BotToken ??= "";
 		properties.CommandPrefix ??= "==";
 		properties.DisallowNetRunnerPlugins ??= true;
 		properties.MongoProperties.ConnectionString ??= "mongodb://localhost:27017";
 		properties.MongoProperties.DatabaseName ??= "yc-default";
 		properties.LavalinkProperties.Hostname ??= "localhost";
 		properties.LavalinkProperties.Port ??= 2333;
-		properties.LavalinkProperties.Password ??= string.Empty;
+		properties.LavalinkProperties.Password ??= "";
 
 		return properties;
 	}

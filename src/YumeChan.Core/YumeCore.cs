@@ -5,7 +5,6 @@ using DryIoc;
 using YumeChan.Core.Config;
 using YumeChan.Core.Services.Config;
 
-#nullable enable
 namespace YumeChan.Core;
 
 public enum YumeCoreState
@@ -25,7 +24,7 @@ public sealed class YumeCore
 	public DiscordClient Client { get; set; }
 	public CommandHandler CommandHandler { get; set; }
 	public LavalinkHandler LavalinkHandler { get; set; }
-	public IContainer Services { get; set; }
+	public IContainer Services { get; init; }
 
 	internal ILogger<YumeCore> Logger { get; set; }
 
@@ -93,10 +92,7 @@ public sealed class YumeCore
 
 	public async Task RestartBotAsync()
 	{
-		// Stop Bot
 		await StopBotAsync();
-
-		// Start Bot
 		await StartBotAsync();
 	}
 

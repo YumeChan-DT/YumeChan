@@ -5,7 +5,6 @@ using YumeChan.Core.Modules;
 using YumeChan.PluginBase.Tools;
 
 namespace YumeChan.Core.Services.Config;
-#nullable enable
 
 /// <summary>
 /// Represents a configuration provider for a plugin.

@@ -40,7 +40,7 @@ public static class YumeCoreDependencyInjectionExtensions
 		
 		services.AddSingleton(typeof(JsonConfigProvider<>));
 		services.AddSingleton(typeof(InterfaceConfigProvider<>));
-        
+		
 		services.AddSingleton(typeof(IMongoDatabaseProvider<>), typeof(UnifiedDatabaseProvider<>));
 		services.AddSingleton(typeof(IPostgresDatabaseProvider<>), typeof(UnifiedDatabaseProvider<>));
 		services.AddSingleton(typeof(IInterfaceConfigProvider<>), typeof(InterfaceConfigProvider<>));
@@ -50,12 +50,11 @@ public static class YumeCoreDependencyInjectionExtensions
 			sp.GetRequiredService<InterfaceConfigProvider<ICoreProperties>>()
 				.InitConfig("coreconfig.json", true)
 				.InitDefaults());
-        
+		
 		services.AddSingleton<IPluginLoaderProperties>(sp => 
 			sp.GetRequiredService<InterfaceConfigProvider<IPluginLoaderProperties>>()
 				.InitConfig("plugins.json", true)
 				.InitDefaults());
-        
 		
 		services.AddHttpClient()
 			.AddNuGetPluginsFetcher(); // You should implement this in NuGetPluginsFetcher class as an extension method

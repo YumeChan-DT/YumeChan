@@ -20,7 +20,7 @@ internal sealed class DiscordBotTokenProvider
 	}
 
 	/// <summary>
-	/// Gets the Discord bot token from either the <see cref="ICoreProperties"/>, or from the environment variables.
+	/// Gets the Discord bot token from either the <see cref="ICoreProperties" />, or from the environment variables.
 	/// </summary>
 	/// <returns>The Discord bot token.</returns>
 	/// <exception cref="ApplicationException">Thrown if no bot token was supplied.</exception>
@@ -35,7 +35,7 @@ internal sealed class DiscordBotTokenProvider
 
 		string envVarName = $"{_coreProperties.AppInternalName}.Token";
 
-		if (TryBotTokenFromEnvironment(envVarName, out token, out EnvironmentVariableTarget target))
+		if (TryGetBotTokenFromEnvironment(envVarName, out token, out EnvironmentVariableTarget target))
 		{
 			_logger.LogInformation("Bot Token was read from {target} Environment Variable \"{envVar}\", instead of \"coreproperties.json\" Config File", target, envVarName);
 			return token;
@@ -47,7 +47,7 @@ internal sealed class DiscordBotTokenProvider
 		throw e;
 	}
 
-	private static bool TryBotTokenFromEnvironment(string envVarName, [NotNullWhen(true)] out string? token, out EnvironmentVariableTarget foundFromTarget)
+	private static bool TryGetBotTokenFromEnvironment(string envVarName, [NotNullWhen(true)] out string? token, out EnvironmentVariableTarget foundFromTarget)
 	{
 		if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
 		{

@@ -6,7 +6,6 @@ using YumeChan.PluginBase.Database.MongoDB;
 using YumeChan.PluginBase.Database.Postgres;
 
 namespace YumeChan.Core.Services;
-#nullable enable
 
 /// <summary>
 /// Provides a unified solution for spawning plugin-requested database instances.
@@ -17,20 +16,12 @@ public sealed class UnifiedDatabaseProvider<TPlugin> : IMongoDatabaseProvider<TP
 {
 	private const string PluginDbPrefix = "yc-plugin-";
 	
-	private readonly string _postgresConnectionString;
-	private readonly string _postgresDatabaseName;
-	private string _mongoConnectionString;
-	private string _mongoDbDatabaseName;
+	private readonly string _postgresConnectionString = YumeCore.Instance.CoreProperties.PostgresProperties.ConnectionString;
+	private readonly string _postgresDatabaseName = $"{PluginDbPrefix}{typeof(TPlugin).Assembly.GetName().Name?.ToLowerInvariant().Replace('.', '_')}";
 	
+	private string _mongoConnectionString = YumeCore.Instance.CoreProperties.MongoProperties.ConnectionString;
+	private string _mongoDbDatabaseName = $"{PluginDbPrefix}{typeof(TPlugin).Assembly.GetName().Name?.ToLowerInvariant().Replace('.', '-')}";
 
-	public UnifiedDatabaseProvider()
-	{
-		_mongoConnectionString = YumeCore.Instance.CoreProperties.MongoProperties.ConnectionString;
-		_postgresConnectionString = YumeCore.Instance.CoreProperties.PostgresProperties.ConnectionString;
-
-		_mongoDbDatabaseName = $"{PluginDbPrefix}{typeof(TPlugin).Assembly.GetName().Name?.ToLowerInvariant().Replace('.', '-')}";
-		_postgresDatabaseName = $"{PluginDbPrefix}{typeof(TPlugin).Assembly.GetName().Name?.ToLowerInvariant().Replace('.', '_')}";
-	}
 
 	public void SetMongoDb(string connectionString, string databaseName)
 	{

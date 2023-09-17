@@ -19,10 +19,10 @@ public class JsonDictionaryConverter<TKey, TValue> : JsonConverter<IReadOnlyDict
 		 */
 		return typeToConvert.IsAssignableTo(typeof(IReadOnlyDictionary<TKey, TValue>)) && typeToConvert.GenericTypeArguments.First() != typeof(string);
 	}
-	public override Dictionary<TKey, TValue> Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+	public override Dictionary<TKey, TValue>? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
 	{
 		//Step 1 - Use built-in serializer to deserialize into a dictionary with string key
-		Dictionary<string, TValue> dictionaryWithStringKey = (Dictionary<string, TValue>)JsonSerializer.Deserialize(ref reader, typeof(Dictionary<string, TValue>), options);
+		Dictionary<string, TValue>? dictionaryWithStringKey = JsonSerializer.Deserialize(ref reader, typeof(Dictionary<string, TValue>), options) as Dictionary<string, TValue>;
 
 
 		//Step 2 - Convert the dictionary to one that uses the actual key type we want

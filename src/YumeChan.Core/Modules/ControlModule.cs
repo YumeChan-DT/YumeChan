@@ -9,7 +9,6 @@ using YumeChan.Core.Config;
 using YumeChan.Core.Services.Config;
 
 
-#nullable enable
 namespace YumeChan.Core.Modules;
 
 /// <summary>

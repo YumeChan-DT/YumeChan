@@ -10,7 +10,6 @@ using YumeChan.PluginBase;
 using YumeChan.PluginBase.Tools;
 
 namespace YumeChan.Core.Services.Config;
-#nullable enable
 
 /// <summary>
 /// Common base class for all typed <see cref="JsonConfigProvider{TPlugin}"/>.

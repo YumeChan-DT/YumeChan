@@ -4,7 +4,6 @@ using DSharpPlus.Net;
 using Microsoft.Extensions.Logging;
 using YumeChan.Core.Config;
 
-#nullable enable
 namespace YumeChan.Core;
 
 /// <summary>

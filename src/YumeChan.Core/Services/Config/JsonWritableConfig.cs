@@ -7,7 +7,6 @@ using Microsoft.Extensions.Logging;
 using YumeChan.PluginBase.Tools;
 
 namespace YumeChan.Core.Services.Config;
-#nullable enable
 
 /// <summary>
 /// Represents a Read-Write JSON-based configuration file.

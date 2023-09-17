@@ -8,13 +8,15 @@ public static class SlashCommandsExtensions
 {
 	public static void RegisterCommands(this SlashCommandsExtension slashCommands, Assembly assembly, ulong? guildId = null)
 	{
-		IEnumerable<Type> types = assembly.ExportedTypes.Where(xt =>
-		{
-			TypeInfo typeInfo = xt.GetTypeInfo();
-			return typeInfo.IsModuleCandidateType() && !typeInfo.IsNested;
-		});
+		Type[] types = assembly.ExportedTypes
+			.Where(xt =>
+			{
+				TypeInfo typeInfo = xt.GetTypeInfo();
+				return typeInfo.IsModuleCandidateType() && !typeInfo.IsNested;
+			})
+			.ToArray();
 
-		if (types.Any())
+		if (types is not [])
 		{
 			foreach (Type item in types)
 			{
@@ -24,7 +26,7 @@ public static class SlashCommandsExtensions
 	}
 
 
-	internal static bool IsModuleCandidateType(this TypeInfo ti)
+	private static bool IsModuleCandidateType(this TypeInfo ti)
 	{
 		// check if compiler-generated
 		if (ti.GetCustomAttribute<CompilerGeneratedAttribute>(false) is not null)
@@ -54,19 +56,17 @@ public static class SlashCommandsExtensions
 		return ti.DeclaredMethods.Any(xmi => xmi.IsCommandCandidate(out _)) || ti.DeclaredNestedTypes.Any(xti => xti.IsModuleCandidateType());
 	}
 
-	internal static bool IsCommandCandidate(this MethodInfo method, out ParameterInfo[] parameters)
+	private static bool IsCommandCandidate(this MethodInfo method, out ParameterInfo[] parameters)
 	{
 		parameters = null;
 
-		if (method is null || method.IsStatic || method.IsAbstract || method.IsConstructor || method.IsSpecialName)
+		if (method.IsStatic || method.IsAbstract || method.IsConstructor || method.IsSpecialName)
 		{
 			return false;
 		}
 
 		// check if appropriate return and arguments
 		parameters = method.GetParameters();
-		return parameters.Any() && !parameters.First().ParameterType.IsAssignableFrom(typeof(BaseContext)) && method.ReturnType == typeof(Task);
-
-		// qualifies
+		return parameters is not [] && !parameters.First().ParameterType.IsAssignableFrom(typeof(BaseContext)) && method.ReturnType == typeof(Task);
 	}
 }

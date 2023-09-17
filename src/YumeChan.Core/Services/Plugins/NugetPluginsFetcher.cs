@@ -1,5 +1,3 @@
-#nullable enable
-
 using System.Collections.Immutable;
 using System.Diagnostics;
 using System.Reflection;
@@ -61,7 +59,7 @@ public sealed class NugetPluginsFetcher : IDisposable
 
 					if (pluginPackageIdentity is null)
 					{
-						_logger.LogWarning("Plugin {PluginKey} is not found in the NuGet repository.", plugin.Key);
+						_logger.LogWarning("Plugin {pluginKey} is not found in the NuGet repository.", plugin.Key);
 						return;
 					}
 
@@ -72,7 +70,7 @@ public sealed class NugetPluginsFetcher : IDisposable
 
 					if (shouldRefreshPackage && localPluginVersion is not null)
 					{
-						_logger.LogInformation("Versions have changed for plugin {PluginKey} (currently {PluginCurrentVersion}, expected {PluginExpectedVersion})", 
+						_logger.LogInformation("Versions have changed for plugin {pluginKey} (currently {pluginCurrentVersion}, expected {pluginExpectedVersion})", 
 							plugin.Key, localPluginVersion, pluginPackageIdentity.Version);
 
 						// Perform pre-update files cleanup.
@@ -83,16 +81,16 @@ public sealed class NugetPluginsFetcher : IDisposable
 					if (shouldRefreshPackage || !File.Exists(Path.Combine(pluginsDirectory, pluginPackageIdentity.Id, $"{pluginPackageIdentity.Id}.dll")))
 					{
 						List<SourcePackageDependencyInfo> allPackages = new();
-						await GetPackageDependenciesAsync(pluginPackageIdentity, _nugetFramework, sourceRepositories, DependencyContext.Default, allPackages, ct);
+						await GetPackageDependenciesAsync(pluginPackageIdentity, _nugetFramework, sourceRepositories, DependencyContext.Default!, allPackages, ct);
 						await InstallPluginPackagesAsync(pluginPackageIdentity, GetPluginPackagesToInstall(pluginPackageIdentity, allPackages), pluginsDirectory, nugetSettings, ct);
 
-						FlattenDownloadedPackageToDirectoryStructure(new(Path.Combine(pluginsDirectory, plugin.Key, "dl")), new(Path.Combine(pluginsDirectory, plugin.Key)), ct);
+						FlattenDownloadedPackageToDirectoryStructure(new(Path.Combine(pluginsDirectory, plugin.Key, "dl")), new(Path.Combine(pluginsDirectory, plugin.Key)));
 
-						_logger.LogDebug("Fetched plugin {PluginName} v{PluginVersion} from NuGet.", pluginPackageIdentity.Id, pluginPackageIdentity.Version);
+						_logger.LogDebug("Fetched plugin {pluginName} v{pluginVersion} from NuGet.", pluginPackageIdentity.Id, pluginPackageIdentity.Version);
 					}
 					else
 					{
-						_logger.LogDebug("Plugin {PluginName} v{PluginVersion} is already present locally, ignoring NuGet fetch.", pluginPackageIdentity.Id, pluginPackageIdentity.Version);
+						_logger.LogDebug("Plugin {pluginName} v{pluginVersion} is already present locally, ignoring NuGet fetch.", pluginPackageIdentity.Id, pluginPackageIdentity.Version);
 					}
 				}
 			);
@@ -116,12 +114,12 @@ public sealed class NugetPluginsFetcher : IDisposable
 
 			if (selectedVersion is not null)
 			{
-				_logger.LogDebug("Identified package {PackageName} v{PackageVersion} from NuGet.", packageName, selectedVersion);
+				_logger.LogDebug("Identified package {packageName} v{packageVersion} from NuGet.", packageName, selectedVersion);
 				return new(packageName, selectedVersion);
 			}
 		}
 
-		_logger.LogWarning("Could not find package {PackageName} {Version}.", packageName, version);
+		_logger.LogWarning("Could not find package {packageName} {version}.", packageName, version);
 		return null;
 	}
 
@@ -159,12 +157,12 @@ public sealed class NugetPluginsFetcher : IDisposable
 			
 			// Add to the list of all packages.
 			availablePackages.Add(actualSourceDep);
-			_logger.LogTrace("Found package {PackageName} {PackageVersion}.", dependencyInfo.Id, dependencyInfo.Version);
+			_logger.LogTrace("Found package {packageName} {packageVersion}.", dependencyInfo.Id, dependencyInfo.Version);
  
 			// Recurse through each package.
 			foreach (PackageDependency? dependency in actualSourceDep.Dependencies)
 			{
-				_logger.LogTrace("Introspecting dependency {DependencyId} {DependencyVersion} for package {PackageId} {PackageVersion}",
+				_logger.LogTrace("Introspecting dependency {dependencyId} {dependencyVersion} for package {packageId} {packageVersion}",
 					dependency.Id, dependency.VersionRange, package.Id, package.Version);
 				
 				await GetPackageDependenciesAsync(new(dependency.Id, dependency.VersionRange.MinVersion), framework, repositories, hostDependencies, availablePackages, ct); 
@@ -174,7 +172,7 @@ public sealed class NugetPluginsFetcher : IDisposable
 		}
 	}
 
-	private IEnumerable<SourcePackageDependencyInfo> GetPluginPackagesToInstall(PackageIdentity pluginPackage, IEnumerable<SourcePackageDependencyInfo> allPackages)
+	private IEnumerable<SourcePackageDependencyInfo> GetPluginPackagesToInstall(PackageIdentity pluginPackage, ICollection<SourcePackageDependencyInfo> allPackages)
 	{
 		// Create a package resolver context.
 		PackageResolverContext resolverContext = new(
@@ -223,7 +221,6 @@ public sealed class NugetPluginsFetcher : IDisposable
 	public void Dispose()
 	{
 		_sourceCacheContext.Dispose();
-		GC.SuppressFinalize(this);
 	}
 	
 	private static bool DependencySuppliedByHost(DependencyContext hostDependencies, PackageDependency dep)
@@ -243,7 +240,7 @@ public sealed class NugetPluginsFetcher : IDisposable
 		return runtimeLib is not null;
 	}
 	
-	private static void FlattenDownloadedPackageToDirectoryStructure(DirectoryInfo downloadFolder, DirectoryInfo targetFolder, CancellationToken ct = default)
+	private static void FlattenDownloadedPackageToDirectoryStructure(DirectoryInfo downloadFolder, DirectoryInfo targetFolder)
 	{
 		List<DirectoryInfo> directories = new(downloadFolder.GetDirectories("*", SearchOption.AllDirectories).ToList());
 		List<FileInfo> files = new();
@@ -256,13 +253,13 @@ public sealed class NugetPluginsFetcher : IDisposable
 			foreach (DirectoryInfo dir in directories
 				.Where(d =>
 					regex.Matches(d.FullName).Count is 1
-					|| regex.Matches(d.FullName).Count is 2
-					&& string.Equals(regex.Matches(d.FullName)[1].Value, RuntimeInformation.RuntimeIdentifier, StringComparison.OrdinalIgnoreCase)
+					|| regex.Matches(d.FullName) is [{ Value: var moniker }, _]
+						&& string.Equals(moniker, RuntimeInformation.RuntimeIdentifier, StringComparison.OrdinalIgnoreCase)
 				).OrderByDescending(d => d.Name, StringComparer.OrdinalIgnoreCase))
 			{
 				// Special case for .NET 5.0+ runtime monikers, we must make sure the major version does not exceed the current runtime major version.
                 if (i is 1 && regex.Matches(dir.FullName) is [{ Value: var moniker }, ..] 
-					&& int.TryParse(moniker["net".Length..moniker.IndexOf('.')], out int majorVersion) 
+					&& int.TryParse(moniker["net".Length .. moniker.IndexOf('.')], out int majorVersion) 
 					&& majorVersion > Environment.Version.Major)
 				{
 					continue;
@@ -284,31 +281,43 @@ public sealed class NugetPluginsFetcher : IDisposable
 		}
 
 		// Get the content/wwwroot folder, and copy its contents to the target folder (preserving directory structure, creating folders as needed).
-		DirectoryInfo wwwrootFolder = new (Path.Combine(downloadFolder.FullName, "content", "wwwroot"));
+		CopyWebRootAssets(new (Path.Combine(downloadFolder.FullName, "content", "wwwroot")), targetFolder);
 
-		if (wwwrootFolder.Exists)
-		{
-			foreach (FileInfo file in wwwrootFolder.GetFiles("*", SearchOption.AllDirectories))
-			{
-				FileInfo targetFile = new(Path.Combine(targetFolder.FullName, "wwwroot", file.FullName[(wwwrootFolder.FullName.Length + 1)..]));
-
-				if (!targetFile.Exists)
-				{
-					if (targetFile.Directory is { Exists: false })
-					{
-						Directory.CreateDirectory(targetFile.Directory.FullName);
-					}
-					
-					file.MoveTo(targetFile.FullName);
-				}
-			}
-		}
+		
 		
 		
 		// Delete the downloaded package (download folder).
 		downloadFolder.Delete(true);
 	}
 
+	/// <summary>
+	/// Copies all files from the specified web assets folder to the target folder.
+	/// </summary>
+	/// <param name="webAssetsDir">The web assets folder to copy from.</param>
+	/// <param name="targetFolder">The target folder to copy to.</param>
+	private static void CopyWebRootAssets(DirectoryInfo webAssetsDir, DirectoryInfo targetFolder)
+	{
+		if (!webAssetsDir.Exists)
+		{
+			return;
+		}
+
+		foreach (FileInfo file in webAssetsDir.GetFiles("*", SearchOption.AllDirectories))
+		{
+			FileInfo targetFile = new(Path.Combine(targetFolder.FullName, "wwwroot", file.FullName[(webAssetsDir.FullName.Length + 1)..]));
+
+			if (!targetFile.Exists)
+			{
+				if (targetFile.Directory is { Exists: false })
+				{
+					Directory.CreateDirectory(targetFile.Directory.FullName);
+				}
+					
+				file.MoveTo(targetFile.FullName);
+			}
+		}
+	}
+	
 	private static void DeletePluginPackage(string pluginsDirectory, string packageName)
 	{
 		DirectoryInfo pluginPackageFolder = new(Path.Combine(pluginsDirectory, packageName));
@@ -325,8 +334,8 @@ public sealed class NugetPluginsFetcher : IDisposable
 	private static NuGetVersion? GetLocalPackageVersion(string pluginsDirectory, string packageName) 
 		=> new DirectoryInfo(Path.Combine(pluginsDirectory, packageName)).Exists 
 			&& new FileInfo(Path.Combine(pluginsDirectory, packageName, $"{packageName}.dll")) is { Exists: true } file 
-			&& FileVersionInfo.GetVersionInfo(file.FullName) is { } fileVersionInfo 
-				? new(fileVersionInfo.FileVersion) 
+			&& FileVersionInfo.GetVersionInfo(file.FullName) is { FileVersion: { } fileVersion } 
+				? new(fileVersion) 
 				: null;
 }
 
@@ -347,6 +356,6 @@ public static class NugetUtilities
 		new(@"net\d+"),
 		
 		// Catch-all & non-monikers (last-resort default)
-		new(@".*")
+		new(".*")
 	};
 }

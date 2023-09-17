@@ -1,5 +1,4 @@
 ﻿namespace YumeChan.Core.Config;
-#nullable enable
 
 /// <summary>
 /// Represents configuration for a plugins environment.
