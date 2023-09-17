@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk.Razor">
 
     <PropertyGroup>
-        <TargetFramework>net6.0</TargetFramework>
+        <TargetFramework>net8.0</TargetFramework>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
     </PropertyGroup>
@@ -21,10 +21,10 @@
     <ItemGroup>
       <PackageReference Include="Microsoft.AspNetCore.Mvc.Core" Version="2.2.5" />
       <PackageReference Include="Microsoft.AspNetCore.Mvc.Versioning.ApiExplorer" Version="5.1.0" />
-      <PackageReference Include="Microsoft.AspNetCore.WebUtilities" Version="2.2.0" />
-      <PackageReference Include="Nodsoft.MoltenObsidian.Blazor" Version="0.5.13" />
-      <PackageReference Include="Nodsoft.MoltenObsidian.Vaults.FileSystem" Version="0.5.13" />
-      <PackageReference Include="Swashbuckle.AspNetCore" Version="6.4.0" />
+      <PackageReference Include="Microsoft.AspNetCore.WebUtilities" Version="8.0.0-rc.1.23421.29" />
+      <PackageReference Include="Nodsoft.MoltenObsidian.Blazor" Version="0.5.18" />
+      <PackageReference Include="Nodsoft.MoltenObsidian.Vaults.FileSystem" Version="0.5.18" />
+      <PackageReference Include="Swashbuckle.AspNetCore" Version="6.5.0" />
     </ItemGroup>
 
 </Project>
