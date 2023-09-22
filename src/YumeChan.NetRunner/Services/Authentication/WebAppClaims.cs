@@ -1,15 +1,14 @@
 ﻿using DSharpPlus;
 using Microsoft.AspNetCore.Authentication;
 using System.Security.Claims;
-using Microsoft.Extensions.Configuration;
 
 namespace YumeChan.NetRunner.Services.Authentication;
 
-public class WebAppClaims : IClaimsTransformation
+public sealed class WebAppClaims : IClaimsTransformation
 {
 	private readonly DiscordClient _client;
 
-	public WebAppClaims(DiscordClient client, IConfiguration config)
+	public WebAppClaims(DiscordClient client)
 	{
 		_client = client;
 	}

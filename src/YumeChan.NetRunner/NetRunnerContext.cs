@@ -2,4 +2,4 @@
 
 namespace YumeChan.NetRunner;
 
-internal record NetRunnerContext(RunnerType RunnerType, string RunnerName, string RunnerVersion) : IRunnerContext;
+internal sealed record NetRunnerContext(RunnerType RunnerType, string RunnerName, string RunnerVersion) : IRunnerContext;

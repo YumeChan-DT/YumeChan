@@ -9,7 +9,7 @@ namespace YumeChan.NetRunner.Infrastructure.Blazor
 
 		public ComponentActivator(IContainer container)
 		{
-			this._container = container;
+			_container = container;
 		}
 
 		public IComponent CreateInstance(Type type)

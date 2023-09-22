@@ -66,8 +66,10 @@ public sealed class Startup
 		})
 		.AddDiscord(options =>
 		{
-			options.ClientId = Configuration["DiscordAuth:ClientId"];
-			options.ClientSecret = Configuration["DiscordAuth:ClientSecret"];
+			Configuration.GetSection("DiscordAuth").Bind(options);
+
+//			options.ClientId = Configuration["DiscordAuth:ClientId"];
+//			options.ClientSecret = Configuration["DiscordAuth:ClientSecret"];
 			options.CallbackPath = "/signin-oauth2";
 
 			options.Scope.Add("identify");

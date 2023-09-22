@@ -254,7 +254,7 @@ public sealed class CommandHandler
 				SlashRequireGuildAttribute => "Sorry, not here. Please send this command in a server.",
 //				SlashRequireNsfwAttribute => "Sorry. As much as I'd love to, I've gotta keep the hot stuff to the right channels.",
 //				SlashCooldownAttribute cd => $"Sorry. This command is on Cooldown. You can use it {cd.MaxUses} time(s) every {cd.Reset.TotalSeconds} seconds.",
-				SlashRequireUserPermissionsAttribute p => $"Sorry. You need to have permission(s) ``{p.Permissions}`` to run this.",
+				SlashRequireUserPermissionsAttribute p => $"Sorry. You need to have permission(s) {p.Permissions:F} (``0x{p.Permissions:X}``) to run this.",
 				_ => null
 			}).ToArray();
 

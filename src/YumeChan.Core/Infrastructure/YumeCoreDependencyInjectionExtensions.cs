@@ -17,6 +17,26 @@ namespace Microsoft.Extensions.DependencyInjection;
 /// </summary>
 public static class YumeCoreDependencyInjectionExtensions
 {
+	/// <summary>
+	/// Extension method for <see cref="IServiceCollection"/> to add custom services necessary for running the YumeCore application. 
+	/// This method configures a comprehensive service pipeline including various singleton services, database providers, configuration providers, and an HTTP client.
+	/// </summary>
+	/// <param name="services">An instance of <see cref="IServiceCollection"/>.</param>
+	/// <returns>The same service collection passed in, enabling chained configuration calls.</returns>
+	///
+	/// <remarks>
+	/// <para>Components added to the DI pipeline:</para>
+	/// <list type="bullet">
+	/// <item><description><see cref="YumeCore"/> - a singleton service instance for the application.</description></item>
+	/// <item><description><see cref="DiscordClient"/> - a singleton service with initial settings for intents, token type, token, logger factory, and minimum log level.</description></item>
+	/// <item><description><see cref="PluginsLoader"/> - a singleton that loads plugins from the path specified in <see cref="ICoreProperties"/>.</description></item>
+	/// <item><description>Singleton instances of <see cref="PluginLifetimeListener.Instance"/>, <see cref="CommandHandler"/>, <see cref="LavalinkHandler"/>, <see cref="NuGetPluginsFetcher"/>, and <see cref="DiscordBotTokenProvider"/>.</description></item>
+	/// <item><description>Services for MongoDB and Postgres are set up using a class <see cref="UnifiedDatabaseProvider"/>, which implements <see cref="IMongoDatabaseProvider"/> and <see cref="IPostgresDatabaseProvider"/>.</description></item>
+	/// <item><description><see cref="InterfaceConfigProvider"/> and <see cref="JsonConfigProvider"/> generic services provide configuration data.</description></item>
+	/// <item><description><see cref="ICoreProperties"/> and <see cref="IPluginLoaderProperties"/> instances are added with configurations loaded from 'coreconfig.json' and 'plugins.json' respectively.</description></item>
+	/// <item><description>An <see cref="HttpClient"/> is registered and configured via the HttpClientFactory for making HTTP requests, and the <see cref="NuGetPluginsFetcher"/> is added to the client.</description></item>
+	/// </list>
+	/// </remarks>
 	public static IServiceCollection AddYumeCoreServices(this IServiceCollection services)
 	{
 		services.AddSingleton<YumeCore>();

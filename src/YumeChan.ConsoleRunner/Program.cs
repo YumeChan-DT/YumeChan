@@ -15,7 +15,7 @@ namespace YumeChan.ConsoleRunner;
 
 public static class Program
 {
-	private static readonly LoggerConfiguration SerilogConfiguration = new LoggerConfiguration()
+	private static readonly LoggerConfiguration _serilogConfiguration = new LoggerConfiguration()
 		.MinimumLevel.Debug()
 		.MinimumLevel.Override("Microsoft", LogEventLevel.Information)
 		.MinimumLevel.Override("DSharpPlus", LogEventLevel.Information)
@@ -24,13 +24,13 @@ public static class Program
 
 	private static readonly string _informationalVersion = Assembly.GetEntryAssembly()?.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion;
 
-	public static async Task Main(string[] _)
+	public static async Task Main(string[] args)
 	{
 		
 
-		Log.Logger = SerilogConfiguration.CreateLogger();
+		Log.Logger = _serilogConfiguration.CreateLogger();
 
-		IHost host = CreateHostBuilder().Build();
+		IHost host = CreateHostBuilder(args).Build();
         
 		await using AsyncServiceScope scope = host.Services.CreateAsyncScope();
 		IServiceProvider services = scope.ServiceProvider;
@@ -46,7 +46,7 @@ public static class Program
 		await host.WaitForShutdownAsync();
 	}
 
-	public static IHostBuilder CreateHostBuilder() => new HostBuilder()
+	public static IHostBuilder CreateHostBuilder(string[] args) => new HostBuilder()
 		.UseServiceProviderFactory(new DryIocServiceProviderFactory())
 		.ConfigureLogging(static x => x.ClearProviders())
 		.UseSerilog()
