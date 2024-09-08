@@ -44,7 +44,7 @@ public sealed class CommandHandler
 #if DEBUG
 	private const ulong SlashCommandsGuild = 584445871413002242; // Used for Development only 
 #else
-	private const ulong? SlashCommandsGuild = null;
+	private const ulong SlashCommandsGuild = 0;
 #endif
 	
 	public CommandHandler(DiscordClient client, ILogger<CommandHandler> logger, IServiceProvider services, IContainer container, NugetPluginsFetcher pluginsFetcher,
@@ -138,7 +138,10 @@ public sealed class CommandHandler
 		{
 			try
 			{
-				await LoadPluginAsync(plugin, SlashCommandsGuild);
+				// Release: The given expression always matches the provided constant.
+				#pragma warning disable CS8520 
+				await LoadPluginAsync(plugin, SlashCommandsGuild is 0 ? null : SlashCommandsGuild);
+				#pragma warning restore CS8520
 			}
 			catch (Exception e)
 			{
