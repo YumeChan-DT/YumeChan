@@ -33,7 +33,7 @@
             <PrivateAssets>all</PrivateAssets>
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
-        <PackageReference Include="Microsoft.VisualStudio.Web.BrowserLink" Version="2.2.0" />
+        <PackageReference Include="Microsoft.Web.LibraryManager.Build" Version="2.1.175" />
         <PackageReference Include="Serilog.AspNetCore" Version="8.0.2" />
         <PackageReference Include="Serilog.Extensions.Logging" Version="8.0.0" />
         <PackageReference Include="SourceLink.Create.CommandLine" Version="2.8.3">
