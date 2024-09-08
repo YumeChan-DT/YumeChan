@@ -3,39 +3,28 @@
 
 @using YumeChan.PluginBase;
 @using YumeChan.Core.Services.Plugins
+@using YumeChan.NetRunner.Shared.Plugins
 
 @inject AuthenticationStateProvider AuthStateProvider;
 @inject PluginsLoader PluginsLoader;
 
 
 
-<h1>Plugins</h1>
-<br />
-<h3>Currently Loaded : @PluginsLoader.PluginManifests.Count Plugins</h3>
-<br />
+<div class="d-flex justify-content-between align-items-end mb-4">
+	<h1><i class="bi bi-plugin me-3"></i>Plugins</h1>
+	<p class="lead">Currently Loaded : @PluginsLoader.PluginManifests.Count Plugins</p>
+</div>
 
-<table class="table table-hover">
-	<thead>
-		<tr>
-			<th>Assembly</th>
-			<th>Plugin Name</th>
-			<th>Version</th>
-			<th>Active</th>
-		</tr>
-	</thead>
+<div id="plugin-cards" class="row">
+	@foreach (IPlugin pluginManifest in PluginsLoader.PluginManifests.Values.Where(p => _isAdmin || !p.StealthMode))
+	{
+		<div class="col-12 col-md-6 col-lg-4">
+			<PluginCard PluginManifest="pluginManifest" />
+		</div>
+	}
 
-	<tbody>
-		@foreach (IPlugin pluginManifest in PluginsLoader.PluginManifests.Values.Where(p => _isAdmin || !p.StealthMode))
-		{
-			<tr>
-				<td><a href="/p/@pluginManifest.AssemblyName/">@pluginManifest.AssemblyName</a></td>
-				<td>@pluginManifest.DisplayName</td>
-				<td>@pluginManifest.Version</td>
-				<td>@(pluginManifest.Loaded ? "Yes" : "No")</td>
-			</tr>
-		}
-	</tbody>
-</table>
+</div>
+
 
 @code {
 

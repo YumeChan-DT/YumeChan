@@ -1,0 +1,86 @@
+@using YumeChan.PluginBase
+
+@*
+    Structure:
+    - Plugin Icon
+    - Plugin Name
+    - Plugin Description
+    - Plugin Version / Author(s)
+    - Plugin Status
+*@
+
+
+<div id="plugin-card-@(PluginManifest.AssemblyName.ToLowerInvariant())" 
+    class="card bg-body border-@(PluginManifest.Loaded ? "success" : "secondary") p-4 d-flex flex-column align-items-center h-100"
+>
+    <img src="@(PluginManifest.IconUri?.ToString() ?? "/plugin.svg")" class="card-img p-3 img-fluid ratio-1x1" alt="@PluginManifest.DisplayName">
+
+    <div class="my-2 text-center">
+        <h3 class="card-title text-center mb-0">@PluginManifest.DisplayName</h3>
+        <small class="text-muted text-center">
+            <code>@PluginManifest.AssemblyName</code>
+        </small>
+    </div>
+
+    <p class="card-text text-center">@PluginManifest.Description</p>
+
+    <div class="w-100 mt-auto">
+        @* Dashboard: Centre button *@
+        <a class="btn btn-primary w-100 px-2" href="/p/@PluginManifest.AssemblyName/" title="Dashboard">
+            <i inert class="bi me-2 bi-speedometer2"></i>Dashboard
+        </a>
+        
+        <div class="btn-group btn-group-sm my-2 w-100" role="group">
+            @if (PluginManifest.ProjectHomepage is not null)
+            {
+                <a href="@PluginManifest.ProjectHomepage" target="_blank" rel="noopener" class="btn btn-secondary px-2">
+                    <i inert class="bi me-2 bi-globe"></i>Homepage
+                </a>
+            }
+
+            @if (PluginManifest.SourceCodeRepository is not null)
+            {
+                <a href="@PluginManifest.SourceCodeRepository" target="_blank" rel="noopener" class="btn btn-secondary px-2">
+                    <i inert class="bi me-2 bi-code-slash"></i>Repository
+                </a>
+            }
+
+            @if (PluginManifest.AuthorContact is not null)
+            {
+                bool isEmail = PluginManifest.AuthorContact.Contains('@');
+                bool isUrl = Uri.TryCreate(PluginManifest.AuthorContact, UriKind.Absolute, out _);
+                string builtUrl = isUrl ? PluginManifest.AuthorContact : isEmail ? $"mailto:{PluginManifest.AuthorContact}" : null;
+
+                <a href="@builtUrl" target="_blank" rel="noopener" class="btn btn-secondary px-2">
+                    <i inert class="bi me-2 @(isEmail ? "bi-envelope" : "bi-person")"></i>@(isEmail ? "Contact" : "Author")
+                </a>
+            }
+        </div>
+
+        <div class="d-flex justify-content-between gap-3">
+            <small class="text-muted" title="Commit hash: @(VersionInfo.Item2 ?? "N/A")">@VersionInfo.Item1</small>
+            <small class="text-muted">@(PluginManifest.Author ?? "Unknown")</small>
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter]
+    public IPlugin PluginManifest { get; set; }
+
+    public (string, string?) VersionInfo { get; set; } = ("", "");
+    
+    protected override void OnParametersSet()
+    {
+        if (PluginManifest.Version is { Length: not 0 } version)
+        {
+            // Try splitting the version string into two parts
+            VersionInfo = version.LastIndexOf('+') is var hashIndex and not -1 
+                ? (version[..hashIndex], version[(hashIndex + 1)..]) 
+                : (version, null);
+        }
+        
+        base.OnParametersSet();
+    }
+
+}
