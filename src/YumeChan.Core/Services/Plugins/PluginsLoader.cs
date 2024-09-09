@@ -3,6 +3,7 @@ using System.Runtime.InteropServices;
 using System.Runtime.Loader;
 using System.Security;
 using DryIoc;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using YumeChan.PluginBase;
 
@@ -19,8 +20,8 @@ public sealed class PluginsLoader
 	internal readonly Dictionary<string, IPlugin> PluginManifestsInternal = new();
 	private readonly Dictionary<string, Assembly> _pluginAssemblies = new();
 
-	private readonly List<Assembly> _loadAssemblies = new();
-	private readonly List<FileInfo> _pluginFiles = new();
+	private readonly List<Assembly> _loadAssemblies = [];
+	private readonly List<FileInfo> _pluginFiles = [];
 	
 	private const string PluginsLocationEnvVarName = "YumeChan_PluginsLocation";
 	
@@ -160,7 +161,7 @@ public sealed class PluginsLoader
 
 	internal IEnumerable<DependencyInjectionHandler> LoadDependencyInjectionHandlers()
 	{
-		List<DependencyInjectionHandler> handlers = new();
+		List<DependencyInjectionHandler> handlers = [];
 
 		foreach (Assembly a in _loadAssemblies)
 		{
@@ -189,5 +190,8 @@ public sealed class PluginsLoader
 	}
 
 	private static IPlugin? InstantiateManifest(Type type) => YumeCore.Instance.Services.Resolve(type) as IPlugin;
-	private static DependencyInjectionHandler? InstantiateInjectionRegistry(Type type) => YumeCore.Instance.Services.Resolve(type) as DependencyInjectionHandler;
+	private static DependencyInjectionHandler? InstantiateInjectionRegistry(Type type)
+	{
+		return ActivatorUtilities.CreateInstance(YumeCore.Instance.Services, type) as DependencyInjectionHandler;
+	}
 }

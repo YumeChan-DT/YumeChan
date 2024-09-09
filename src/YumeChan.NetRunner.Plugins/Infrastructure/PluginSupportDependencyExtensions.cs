@@ -44,38 +44,38 @@ public static class PluginSupportDependencyExtensions
 				
 				options.SwaggerGeneratorOptions.SwaggerDocs = swaggerDocsEnumerator.Documents;
 
-				// Discord Authentication
-				options.AddSecurityDefinition("oauth2", new()
-					{
-						Type = SecuritySchemeType.OAuth2,
-						Flows = new()
-						{
-							AuthorizationCode = new()
-							{
-								AuthorizationUrl = new("https://discord.com/api/oauth2/authorize"),
-								TokenUrl = new("https://discord.com/api/oauth2/token"),
-								Scopes = new Dictionary<string, string>
-								{
-									{ "identify", "Access to your Discord account" }
-								}
-							}
-						}
-					}
-				);
+				// // Discord Authentication
+				// options.AddSecurityDefinition("oauth2_discord", new()
+				// 	{
+				// 		Type = SecuritySchemeType.OAuth2,
+				// 		Flows = new()
+				// 		{
+				// 			AuthorizationCode = new()
+				// 			{
+				// 				AuthorizationUrl = new("https://discord.com/api/oauth2/authorize"),
+				// 				TokenUrl = new("https://discord.com/api/oauth2/token"),
+				// 				Scopes = new Dictionary<string, string>
+				// 				{
+				// 					{ "identify", "Access to your Discord account" }
+				// 				}
+				// 			}
+				// 		}
+				// 	}
+				// );
 
 				// Make sure Swagger UI requires Discord authentication
 				OpenApiSecurityScheme securityScheme = new()
 				{
 					Reference = new()
 					{
-						Id = "oauth2",
+						Id = "oauth2_discord",
 						Type = ReferenceType.SecurityScheme
 					}
 				};
 
 				options.AddSecurityRequirement(new()
 					{
-						{ securityScheme, new[] { "identify" } }
+						{ securityScheme, ["identify"] }
 					}
 				);
 
