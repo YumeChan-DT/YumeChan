@@ -15,14 +15,13 @@
 	<p class="lead">Currently Loaded : @PluginsLoader.PluginManifests.Count Plugins</p>
 </div>
 
-<div id="plugin-cards" class="row">
+<div id="plugin-cards" class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-3">
 	@foreach (IPlugin pluginManifest in PluginsLoader.PluginManifests.Values.Where(p => _isAdmin || !p.StealthMode))
 	{
-		<div class="col-12 col-md-6 col-lg-4">
+		<div role="presentation">
 			<PluginCard PluginManifest="pluginManifest" />
 		</div>
 	}
-
 </div>
 
 
