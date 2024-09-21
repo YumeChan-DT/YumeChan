@@ -1,5 +1,6 @@
 using DryIoc;
 using DryIoc.Microsoft.DependencyInjection;
+using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -11,34 +12,35 @@ namespace YumeChan.NetRunner;
 
 public static class Program
 {
-	private static Container _container = new();
-	private static readonly LoggerConfiguration _loggerConfiguration = new LoggerConfiguration()
-        .MinimumLevel.Debug()
-        .MinimumLevel.Override("Microsoft", LogEventLevel.Warning)
-        .MinimumLevel.Override("Microsoft.Hosting.Lifetime", LogEventLevel.Information)
-        .Enrich.FromLogContext()
-        .WriteTo.Console();
-
 	public static async Task Main(string[] args)
 	{
-		Log.Logger = _loggerConfiguration.CreateLogger();
+		Log.Logger = new LoggerConfiguration()
+			.MinimumLevel.Override("Microsoft", LogEventLevel.Information)
+			.Enrich.FromLogContext()
+			.WriteTo.Console(applyThemeToRedirectedOutput: true)
+			.CreateBootstrapLogger();
         
-		using IHost host = CreateHostBuilder(args).Build();
-		IServiceProvider services = host.Services;
+		WebApplicationBuilder builder = WebApplication.CreateBuilder(new WebApplicationOptions { Args = args });
+		
+		builder.Host.ConfigureHost();
+		
+		builder.ConfigureServices();
+		await using WebApplication host = builder.Build();
 
-		YumeCore yumeCore = services.GetRequiredService<YumeCore>();
+		host.UseApplicationPipeline();
+		
+		YumeCore yumeCore = host.Services.GetRequiredService<YumeCore>();
 		
 		await Task.WhenAll(
 			yumeCore.StartBotAsync(),
 			host.RunAsync()
 		);
 	}
-	public static IHostBuilder CreateHostBuilder(string[] args) => Host.CreateDefaultBuilder(args)
+	
+	private static void ConfigureHost(this ConfigureHostBuilder builder) => builder
 		.UseServiceProviderFactory(new DryIocServiceProviderFactory())
 		.ConfigureLogging(x => x.ClearProviders())
-		.ConfigureWebHostDefaults(webBuilder => webBuilder.UseStartup<Startup>())
 		.ConfigureContainer<Container>((_, container) => container
 			.WithDependencyInjectionAdapter()
-		)
-	;
+		);
 }

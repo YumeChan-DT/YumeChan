@@ -22,40 +22,38 @@ using YumeChan.PluginBase.Tools;
 
 namespace YumeChan.NetRunner;
 
-public sealed class Startup
+public static class Startup
 {
-	public IConfiguration Configuration { get; }
-
-	public Startup(IConfiguration configuration)
-	{
-		Configuration = configuration;
-	}
-
 	// This method gets called by the runtime. Use this method to add services to the container.
 	// For more information on how to configure your application, visit https://go.microsoft.com/fwlink/?LinkID=398940
-	public void ConfigureServices(IServiceCollection services)
+	public static WebApplicationBuilder ConfigureServices(this WebApplicationBuilder builder)
 	{
-		services.AddYumeCoreServices();
+		builder.Services.AddYumeCoreServices();
+		
+		builder.Services.AddSerilog(static (services, lc) => lc
+			.ReadFrom.Configuration(services.GetRequiredService<IConfiguration>())
+			.ReadFrom.Services(services)
+		);
         
 		string informationalVersion = Assembly.GetEntryAssembly()?.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion;
-		services.AddSingleton(new NetRunnerContext(RunnerType.Console, typeof(Program).Assembly.GetName().Name, informationalVersion));
+		builder.Services.AddSingleton(new NetRunnerContext(RunnerType.Console, typeof(Program).Assembly.GetName().Name, informationalVersion));
 		
-		services.AddControllers(builder =>
+		builder.Services.AddControllers(options =>
 			{
-				builder.ConfigurePluginNameRoutingToken();
-				builder.Conventions.Add(new PluginApiRoutingConvention());
+				options.ConfigurePluginNameRoutingToken();
+				options.Conventions.Add(new PluginApiRoutingConvention());
 			}
 		);
 		
-		services.AddApiPluginSupport();
-		services.AddApiPluginsSwagger();
-		services.AddPluginDocsSupport();
+		builder.Services.AddApiPluginSupport();
+		builder.Services.AddApiPluginsSwagger();
+		builder.Services.AddPluginDocsSupport();
 
-		services.AddRazorPages();
-		services.AddServerSideBlazor();
-		services.AddHttpContextAccessor();
+		builder.Services.AddRazorPages();
+		builder.Services.AddServerSideBlazor();
+		builder.Services.AddHttpContextAccessor();
 
-		services.AddAuthentication(options =>
+		builder.Services.AddAuthentication(options =>
 		{
 			options.DefaultScheme = CookieAuthenticationDefaults.AuthenticationScheme;
 			options.DefaultChallengeScheme = DiscordAuthenticationDefaults.AuthenticationScheme;
@@ -66,7 +64,7 @@ public sealed class Startup
 		})
 		.AddDiscord(options =>
 		{
-			Configuration.GetSection("DiscordAuth").Bind(options);
+			builder.Configuration.GetSection("DiscordAuth").Bind(options);
 
 //			options.ClientId = Configuration["DiscordAuth:ClientId"];
 //			options.ClientSecret = Configuration["DiscordAuth:ClientSecret"];
@@ -78,20 +76,16 @@ public sealed class Startup
 			options.CorrelationCookie.SameSite = SameSiteMode.Lax;
 		});
 
-		services.AddLogging(x =>
-		{
-			x.ClearProviders();
-			x.AddSerilog();
-		});
-
-		services.AddSingleton<IComponentActivator, ComponentActivator>();
-		services.AddScoped<IClaimsTransformation, WebAppClaims>();
+		builder.Services.AddSingleton<IComponentActivator, ComponentActivator>();
+		builder.Services.AddScoped<IClaimsTransformation, WebAppClaims>();
+		
+		return builder;
 	}
 
 	// This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-	public static void Configure(IApplicationBuilder app, IWebHostEnvironment env)
+	public static void UseApplicationPipeline(this WebApplication app)
 	{
-		if (env.IsDevelopment())
+		if (app.Environment.IsDevelopment())
 		{
 			app.UseDeveloperExceptionPage();
 		}
@@ -109,7 +103,7 @@ public sealed class Startup
 		app.UseStaticFiles();
 		app.UseStaticFiles(options: new()
 		{
-			FileProvider = new PluginWebAssetsProvider(app.ApplicationServices.GetService<ICoreProperties>()?.Path_Plugins 
+			FileProvider = new PluginWebAssetsProvider(app.Services.GetService<ICoreProperties>()?.Path_Plugins 
 				?? throw new InvalidOperationException("Plugin path not found")),
 			
 			RequestPath = "/_content"
@@ -117,7 +111,7 @@ public sealed class Startup
 		
 		app.UseStaticFiles(options: new()
 		{
-			FileProvider = new PluginWebAssetsProvider(app.ApplicationServices.GetService<ICoreProperties>()?.Path_Plugins 
+			FileProvider = new PluginWebAssetsProvider(app.Services.GetService<ICoreProperties>()?.Path_Plugins 
 				?? throw new InvalidOperationException("Plugin path not found")),
 			
 			RequestPath = "/p"
@@ -131,18 +125,15 @@ public sealed class Startup
 		app.UseAuthentication();
 		app.UseAuthorization();
 
-		app.UseEndpoints(endpoints =>
+		app.MapControllers();
+		app.MapBlazorHub();
+		
+		app.MapFallback("/api/{*path}", context =>
 		{
-			endpoints.MapControllers();
-			endpoints.MapBlazorHub();
-			
-			endpoints.MapFallback("/api/{*path}", context =>
-			{
-				context.Response.StatusCode = StatusCodes.Status404NotFound;
-				return Task.CompletedTask;
-			});
-			
-			endpoints.MapFallbackToPage("/_Host");
+			context.Response.StatusCode = StatusCodes.Status404NotFound;
+			return Task.CompletedTask;
 		});
+		
+		app.MapFallbackToPage("/_Host");
 	}
 }

@@ -39,6 +39,9 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		.gitignore = .gitignore
 		LICENSE = LICENSE
 		README.md = README.md
+		G:\YumeChan\.gitmodules = G:\YumeChan\.gitmodules
+		G:\YumeChan\Directory.Build.props = G:\YumeChan\Directory.Build.props
+		G:\YumeChan\version.json = G:\YumeChan\version.json
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".github/workflows", ".github/workflows", "{24C84DC3-4061-4ACA-88BA-19BDAABB9A15}"
