@@ -24,18 +24,18 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="Castle.Core" Version="5.1.1" />
+        <PackageReference Include="Castle.Core" Version="5.2.1" />
         <PackageReference Include="DryIoc.Microsoft.DependencyInjection" Version="6.2.0" />
         <PackageReference Include="DSharpPlus.Interactivity" Version="4.5.*" />
         <PackageReference Include="DSharpPlus.Lavalink" Version="4.5.*" />
-        <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="8.0.0" />
-        <PackageReference Include="Microsoft.Extensions.DependencyModel" Version="8.0.1" />
+        <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="8.0.1" />
+        <PackageReference Include="Microsoft.Extensions.DependencyModel" Version="8.0.2" />
         <PackageReference Include="Microsoft.Extensions.FileProviders.Physical" Version="8.0.0" />
-        <PackageReference Include="Microsoft.Extensions.Http" Version="8.0.0" />
-        <PackageReference Include="Microsoft.Extensions.Logging" Version="8.0.0" />
-        <PackageReference Include="NuGet.Configuration" Version="6.11.0" />
-        <PackageReference Include="NuGet.Resolver" Version="6.11.0" />
-        <PackageReference Include="System.Text.Json" Version="8.0.4" />
+        <PackageReference Include="Microsoft.Extensions.Http" Version="8.0.1" />
+        <PackageReference Include="Microsoft.Extensions.Logging" Version="8.0.1" />
+        <PackageReference Include="NuGet.Configuration" Version="6.13.2" />
+        <PackageReference Include="NuGet.Resolver" Version="6.13.2" />
+        <PackageReference Include="System.Text.Json" Version="8.0.5" />
     </ItemGroup>
 
     <ItemGroup>

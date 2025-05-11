@@ -19,12 +19,11 @@
     </ItemGroup>
     
     <ItemGroup>
-      <PackageReference Include="Microsoft.AspNetCore.Mvc.Core" Version="2.2.5" />
       <PackageReference Include="Microsoft.AspNetCore.Mvc.Versioning.ApiExplorer" Version="5.1.0" />
-      <PackageReference Include="Microsoft.AspNetCore.WebUtilities" Version="8.0.8" />
-      <PackageReference Include="Nodsoft.MoltenObsidian.Blazor" Version="1.1.1" />
+      <PackageReference Include="Microsoft.AspNetCore.WebUtilities" Version="8.0.15" />
+      <PackageReference Include="Nodsoft.MoltenObsidian.Blazor" Version="1.1.2" />
       <PackageReference Include="Nodsoft.MoltenObsidian.Vaults.FileSystem" Version="1.1.1" />
-      <PackageReference Include="Swashbuckle.AspNetCore" Version="6.7.3" />
+      <PackageReference Include="Swashbuckle.AspNetCore" Version="8.1.1" />
     </ItemGroup>
 
 </Project>

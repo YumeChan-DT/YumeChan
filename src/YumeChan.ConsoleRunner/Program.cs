@@ -26,8 +26,6 @@ public static class Program
 
 	public static async Task Main(string[] args)
 	{
-		
-
 		Log.Logger = _serilogConfiguration.CreateLogger();
 
 		IHost host = CreateHostBuilder(args).Build();
