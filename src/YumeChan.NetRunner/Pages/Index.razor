@@ -1,21 +1,62 @@
 ﻿@page "/"
+@layout MainLayout
 
 @using static YumeChan.NetRunner.Properties.AppProperties
 
-<h1>@AppName</h1>
-<h3>(Control Panel)</h3>
-<br />
-Welcome to @AppName's Control Panel. Here will be presented useful data on @AppName's current state, but also a few utilities to assist you in using @AppName.
-<br />
-<br />
+<div class="d-md-flex justify-content-around flex-column align-items-center flex-md-row my-5">
+    <div>
+        <h1>@AppName</h1>
+        <p class="lead">An open-source Discord bot, tailored to your needs.</p>
+    </div>
 
-<AuthorizeView>
-    <NotAuthorized>
-        <div class="alert alert-info" role="alert">In order to access some options, logging-in may be required. You may do so here :
-        <wbr /><a href="/login" class="alert-link">Login</a></div>
-    </NotAuthorized>
-    <Authorized>
-        <div class="alert alert-success" role="alert">You are now logged in. All administrative operations have now been unlocked for @AppName.</div>
-    </Authorized>
-</AuthorizeView>
+    <div style="max-width: 30rem;">
+        <img src="/yumechan-bg.png" class="w-100" alt="Illustration of YumeChan" />
+    </div>
+</div>
+
+<div id="description-cards" class="row gap-5">
+    <div id="plugins" class="col-md-7">
+        <h2 class="mb-3"><i class="bi bi-plugin me-4"></i>Plugins</h2>
+    
+        <p>
+            @AppName brings a variety of <a href="/plugins">plugins</a> to enhance your experience, with limitless possibilities. <br />
+            A few examples include Chat utilities, Security, Screening, Music...
+        </p>
+    
+        <p class="lead mb-1">Interested in creating plugins ?</p>
+        
+        <p>You can create plugins easily using the power of
+            <a href="https://dot.net/" target="_blank" rel="noopener">.NET</a>, 
+            <a href="https://dotnet.microsoft.com/en-us/apps/aspnet/web-apps/blazor" target="_blank" rel="noopener">Blazor</a>,
+            and <a href="https://github.com/DSharpPlus/DSharpPlus" target="_blank" rel="noopener">DSharpPlus</a>. 
+            <br />
+            Check out our <a href="https://github.com/YumeChan-DT/SamplePlugin-CSS" target="_blank" rel="noopener">Plugin sample code</a> to get started.
+        </p>
+    </div>
+
+    <div id="open-source" class="col-md-7 ms-md-auto">
+        <h2 class="mb-3"><i class="bi bi-code-slash me-4"></i>Open Source</h2>
+    
+        <p>
+            @AppName is an open-source project, designed with transparency in mind.
+            All plugins provided on <a href="https://yumechan.app" target="_blank" rel="noopener">yumechan.app</a> are open-source, 
+            and you can find the source code on our <a href="https://github.com/YumeChan-DT/" target="_blank" rel="noopener">GitHub repository</a>.
+        </p>
+        
+        <p class="lead mb-1">Want to contribute ?</p>
+        <p>We welcome contributions and feedback from the community, and we are always looking for ways to improve our software.</p>
+    </div>
+    
+    <div id="security" class="col-md-7">
+        <h2 class="mb-3"><i class="bi bi-shield-lock me-4"></i>Security</h2>
+    
+        <p>
+            @AppName is designed with security in mind. This goes hand-in-hand with the open-source nature of the project,
+            but also furthered by the strict security policies put in place by the host behind
+            <a href="https://yumechan.app" target="_blank" rel="noopener">yumechan.app</a>.
+            <br />
+            When storing your data, all plugin databases are isolated from each other, and are stored in a secure manner.
+        </p>
+    </div>
+</div>
 
