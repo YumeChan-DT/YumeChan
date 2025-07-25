@@ -138,7 +138,7 @@ public sealed class PluginsLoader
 	{
 		PluginManifestsInternal.Clear();
 
-		pluginTypes ??= GetPluginManifestTypes();
+		pluginTypes = GetPluginManifestTypes();
 		
 		foreach (var (a, t) in pluginTypes)
 		{

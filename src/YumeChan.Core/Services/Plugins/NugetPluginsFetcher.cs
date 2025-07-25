@@ -45,13 +45,14 @@ public sealed class NugetPluginsFetcher : IDisposable
 
 	public async Task FetchPluginsAsync(CancellationToken ct = default)
 	{
-		ImmutableArray<SourceRepository> sourceRepositories = _sourceRepositoryProvider.GetRepositories().ToImmutableArray();
+		SourceRepository[] sourceRepositories = [.._sourceRepositoryProvider.GetRepositories()];
 
 		if (_pluginProperties is { EnabledPlugins.Count: > 0 })
 		{
 			string pluginsDirectory = _coreProperties.Path_Plugins;
 			ISettings? nugetSettings = Settings.LoadDefaultSettings(pluginsDirectory);
 
+			// ReSharper disable once VariableHidesOuterVariable
 			await Parallel.ForEachAsync(_pluginProperties.EnabledPlugins, ct, async (plugin, ct) =>
 				{
 					// Get the package metadata for specified name and version (default to latest version)
@@ -123,7 +124,7 @@ public sealed class NugetPluginsFetcher : IDisposable
 		return null;
 	}
 
-	private async Task GetPackageDependenciesAsync(PackageIdentity package, NuGetFramework framework, ImmutableArray<SourceRepository> repositories,
+	private async Task GetPackageDependenciesAsync(PackageIdentity package, NuGetFramework framework, SourceRepository[] repositories,
 		DependencyContext hostDependencies, ICollection<SourcePackageDependencyInfo> availablePackages, CancellationToken ct)
 	{
 		// Don't recurse over a package we've already seen.
@@ -132,7 +133,7 @@ public sealed class NugetPluginsFetcher : IDisposable
 			return;
 		}
  
-		foreach (SourceRepository? sourceRepository in _sourceRepositoryProvider.GetRepositories())
+		foreach (SourceRepository sourceRepository in repositories)
 		{
 			// Get the dependency info for the package.
 			DependencyInfoResource? dependencyInfoResource = await sourceRepository.GetResourceAsync<DependencyInfoResource>(ct);
