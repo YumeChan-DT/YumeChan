@@ -48,8 +48,8 @@ public sealed class YumeCore
 		CommandHandler = Services.Resolve<CommandHandler>();
 		CommandHandler.Config = CoreProperties;
 
-		LavalinkHandler = Services.Resolve<LavalinkHandler>();
-		LavalinkHandler.Config = CoreProperties.LavalinkProperties;
+		// LavalinkHandler = Services.Resolve<LavalinkHandler>();
+		// LavalinkHandler.Config = CoreProperties.LavalinkProperties;
 		
 		_instance = this;
 	}
@@ -73,7 +73,7 @@ public sealed class YumeCore
 		await CommandHandler.InstallCommandsAsync();
 		await Client.ConnectAsync();
 		await Client.InitializeAsync();
-		await LavalinkHandler.InitializeAsync();
+		// await LavalinkHandler.InitializeAsync();
 
 		CoreState = YumeCoreState.Online;
 	}
